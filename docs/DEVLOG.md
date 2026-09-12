@@ -8,6 +8,7 @@ This document tracks all project milestones, architectural additions, and commit
 
 | Commit | Timestamp (UTC+2) | Milestone / Scope | Key Deliverables | Tests Passing |
 | --- | --- | --- | --- | --- |
+| [`c330c89`](https://github.com/Dvrkstvr/tak-p2p/commit/c330c89) | 2026-09-12 07:56:47 | **Invite UX & Multi-Device Nostr Linking** | Implemented NIP-19 `npub`/`nsec` Bech32 codec, 1-click playable web invite links (`/?invite=TAK1_...`), native SVG QR code generator via `Net.Codecrete.QrCodeGenerator`, Web Share API (`navigator.share`), URL query challenge detection, and multi-device 'Link Mobile / Devices' pairing modal; 104 passing unit tests. | 104 |
 | [`23caed5`](https://github.com/Dvrkstvr/tak-p2p/commit/23caed5) | 2026-09-12 07:48:07 | **Offline AI Practice Bot** | Implemented `MinimaxTakBot` and `TakEvaluator` with Alpha-Beta pruning, in-memory `Clone`, `GetAllLegalMoves`, Blazor WASM AI practice mode with difficulty picker, and CLI vs AI option; 100 passing unit tests. | 100 |
 | [`47704b8`](https://github.com/Dvrkstvr/tak-p2p/commit/47704b8) | 2026-09-12 07:36:21 | **Release Workflow CI/CD** | Added `.github/workflows/release.yml` with cross-platform matrix publishing for `TakApp.Avalonia` and `TakApp.Cli` (Windows `.zip`, Linux `.tar.gz`) with SHA-256 checksums and automated GitHub Releases; updated README with release badges and publishing guide. | 93 |
 | [`f6b209c`](https://github.com/Dvrkstvr/tak-p2p/commit/f6b209c) | 2026-09-12 07:27:06 | **CLI Hardening & MVP Audit** | Fixed Spectre.Console markup escaping crashes, added `SafeClear` for headless/redirected terminal execution, verified MVP user flows across Web and CLI, updated M1.9 status. | 93 |
@@ -30,6 +31,25 @@ This document tracks all project milestones, architectural additions, and commit
 ---
 
 ## Detailed Entry Logs
+
+### [c330c89](https://github.com/Dvrkstvr/tak-p2p/commit/c330c89) - Invite UX Overhaul & Multi-Device Nostr Linking
+* **Timestamp**: `2026-09-12T07:56:47+02:00`
+* **Author**: Calvin Kohl
+* **Scope**: Frictionless 1-click playable match invites, native dark-mode SVG QR codes, Web Share API, and universal Nostr multi-device pairing.
+* **Changes**:
+  * [Nip19.cs](file:///e:/repos/tak-p2p/src/TakEngine.Core/Cryptography/Nip19.cs): Full BIP-173 / NIP-19 Bech32 encoder and decoder supporting `npub` and `nsec` key serialization.
+  * [Nip19Tests.cs](file:///e:/repos/tak-p2p/tests/TakEngine.Core.Tests/Nip19Tests.cs): Unit tests verifying round-trip fidelity, hrp validation, and checksum verification.
+  * [InviteCode.cs](file:///e:/repos/tak-p2p/src/TakEngine.Transport/Matchmaking/InviteCode.cs): Added `ToWebUrl(baseUrl)` and HTTP/HTTPS parsing support for `?invite=` parameters.
+  * [InviteCodeTests.cs](file:///e:/repos/tak-p2p/tests/TakEngine.Transport.Tests/InviteCodeTests.cs): Added unit tests for web URL round-tripping.
+  * [QrCodeSvgHelper.cs](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Services/QrCodeSvgHelper.cs): Zero-dependency WASM-compatible SVG QR code generator styled for dark theme backgrounds.
+  * [BrowserStorage.cs](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Services/BrowserStorage.cs): Added `SetKeypairAsync`, `ImportPrivateKeyAsync` (supporting `nsec1...` and raw hex), and `ClearIdentityAsync`.
+  * [InviteModal.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Modals/InviteModal.razor): Redesigned modal with tabbed view (QR & Shareable Link vs Token), high-contrast SVG QR code, 1-click "Copy Game Link", and native Web Share API (`navigator.share`).
+  * [LinkDeviceModal.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Modals/LinkDeviceModal.razor): Multi-device Nostr identity modal with privacy-shielded pairing QR codes, key import, and sovereign `nsec` backup.
+  * [Home.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Pages/Home.razor): Added top identity status bar with `npub` badge and Link Mobile trigger; added automated URL query handling for `?link_identity=` and `?invite=`.
+  * [tak-theme.css](file:///e:/repos/tak-p2p/src/TakApp.Blazor/wwwroot/css/tak-theme.css): Added `.btn-purple` button variant.
+* **Test Suite**: 104 tests passing (100% pass rate).
+
+---
 
 ### [23caed5](https://github.com/Dvrkstvr/tak-p2p/commit/23caed5) - Offline AI Practice Bot (Mobile, Web & Desktop)
 * **Timestamp**: `2026-09-12T07:48:07+02:00`
