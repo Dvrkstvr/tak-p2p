@@ -8,6 +8,7 @@ This document tracks all project milestones, architectural additions, and commit
 
 | Commit | Timestamp (UTC+2) | Milestone / Scope | Key Deliverables | Tests Passing |
 | --- | --- | --- | --- | --- |
+| [`325e984`](https://github.com/Dvrkstvr/tak-p2p/commit/325e984) | 2026-09-12 08:52:00 | **Docs Consolidation & AGENTS.md Update** | Comprehensive cleanup and synchronization of all 10 specification documents and audit reports; aligned `AGENTS.md` and rules with multi-assembly test metrics (88 Core + 19 Transport = 107 total tests) and Blazor WASM rebuild guidelines; added uniform cross-specification links across the documentation suite. | 107 |
 | [`2d5eee2`](https://github.com/Dvrkstvr/tak-p2p/commit/2d5eee2) | 2026-09-12 08:10:00 | **Avalonia Native Mobile (Android & iPad/iOS)** | Scaffolded `TakApp.Avalonia.Android` (targeting `net10.0-android`, APK output, splash screen, permissions) and `TakApp.Avalonia.iOS` (targeting `net10.0-ios`, iPad & iPhone device family profiles), transitioned `TakApp.Avalonia` into shared cross-platform library and `TakApp.Avalonia.Desktop` into desktop executable; 107 passing unit tests. | 107 |
 | [`114436a`](https://github.com/Dvrkstvr/tak-p2p/commit/114436a) | 2026-09-12 08:09:18 | **Nostr Player Nicknames & Profiles** | Implemented Nostr `kind: 0` user profile publishing and metadata queries with in-memory caching, custom nickname support in `InviteCode` URIs/tokens, Profile modal in Blazor WASM, and nickname badges in game headers; 107 passing unit tests. | 107 |
 | [`c330c89`](https://github.com/Dvrkstvr/tak-p2p/commit/c330c89) | 2026-09-12 07:56:47 | **Invite UX & Multi-Device Nostr Linking** | Implemented NIP-19 `npub`/`nsec` Bech32 codec, 1-click playable web invite links (`/?invite=TAK1_...`), native SVG QR code generator via `Net.Codecrete.QrCodeGenerator`, Web Share API (`navigator.share`), URL query challenge detection, and multi-device 'Link Mobile / Devices' pairing modal; 104 passing unit tests. | 104 |
@@ -33,6 +34,23 @@ This document tracks all project milestones, architectural additions, and commit
 ---
 
 ## Detailed Entry Logs
+
+### [325e984](https://github.com/Dvrkstvr/tak-p2p/commit/325e984) - Documentation Consolidation & AGENTS.md Update
+* **Timestamp**: `2026-09-12T08:52:00+02:00`
+* **Author**: Calvin Kohl
+* **Scope**: System-wide consolidation, synchronization, and cleanup of the documentation suite, audit report, and agent guidelines.
+* **Changes**:
+  * [AGENTS.md](file:///e:/repos/tak-p2p/AGENTS.md): Updated project layout to reflect shared `TakApp.Avalonia` library with Desktop, Android, and iOS heads; added critical guidance on multi-assembly test totals (88 Core + 19 Transport = 107 total); added Blazor WASM dev-server clean rebuild rule; synchronized documentation map.
+  * [.agents/rules/devlog-maintenance.md](file:///e:/repos/tak-p2p/.agents/rules/devlog-maintenance.md): Updated test verification step to specify 107 total tests across both assemblies and keep spec progress synchronized.
+  * [AUDIT.md](file:///e:/repos/tak-p2p/docs/AUDIT.md): Corrected test count analysis to reflect that all 107 tests pass with 100% success across `TakEngine.Core.Tests` (88) and `TakEngine.Transport.Tests` (19); removed false discrepancy note; updated scorecard and prioritized recommendations.
+  * [PROJECT_SPECIFICATION.md](file:///e:/repos/tak-p2p/docs/PROJECT_SPECIFICATION.md): Synchronized solution layout with all 9 projects; promoted M1.9 to COMPLETED and added post-MVP foundation milestones (M1.10 AI Bot, M1.11 Nostr Profiles, M1.12 Mobile Heads); replaced obsolete day-1 action items with a consolidated documentation map and active roadmap.
+  * [system-overview.md](file:///e:/repos/tak-p2p/docs/system-overview.md): Updated component boundary ASCII diagram and completed foundations list with multi-platform mobile heads and AI bot; added documentation map.
+  * [v1-mvp.md](file:///e:/repos/tak-p2p/docs/v1-mvp.md): Synchronized milestone table through M1.12 and linked companion documents.
+  * [v2-tournaments.md](file:///e:/repos/tak-p2p/docs/v2-tournaments.md), [wire-protocol.md](file:///e:/repos/tak-p2p/docs/wire-protocol.md), [database-schema.md](file:///e:/repos/tak-p2p/docs/database-schema.md), [blazor-web-github-pages.md](file:///e:/repos/tak-p2p/docs/blazor-web-github-pages.md), [spectator-implementation-plan.md](file:///e:/repos/tak-p2p/docs/spectator-implementation-plan.md): Added uniform Related Documentation navigation sections with clickable links.
+  * [README.md](file:///e:/repos/tak-p2p/README.md): Added `AUDIT.md` to the documentation index.
+* **Test Suite**: 107 tests passing (100% pass rate: 88 in `TakEngine.Core.Tests`, 19 in `TakEngine.Transport.Tests`).
+
+---
 
 ### [2d5eee2](https://github.com/Dvrkstvr/tak-p2p/commit/2d5eee2) - Avalonia Native Mobile Scaffolding (Android & iPad/iOS)
 * **Timestamp**: `2026-09-12T08:10:00+02:00`

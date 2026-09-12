@@ -284,3 +284,17 @@ CREATE INDEX IF NOT EXISTS idx_live_broadcast_active ON LiveBroadcastCache(LastA
 | **Phase 3: Admin Tournament Pipeline** | Dual-delivery publisher: opponent direct + admin direct stream. | Multi-client integration test with simulated Admin referee receiving instant moves. |
 | **Phase 4: GUI & CLI Spectator Views** | Avalonia "Watch" tab, board scrubber, and CLI `tak watch <game_id>`. | Manual end-to-end match spectating with real-time stack inspection. |
 | **Phase 5: Admin Multi-Match Hub** | Tournament Director grid monitoring view in Avalonia. | Stress test monitoring 16 concurrent simulated matches over Nostr. |
+
+---
+
+## 10. Related Documentation & Deep Dives
+
+* Master Architecture: [docs/PROJECT_SPECIFICATION.md](file:///e:/repos/tak-p2p/docs/PROJECT_SPECIFICATION.md)
+* System Overview: [docs/system-overview.md](file:///e:/repos/tak-p2p/docs/system-overview.md)
+* MVP Milestone Guide (v1.0): [docs/v1-mvp.md](file:///e:/repos/tak-p2p/docs/v1-mvp.md)
+* Competitive & Tournaments: [docs/v2-tournaments.md](file:///e:/repos/tak-p2p/docs/v2-tournaments.md)
+* Wire Protocol & Nostr: [docs/wire-protocol.md](file:///e:/repos/tak-p2p/docs/wire-protocol.md)
+* SQLite Database Schema: [docs/database-schema.md](file:///e:/repos/tak-p2p/docs/database-schema.md)
+* Blazor Web & GitHub Pages: [docs/blazor-web-github-pages.md](file:///e:/repos/tak-p2p/docs/blazor-web-github-pages.md)
+* Project Audit Report: [docs/AUDIT.md](file:///e:/repos/tak-p2p/docs/AUDIT.md)
+* Chronological Commit History: [docs/DEVLOG.md](file:///e:/repos/tak-p2p/docs/DEVLOG.md)

@@ -69,3 +69,16 @@ Every game turn is transmitted as an encrypted event containing the current move
 | `kind: 31923` | Parameterized Replaceable | Admin tournament announcements & parameters. |
 | `kind: 30000` | Replaceable | Admin / Oracle weekly signed Elo ratings & rank tiers. |
 | `kind: 30001` | Replaceable | Admin append-only blacklist event for revoked certificates. |
+
+---
+
+## 4. Related Documentation & Deep Dives
+
+* Master Architecture: [docs/PROJECT_SPECIFICATION.md](file:///e:/repos/tak-p2p/docs/PROJECT_SPECIFICATION.md)
+* System Overview: [docs/system-overview.md](file:///e:/repos/tak-p2p/docs/system-overview.md)
+* MVP Milestone Guide (v1.0): [docs/v1-mvp.md](file:///e:/repos/tak-p2p/docs/v1-mvp.md)
+* Competitive & Tournaments: [docs/v2-tournaments.md](file:///e:/repos/tak-p2p/docs/v2-tournaments.md)
+* SQLite Database Schema: [docs/database-schema.md](file:///e:/repos/tak-p2p/docs/database-schema.md)
+* Spectator & Broadcast System: [docs/spectator-implementation-plan.md](file:///e:/repos/tak-p2p/docs/spectator-implementation-plan.md)
+* Project Audit Report: [docs/AUDIT.md](file:///e:/repos/tak-p2p/docs/AUDIT.md)
+* Chronological Commit History: [docs/DEVLOG.md](file:///e:/repos/tak-p2p/docs/DEVLOG.md)

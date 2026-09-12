@@ -182,3 +182,19 @@ public interface ITakGameSession
 | **M1.7** | Spectre.Console UI | Functional CLI game loop with live ANSI board updating, conversational stepped typed input, stack inspector, and PTN prompt. | **COMPLETED** |
 | **M1.8** | Avalonia UI Prototype | 2D vector board rendering, MVVM bindings to `ITakGameSession`, functioning across desktop and mobile. | **COMPLETED** |
 | **M1.9** | Blazor WASM Client | Zero-install browser client with GitHub Pages automated deployment. | **COMPLETED** |
+| **M1.10** | Offline AI Practice Bot | Minimax bot with Alpha-Beta pruning, heuristic evaluation, and difficulty tiers. | **COMPLETED** |
+| **M1.11** | Nostr Profiles & Invite UX | NIP-19 npub/nsec Bech32, 1-click playable web links, SVG QR codes, and profile metadata. | **COMPLETED** |
+| **M1.12** | Multi-Platform Native Heads | Scaffolding dedicated Avalonia heads for Android (APK) and iOS/iPadOS with shared MVVM core. | **COMPLETED** |
+
+---
+
+## 2.6 Related Documentation & Deep Dives
+
+* Master Architecture: [docs/PROJECT_SPECIFICATION.md](file:///e:/repos/tak-p2p/docs/PROJECT_SPECIFICATION.md)
+* System Overview: [docs/system-overview.md](file:///e:/repos/tak-p2p/docs/system-overview.md)
+* Wire Protocol & Nostr: [docs/wire-protocol.md](file:///e:/repos/tak-p2p/docs/wire-protocol.md)
+* Database Schema: [docs/database-schema.md](file:///e:/repos/tak-p2p/docs/database-schema.md)
+* Web WASM Architecture: [docs/blazor-web-github-pages.md](file:///e:/repos/tak-p2p/docs/blazor-web-github-pages.md)
+* Spectator Architecture: [docs/spectator-implementation-plan.md](file:///e:/repos/tak-p2p/docs/spectator-implementation-plan.md)
+* Project Audit Report: [docs/AUDIT.md](file:///e:/repos/tak-p2p/docs/AUDIT.md)
+* Chronological Commit History: [docs/DEVLOG.md](file:///e:/repos/tak-p2p/docs/DEVLOG.md)

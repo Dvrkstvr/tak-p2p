@@ -37,42 +37,60 @@ This project is a decentralized, peer-to-peer (P2P), zero-server implementation 
 ```
 TakGame.sln / TakGame.slnx
 ├── src/
-│   ├── TakEngine.Abstractions/       # [Public NuGet candidate]
-│   │   ├── Enums/                    # PieceType, PlayerColor, Direction, GamePhase
+│   ├── TakEngine.Abstractions/       # [Shared NuGet candidate]
+│   │   ├── Enums/                    # PieceType, PlayerColor, Direction, GamePhase, BotDifficulty
 │   │   ├── Models/                   # Coord, StackSnapshot, BoardSnapshot, TakMove, BroadcastModels
 │   │   ├── ITakGameSession.cs        # Primary interface consumed by all frontends
-│   │   └── ISpectatorGameSession.cs  # Spectator observable interface
+│   │   ├── ITakBot.cs                # Decoupled AI engine interface
+│   │   └── ISpectatorGameSession.cs  # Spectator/broadcast observable interface
 │   │
 │   ├── TakEngine.Core/               # [Engine & Rules Core]
 │   │   ├── Board/                    # Grid, Stacks, Piece Inventories, Move Execution
 │   │   ├── Rules/                    # Invariant rules, Carry limits, DFS Road finder, MoveValidator
+│   │   ├── AI/                       # MinimaxTakBot, TakEvaluator (Alpha-Beta pruning)
 │   │   ├── Serialization/            # PTN (Portable Tak Notation) & TPS (Tak Positional System)
-│   │   ├── Cryptography/             # Keypairs, Signatures, SHA-256 State Hashing
+│   │   ├── Cryptography/             # Keypairs, Signatures, SHA-256 State Hashing, NIP-19 Bech32
 │   │   ├── Storage/                  # SQLite database engine, Match logs, Replay provider
 │   │   └── Session/                  # TakGameSession, DelayedBroadcastQueue, SpectatorSession, NTP
 │   │
 │   ├── TakEngine.Transport/          # [Nostr P2P Infrastructure]
-│   │   ├── Nostr/                    # WebSocket client, NIP-01/NIP-44 wrappers
-│   │   ├── Matchmaking/              # Invite code parser, Ephemeral broadcast handler
+│   │   ├── Nostr/                    # WebSocket client, NIP-01/NIP-44 wrappers, NostrProfile metadata
+│   │   ├── Matchmaking/              # Invite code parser, Ephemeral broadcast handler, ColorResolver
 │   │   └── TransportEnvelope.cs      # Signed wire models
 │   │
-│   ├── TakApp.Cli/                   # [Runnable Console App]
-│   │   ├── Program.cs                # Entry point, Interactive menus
-│   │   ├── Rendering/                # Spectre.Console ANSI board, stack layer inspector
-│   │   └── Input/                    # Conversational stepped typed input & PTN command parser
-│   │
-│   ├── TakApp.Avalonia/              # [Runnable Cross-Platform GUI]
+│   ├── TakApp.Avalonia/              # [Shared Cross-Platform UI & MVVM Library]
 │   │   ├── ViewModels/               # MVVM ViewModels (CommunityToolkit.Mvvm)
-│   │   ├── Views/                    # Canvas/Skia board renderer, Match controls
+│   │   ├── Views/                    # Canvas/Skia board renderer, Match controls, MainView
 │   │   └── Services/                 # Local OS notification scheduler
 │   │
-│   └── TakApp.Blazor/                # [Runnable Zero-Install Web Client]
-│       ├── Pages/                    # Web board renderer, Lobby view
-│       └── wwwroot/                  # GitHub Pages deployment assets
+│   ├── TakApp.Avalonia.Desktop/      # [Runnable Desktop GUI - Windows, macOS, Linux]
+│   │   ├── Program.cs                # Desktop entry point
+│   │   └── app.manifest              # Windows DPI awareness & OS compatibility
+│   │
+│   ├── TakApp.Avalonia.Android/      # [Runnable Android Native App - Phone & Tablet]
+│   │   ├── MainActivity.cs           # Android entry point & activity lifecycle
+│   │   ├── Application.cs            # Android application bootstrap
+│   │   └── Properties/               # AndroidManifest.xml & resources
+│   │
+│   ├── TakApp.Avalonia.iOS/          # [Runnable iOS & iPadOS Native App]
+│   │   ├── Main.cs                   # iOS entry point
+│   │   ├── AppDelegate.cs            # iOS application delegate
+│   │   └── Info.plist                # iPad & iPhone device family configuration
+│   │
+│   ├── TakApp.Blazor/                # [Runnable Zero-Install Web Client]
+│   │   ├── Components/               # TakBoardView (SVG), PieceStackSvg, SlideBar, Panels, Modals
+│   │   ├── Pages/                    # Play.razor, Home.razor (Lobby)
+│   │   ├── Services/                 # WebGameSessionManager, BrowserStorage, QrCodeSvgHelper
+│   │   └── wwwroot/                  # Static assets & GitHub Pages deployment
+│   │
+│   └── TakApp.Cli/                   # [Runnable Console App]
+│       ├── Program.cs                # Entry point, Interactive menus
+│       ├── Rendering/                # Spectre.Console ANSI board, stack layer inspector
+│       └── Input/                    # Conversational stepped typed input & PTN command parser
 │
 └── tests/
-    ├── TakEngine.Core.Tests/         # Rule engine unit tests, DFS validation, PTN parser, Crypto, SQLite, Spectator tests
-    └── TakEngine.Transport.Tests/    # Relay serialization, Round-trip latency tests, Invite codes, NIP-44 encryption
+    ├── TakEngine.Core.Tests/         # 88 tests: Rule engine, DFS, PTN, Crypto, SQLite, Bot, Spectator
+    └── TakEngine.Transport.Tests/    # 19 tests: Relay serialization, Latency benchmark, Invites, Profiles
 ```
 
 ---
@@ -195,7 +213,10 @@ public interface ITakGameSession
 | **M1.6** | Time & Stale System | NTP time fetcher integrated; Day 3 warning and Day 7 auto-draw logic verified via mock timestamps. | **COMPLETED** |
 | **M1.7** | Spectre.Console UI | Functional CLI game loop with live ANSI board updating, conversational stepped typed input, stack inspector, and PTN prompt. | **COMPLETED** |
 | **M1.8** | Avalonia UI Prototype | 2D vector board rendering, MVVM bindings to `ITakGameSession`, functioning across desktop and mobile. | **COMPLETED** |
-| **M1.9** | Blazor WASM Client | Zero-install browser client with GitHub Pages automated deployment. | **PLANNED** |
+| **M1.9** | Blazor WASM Client | Zero-install browser client with GitHub Pages automated deployment. | **COMPLETED** |
+| **M1.10** | Offline AI Practice Bot | Minimax bot with Alpha-Beta pruning, heuristic evaluation, and difficulty tiers. | **COMPLETED** |
+| **M1.11** | Nostr Profiles & Invite UX | NIP-19 npub/nsec Bech32, 1-click playable web links, SVG QR codes, and profile metadata. | **COMPLETED** |
+| **M1.12** | Multi-Platform Native Heads | Scaffolding dedicated Avalonia heads for Android (APK) and iOS/iPadOS with shared MVVM core. | **COMPLETED** |
 
 ---
 
@@ -344,8 +365,28 @@ CREATE TABLE IF NOT EXISTS LeaderboardCache (
 
 ---
 
-## 4. Immediate Development Action Items
+## 4. Documentation Architecture & Companion Specifications
 
-1. Initialize `TakEngine.Abstractions` with `Coord`, `TakMove`, `StackSnapshot`, and `ITakGameSession`.
-2. Implement `TakEngine.Core.Board` and write the unit tests for orthogonal DFS road verification.
-3. Benchmark Nostr WebSocket latency (`TakEngine.Transport.Tests`) across public relays to lock in baseline sync performance.
+Tak P2P utilizes a modular documentation suite to provide granular, authoritative specifications for each subsystem:
+
+| Document | Focus & Scope |
+|:---|:---|
+| [System Overview](file:///e:/repos/tak-p2p/docs/system-overview.md) | High-level architecture, zero-server invariants, and component boundaries |
+| [MVP Milestone Guide (v1.0)](file:///e:/repos/tak-p2p/docs/v1-mvp.md) | Core deliverables, acceptance criteria, and M1.1–M1.9 status verification |
+| [Competitive & Tournaments (v2.0)](file:///e:/repos/tak-p2p/docs/v2-tournaments.md) | Co-signed receipts, serverless Swiss tournaments, Elo oracle, and anti-cheat |
+| [Wire Protocol & Nostr](file:///e:/repos/tak-p2p/docs/wire-protocol.md) | Nostr envelopes, NIP-01/NIP-44 schemas, and ephemeral matchmaking handshakes |
+| [SQLite Database Schema](file:///e:/repos/tak-p2p/docs/database-schema.md) | Complete SQLite relational schema for v1 matches/moves and v2 migrations |
+| [Blazor WebAssembly & GitHub Pages](file:///e:/repos/tak-p2p/docs/blazor-web-github-pages.md) | Zero-install web client design, SPA routing, and GitHub Actions CI/CD |
+| [Spectator & Broadcast System](file:///e:/repos/tak-p2p/docs/spectator-implementation-plan.md) | Real-time observation, delayed public streams, and feature match directory |
+| [Comprehensive MVP Project Audit](file:///e:/repos/tak-p2p/docs/AUDIT.md) | Independent audit report, test metrics, UI/UX evaluation, and findings |
+| [Development Log (DevLog)](file:///e:/repos/tak-p2p/docs/DEVLOG.md) | Chronological commit history, deliverables breakdown, and test counts |
+
+---
+
+## 5. Post-MVP Roadmap & Active Priorities
+
+1. **Blazor Web Nostr WebSocket P2P Wiring:** Bridge `NostrTransportClient` directly into `WebGameSessionManager` for live remote matches in the browser client.
+2. **Offline-First PWA & Storage Bridge:** Implement Service Worker caching for 100% offline standalone usage and IndexedDB persistence for match archives.
+3. **Audio & Animation Polish:** Add subtle sound effects and tactile piece placement animations.
+4. **Native Mobile Packaging & Store Releases:** Generate signed Android App Bundles (`.aab`) for Google Play and prepare Apple Developer provisioning for App Store distribution.
+5. **Version 2.0 Swiss Tournaments:** Implement serverless Swiss check-ins and deterministic bracket generation.

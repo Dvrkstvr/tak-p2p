@@ -301,3 +301,4 @@ Or download automated pre-packaged builds directly from [GitHub Releases](https:
 7. [Blazor WebAssembly & GitHub Pages Specification](docs/blazor-web-github-pages.md) - Design and zero-cost deployment architecture for the browser client.
 8. [Spectator & Broadcast Implementation Plan](docs/spectator-implementation-plan.md) - Real-time observation, delayed public streams, and feature match directory.
 9. [Development Log (DevLog)](docs/DEVLOG.md) - Chronological commit log, timestamps, and milestone progress synchronized with GitHub.
+10. [Comprehensive MVP Project Audit](docs/AUDIT.md) - Code quality, architecture assessment, test verification, and prioritized roadmap.

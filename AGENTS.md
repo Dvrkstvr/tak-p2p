@@ -9,9 +9,15 @@
 * **Zero Authoritative Game Servers:** The network layer (Nostr WebSocket relays) functions strictly as an encrypted "dumb pipe" / store-and-forward mailbox. Clients never trust remote states; all moves, state transitions, and hash chains are verified deterministically on the local device.
 * **Separation of Concerns:**
   * `TakEngine.Abstractions`: Shared contracts, immutable records, data structures, and spectator interfaces (public candidate).
-  * `TakEngine.Core`: Private game logic, DFS graph road traversal, cryptographic hashing, invariant checks, state storage, and spectator queue.
+  * `TakEngine.Core`: Private game logic, DFS graph road traversal, cryptographic hashing, invariant checks, state storage, AI minimax bot, and spectator queue.
   * `TakEngine.Transport`: Nostr WebSocket relay interface, NIP-44 encryption, envelope serialization, and matchmaking handshakes.
-  * Frontends (`TakApp.Avalonia`, `TakApp.Cli`, `TakApp.Blazor`): Pure UI views consuming reactive observables/events.
+  * Frontends: Pure UI views consuming reactive observables/events:
+    * `TakApp.Blazor`: Zero-install WebAssembly browser client hosted on GitHub Pages.
+    * `TakApp.Cli`: Spectre.Console ANSI terminal client for all POSIX and Windows consoles.
+    * `TakApp.Avalonia`: Shared cross-platform MVVM UI library consumed by:
+      * `TakApp.Avalonia.Desktop`: Hardware-accelerated executable for Windows, Linux, and macOS.
+      * `TakApp.Avalonia.Android`: Native Android APK for smartphones and tablets.
+      * `TakApp.Avalonia.iOS`: Native iOS and iPadOS application.
 * **Deterministic Rule Adjudication:** Illegal moves are mathematically impossible to force onto a peer. If an opponent injects an invalid payload, the receiving client drops the payload and flags the peer.
 
 ---
@@ -25,7 +31,8 @@ Whenever you complete a milestone, architectural feature, or significant refacto
   ```powershell
   dotnet test TakGame.sln
   ```
-* Ensure that **100% of unit tests pass** across all test suites (`TakEngine.Core.Tests`, `TakEngine.Transport.Tests`) before logging or committing.
+* Ensure that **100% of unit tests pass** across all test suites (`TakEngine.Core.Tests`: 88 tests, `TakEngine.Transport.Tests`: 19 tests, totaling **107 unit tests**) before logging or committing.
+* *Note:* `dotnet test` executes each test project in parallel and prints per-assembly summaries; do not mistake a single assembly's count for the solution total.
 
 ### Step 2: Update `docs/DEVLOG.md`
 * Open [docs/DEVLOG.md](file:///e:/repos/tak-p2p/docs/DEVLOG.md).
@@ -34,7 +41,7 @@ Whenever you complete a milestone, architectural feature, or significant refacto
   * Exact ISO/local timestamp
   * Milestone / Scope
   * Key Deliverables summary
-  * Total passing test count
+  * Total passing test count (107)
 * Add a detailed subsection under **Detailed Entry Logs** documenting:
   * Author & Timestamp
   * Scope
@@ -43,9 +50,10 @@ Whenever you complete a milestone, architectural feature, or significant refacto
 
 ### Step 3: Synchronize Status in Specifications
 * Verify and update:
-  * [README.md](file:///e:/repos/tak-p2p/README.md) – "Implementation Progress (Milestones)" table and solution layout.
+  * [README.md](file:///e:/repos/tak-p2p/README.md) – Device matrix, solution layout, and documentation index.
   * [docs/v1-mvp.md](file:///e:/repos/tak-p2p/docs/v1-mvp.md) – "v1 Acceptance Criteria & Milestone Status" table.
-  * [docs/PROJECT_SPECIFICATION.md](file:///e:/repos/tak-p2p/docs/PROJECT_SPECIFICATION.md) – Master milestone status table.
+  * [docs/PROJECT_SPECIFICATION.md](file:///e:/repos/tak-p2p/docs/PROJECT_SPECIFICATION.md) – Master milestone status table and roadmap.
+  * [docs/DEVLOG.md](file:///e:/repos/tak-p2p/docs/DEVLOG.md) – Master chronological commit and milestone log.
 
 ### Step 4: Commit & Push to GitHub
 * Stage all changes (source code, tests, and documentation).
@@ -65,6 +73,8 @@ Whenever you complete a milestone, architectural feature, or significant refacto
 3. **NIP-44 Encryption:** Wire envelopes over Nostr must use `Nip44Encryption.Encrypt` / `Decrypt` with derived ECDH shared secrets.
 4. **PTN & Direction Encoding:** When serializing JSON for transport, always use `TransportEnvelope.SerializerOptions` (`JavaScriptEncoder.UnsafeRelaxedJsonEscaping`) so characters like `+`, `>`, and `<` are not escaped to unicode entities.
 5. **Offline-First Storage:** Use `SqliteGameStorage` on desktop/mobile and `BrowserStorage` on Blazor WASM. Both caches must be able to restore the board to any turn index $K$ in $O(1)$ time via `TpsSerializer`.
+6. **Blazor Dev-Server Clean Rebuild:** If incremental builds of `TakApp.Blazor` cause 404 errors for `dotnet.<hash>.js` in development, perform a clean build (`Remove-Item -Recurse -Force src/TakApp.Blazor/bin, src/TakApp.Blazor/obj; dotnet build src/TakApp.Blazor/TakApp.Blazor.csproj`).
+7. **Solution-Wide Multi-Assembly Tests:** The test suite spans multiple test projects (`TakEngine.Core.Tests` + `TakEngine.Transport.Tests`). Always verify both projects pass completely (107 tests).
 
 ---
 
@@ -79,3 +89,4 @@ Whenever you complete a milestone, architectural feature, or significant refacto
 * SQLite Database Schema: [docs/database-schema.md](file:///e:/repos/tak-p2p/docs/database-schema.md)
 * Blazor Web & GitHub Pages: [docs/blazor-web-github-pages.md](file:///e:/repos/tak-p2p/docs/blazor-web-github-pages.md)
 * Spectator & Broadcast System: [docs/spectator-implementation-plan.md](file:///e:/repos/tak-p2p/docs/spectator-implementation-plan.md)
+* Comprehensive MVP Project Audit: [docs/AUDIT.md](file:///e:/repos/tak-p2p/docs/AUDIT.md)

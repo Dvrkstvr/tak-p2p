@@ -108,3 +108,16 @@ Tracks active and historical decentralized Swiss tournament brackets downloaded 
 
 #### `LeaderboardCache`
 Locally cached copy of oracle-signed weekly leaderboard updates (`kind: 30000`).
+
+---
+
+## 3. Related Documentation & Deep Dives
+
+* Master Architecture: [docs/PROJECT_SPECIFICATION.md](file:///e:/repos/tak-p2p/docs/PROJECT_SPECIFICATION.md)
+* System Overview: [docs/system-overview.md](file:///e:/repos/tak-p2p/docs/system-overview.md)
+* MVP Milestone Guide (v1.0): [docs/v1-mvp.md](file:///e:/repos/tak-p2p/docs/v1-mvp.md)
+* Competitive & Tournaments: [docs/v2-tournaments.md](file:///e:/repos/tak-p2p/docs/v2-tournaments.md)
+* Wire Protocol & Nostr: [docs/wire-protocol.md](file:///e:/repos/tak-p2p/docs/wire-protocol.md)
+* Spectator & Broadcast System: [docs/spectator-implementation-plan.md](file:///e:/repos/tak-p2p/docs/spectator-implementation-plan.md)
+* Project Audit Report: [docs/AUDIT.md](file:///e:/repos/tak-p2p/docs/AUDIT.md)
+* Chronological Commit History: [docs/DEVLOG.md](file:///e:/repos/tak-p2p/docs/DEVLOG.md)

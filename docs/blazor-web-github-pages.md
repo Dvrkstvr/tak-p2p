@@ -202,3 +202,17 @@ jobs:
 1. Verify end-to-end P2P match between a browser client and the CLI / Avalonia desktop client over a public Nostr relay.
 2. Verify deterministic state hash verification across platforms.
 3. Push to `main` and verify automatic deployment on GitHub Pages.
+
+---
+
+## 6. Related Documentation & Deep Dives
+
+* Master Architecture: [docs/PROJECT_SPECIFICATION.md](file:///e:/repos/tak-p2p/docs/PROJECT_SPECIFICATION.md)
+* System Overview: [docs/system-overview.md](file:///e:/repos/tak-p2p/docs/system-overview.md)
+* MVP Milestone Guide (v1.0): [docs/v1-mvp.md](file:///e:/repos/tak-p2p/docs/v1-mvp.md)
+* Competitive & Tournaments: [docs/v2-tournaments.md](file:///e:/repos/tak-p2p/docs/v2-tournaments.md)
+* Wire Protocol & Nostr: [docs/wire-protocol.md](file:///e:/repos/tak-p2p/docs/wire-protocol.md)
+* SQLite Database Schema: [docs/database-schema.md](file:///e:/repos/tak-p2p/docs/database-schema.md)
+* Spectator & Broadcast System: [docs/spectator-implementation-plan.md](file:///e:/repos/tak-p2p/docs/spectator-implementation-plan.md)
+* Project Audit Report: [docs/AUDIT.md](file:///e:/repos/tak-p2p/docs/AUDIT.md)
+* Chronological Commit History: [docs/DEVLOG.md](file:///e:/repos/tak-p2p/docs/DEVLOG.md)
