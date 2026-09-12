@@ -8,7 +8,7 @@ This document tracks all project milestones, architectural additions, and commit
 
 | Commit | Timestamp (UTC+2) | Milestone / Scope | Key Deliverables | Tests Passing |
 | --- | --- | --- | --- | --- |
-| `HEAD` | 2026-09-12 07:12:30 | **Milestone M1.8** | Avalonia UI Prototype: Vector board renderer, MVVM CommunityToolkit bindings, piece stacks, `TakGameSession` implementation. | 93 |
+| [`5ad1f87`](https://github.com/Dvrkstvr/tak-p2p/commit/5ad1f87) | 2026-09-12 07:11:45 | **Milestone M1.8** | Avalonia UI Prototype: Vector board renderer, MVVM CommunityToolkit bindings, piece stacks, `TakGameSession` implementation. | 93 |
 | [`f1afbfd`](https://github.com/Dvrkstvr/tak-p2p/commit/f1afbfd) | 2026-09-12 07:02:11 | **DevLog & Rule Sync** | Updated DevLog with recent commits and verified git push tracking. | 84 |
 | [`4c40d56`](https://github.com/Dvrkstvr/tak-p2p/commit/4c40d56) | 2026-09-12 07:00:51 | **Workflow & Blazor Components** | Codified `AGENTS.md` and `.agents/rules/devlog-maintenance.md`; implemented Blazor interactive SVG board and UI components. | 84 |
 | [`a5e0e01`](https://github.com/Dvrkstvr/tak-p2p/commit/a5e0e01) | 2026-09-12 06:58:57 | **DevLog Foundation** | Created initial `docs/DEVLOG.md` tracking all commits, timestamps, deliverables, and test metrics. | 84 |
@@ -26,8 +26,8 @@ This document tracks all project milestones, architectural additions, and commit
 
 ## Detailed Entry Logs
 
-### Milestone M1.8: Avalonia UI Prototype & TakGameSession Engine
-* **Timestamp**: `2026-09-12T07:12:30+02:00`
+### [5ad1f87](https://github.com/Dvrkstvr/tak-p2p/commit/5ad1f87) - Milestone M1.8: Avalonia UI Prototype & TakGameSession Engine
+* **Timestamp**: `2026-09-12T07:11:45+02:00`
 * **Author**: Calvin Kohl
 * **Scope**: Cross-platform desktop/mobile Avalonia GUI and concrete `ITakGameSession` implementation.
 * **Changes**:
