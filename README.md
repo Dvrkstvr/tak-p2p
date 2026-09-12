@@ -248,19 +248,3 @@ dotnet run --project src/TakApp.Cli/TakApp.Cli.csproj
 7. [Blazor WebAssembly & GitHub Pages Specification](docs/blazor-web-github-pages.md) - Design and zero-cost deployment architecture for the browser client.
 8. [Spectator & Broadcast Implementation Plan](docs/spectator-implementation-plan.md) - Real-time observation, delayed public streams, and feature match directory.
 9. [Development Log (DevLog)](docs/DEVLOG.md) - Chronological commit log, timestamps, and milestone progress synchronized with GitHub.
-
----
-
-## 📊 Implementation Progress (Milestones)
-
-| Task ID | Milestone Description | Completion Status |
-| :--- | :--- | :--- |
-| **M1.1** | `TakEngine.Core` Rule Foundation | **Completed** (4x4, 5x5, 6x6 initialization; carry limits; DFS road finder; passing 100% tests). |
-| **M1.2** | PTN / TPS Parser & Formatter | **Completed** (Standard PTN move/game parser and full TPS string generator and state restorer). |
-| **M1.3** | Crypto & SQLite Persistence | **Completed** (SHA-256 hash chaining, Ed25519 signing, SQLite database engine, instant $O(1)$ replay scrubbing). |
-| **M1.4** | Nostr Transport MVP | **Completed** (Multi-relay WebSocket pool, NIP-01 frames, NIP-44 direct encryption, round-trip verified < 10 ms). |
-| **M1.5** | Quick Play & Direct Codes | **Completed** (Direct `tak://` URI and compact `TAK1_` QR tokens, `kind: 20001` ephemeral broadcasts, deterministic color resolution). |
-| **M1.6** | Time & Stale System | **Completed** (RFC 5905 NTP network time service, Day 3 stale warnings, Day 7 auto-draw timeout adjudication). |
-| **M1.7** | Spectre.Console CLI | **Completed** (ANSI board renderer, conversational stepped typed input, stack inspector, local/P2P game loop). |
-| **M1.8** | Avalonia Desktop UI | **Completed / Integrated** (Hardware-accelerated XAML board, player reserve trays, move scrubber, SQLite/Nostr integration). |
-| **M1.9** | Blazor WASM Web Client | **Completed / Integrated** (Zero-install GitHub Pages deployment, responsive SVG vector board, live Nostr P2P). |
