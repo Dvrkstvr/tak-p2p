@@ -43,11 +43,14 @@ TakGame.sln / TakGame.slnx
 │   │   ├── Rendering/                # Spectre.Console ANSI board, stack layer inspector
 │   │   └── Input/                    # Conversational stepped typed input & PTN command parser
 │   │
-│   ├── TakApp.Avalonia/              # [Runnable Cross-Platform GUI]
+│   ├── TakApp.Avalonia/              # [Shared Cross-Platform UI & MVVM Library]
 │   │   ├── ViewModels/               # MVVM ViewModels (CommunityToolkit.Mvvm)
-│   │   ├── Views/                    # Canvas/Skia board renderer, Match controls
+│   │   ├── Views/                    # Canvas/Skia board renderer, Match controls, MainView
 │   │   └── Services/                 # Local OS notification scheduler
 │   │
+│   ├── TakApp.Avalonia.Desktop/      # [Runnable Desktop GUI - Windows, macOS, Linux]
+│   ├── TakApp.Avalonia.Android/      # [Runnable Android Native App - Phone & Tablet]
+│   ├── TakApp.Avalonia.iOS/          # [Runnable iOS & iPadOS Native App]
 │   └── TakApp.Blazor/                # [Runnable Zero-Install Web Client]
 │       ├── Pages/                    # Web board renderer, Lobby view
 │       └── wwwroot/                  # GitHub Pages deployment assets

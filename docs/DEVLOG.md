@@ -6,8 +6,8 @@ This document tracks all project milestones, architectural additions, and commit
 
 ## Commit & Milestone Timeline
 
-| Commit | Timestamp (UTC+2) | Milestone / Scope | Key Deliverables | Tests Passing |
-| --- | --- | --- | --- | --- |
+| [`c4276b0`](https://github.com/Dvrkstvr/tak-p2p/commit/c4276b0) | 2026-09-12 08:10:00 | **Avalonia Native Mobile (Android & iPad/iOS)** | Scaffolded `TakApp.Avalonia.Android` (targeting `net10.0-android`, APK output, splash screen, permissions) and `TakApp.Avalonia.iOS` (targeting `net10.0-ios`, iPad & iPhone device family profiles), transitioned `TakApp.Avalonia` into shared cross-platform library and `TakApp.Avalonia.Desktop` into desktop executable; 107 passing unit tests. | 107 |
+| [`114436a`](https://github.com/Dvrkstvr/tak-p2p/commit/114436a) | 2026-09-12 08:09:18 | **Nostr Player Nicknames & Profiles** | Implemented Nostr `kind: 0` user profile publishing and metadata queries with in-memory caching, custom nickname support in `InviteCode` URIs/tokens, Profile modal in Blazor WASM, and nickname badges in game headers; 107 passing unit tests. | 107 |
 | [`c330c89`](https://github.com/Dvrkstvr/tak-p2p/commit/c330c89) | 2026-09-12 07:56:47 | **Invite UX & Multi-Device Nostr Linking** | Implemented NIP-19 `npub`/`nsec` Bech32 codec, 1-click playable web invite links (`/?invite=TAK1_...`), native SVG QR code generator via `Net.Codecrete.QrCodeGenerator`, Web Share API (`navigator.share`), URL query challenge detection, and multi-device 'Link Mobile / Devices' pairing modal; 104 passing unit tests. | 104 |
 | [`23caed5`](https://github.com/Dvrkstvr/tak-p2p/commit/23caed5) | 2026-09-12 07:48:07 | **Offline AI Practice Bot** | Implemented `MinimaxTakBot` and `TakEvaluator` with Alpha-Beta pruning, in-memory `Clone`, `GetAllLegalMoves`, Blazor WASM AI practice mode with difficulty picker, and CLI vs AI option; 100 passing unit tests. | 100 |
 | [`47704b8`](https://github.com/Dvrkstvr/tak-p2p/commit/47704b8) | 2026-09-12 07:36:21 | **Release Workflow CI/CD** | Added `.github/workflows/release.yml` with cross-platform matrix publishing for `TakApp.Avalonia` and `TakApp.Cli` (Windows `.zip`, Linux `.tar.gz`) with SHA-256 checksums and automated GitHub Releases; updated README with release badges and publishing guide. | 93 |
@@ -31,6 +31,42 @@ This document tracks all project milestones, architectural additions, and commit
 ---
 
 ## Detailed Entry Logs
+
+### [c4276b0](https://github.com/Dvrkstvr/tak-p2p/commit/c4276b0) - Avalonia Native Mobile Scaffolding (Android & iPad/iOS)
+* **Timestamp**: `2026-09-12T08:10:00+02:00`
+* **Author**: Calvin Kohl
+* **Scope**: Scaffolding native mobile projects for Android (phone/tablet) and iPad/iOS using Avalonia UI's canonical multi-platform architecture.
+* **Changes**:
+  * [TakApp.Avalonia.csproj](file:///e:/repos/tak-p2p/src/TakApp.Avalonia/TakApp.Avalonia.csproj): Converted from desktop `WinExe` into a shared cross-platform class library containing all MVVM views, viewmodels, assets, and themes.
+  * [App.axaml.cs](file:///e:/repos/tak-p2p/src/TakApp.Avalonia/App.axaml.cs): Added multi-lifetime handlers supporting desktop (`IClassicDesktopStyleApplicationLifetime`), Android (`IActivityApplicationLifetime`), and iOS / iPadOS (`ISingleViewApplicationLifetime`).
+  * [TakApp.Avalonia.Desktop.csproj](file:///e:/repos/tak-p2p/src/TakApp.Avalonia.Desktop/TakApp.Avalonia.Desktop.csproj): Desktop head project (`WinExe`) referencing `Avalonia.Desktop` and shared core.
+  * [Program.cs](file:///e:/repos/tak-p2p/src/TakApp.Avalonia.Desktop/Program.cs): Desktop entry point for Windows, macOS, and Linux.
+  * [app.manifest](file:///e:/repos/tak-p2p/src/TakApp.Avalonia.Desktop/app.manifest): Windows high-DPI and OS compatibility manifest.
+  * [TakApp.Avalonia.Android.csproj](file:///e:/repos/tak-p2p/src/TakApp.Avalonia.Android/TakApp.Avalonia.Android.csproj): Android head targeting `net10.0-android`, with `Avalonia.Android` and AndroidX SplashScreen.
+  * [MainActivity.cs](file:///e:/repos/tak-p2p/src/TakApp.Avalonia.Android/MainActivity.cs) & [Application.cs](file:///e:/repos/tak-p2p/src/TakApp.Avalonia.Android/Application.cs): Android activity and application lifecycle bootstrap.
+  * [AndroidManifest.xml](file:///e:/repos/tak-p2p/src/TakApp.Avalonia.Android/Properties/AndroidManifest.xml): Configured package ID `com.takp2p.app`, Internet and NetworkState permissions, and multi-density screen / tablet support.
+  * [TakApp.Avalonia.iOS.csproj](file:///e:/repos/tak-p2p/src/TakApp.Avalonia.iOS/TakApp.Avalonia.iOS.csproj): iOS head targeting `net10.0-ios`, with `Avalonia.iOS`.
+  * [Main.cs](file:///e:/repos/tak-p2p/src/TakApp.Avalonia.iOS/Main.cs) & [AppDelegate.cs](file:///e:/repos/tak-p2p/src/TakApp.Avalonia.iOS/AppDelegate.cs): iOS application lifecycle bootstrap.
+  * [Info.plist](file:///e:/repos/tak-p2p/src/TakApp.Avalonia.iOS/Info.plist): Configured for **iPad and iPhone** (`UIDeviceFamily = 1, 2`), landscape/portrait orientations, and bundle ID `com.takp2p.app`.
+  * [TakGame.sln](file:///e:/repos/tak-p2p/TakGame.sln) & [TakGame.slnx](file:///e:/repos/tak-p2p/TakGame.slnx): Solution files updated to track all four Avalonia heads and core libraries.
+  * [README.md](file:///e:/repos/tak-p2p/README.md) & [v1-mvp.md](file:///e:/repos/tak-p2p/docs/v1-mvp.md): Updated project layout, build guides, and mobile execution commands.
+* **Test Suite**: 107 tests passing (100% pass rate).
+
+---
+
+### [114436a](https://github.com/Dvrkstvr/tak-p2p/commit/114436a) - Nostr Player Nicknames & Profiles
+* **Timestamp**: `2026-09-12T08:09:18+02:00`
+* **Author**: Calvin Kohl
+* **Scope**: Nostr `kind: 0` user profile metadata publishing, profile querying with caching, and custom nickname integration in matchmaking invites.
+* **Changes**:
+  * [NostrProfile.cs](file:///e:/repos/tak-p2p/src/TakEngine.Transport/Nostr/NostrProfile.cs): Data model for Nostr metadata events (`kind: 0`) and parser.
+  * [NostrTransportClient.cs](file:///e:/repos/tak-p2p/src/TakEngine.Transport/Nostr/NostrTransportClient.cs): Added `PublishProfileAsync` and `QueryProfileAsync` with concurrent dictionary memory cache.
+  * [InviteCode.cs](file:///e:/repos/tak-p2p/src/TakEngine.Transport/Matchmaking/InviteCode.cs): Added `HostNickname` property, URI parameter (`nick=`), and compact token encoding.
+  * [ProfileModal.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Modals/ProfileModal.razor): Blazor modal for editing and broadcasting Nostr profile nickname, about, and avatar.
+  * [NostrProfileTests.cs](file:///e:/repos/tak-p2p/tests/TakEngine.Transport.Tests/NostrProfileTests.cs): Unit tests for metadata event creation, parsing, fallback names, and invite code roundtripping.
+* **Test Suite**: 107 tests passing (100% pass rate).
+
+---
 
 ### [c330c89](https://github.com/Dvrkstvr/tak-p2p/commit/c330c89) - Invite UX Overhaul & Multi-Device Nostr Linking
 * **Timestamp**: `2026-09-12T07:56:47+02:00`

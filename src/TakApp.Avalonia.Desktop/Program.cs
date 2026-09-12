@@ -1,7 +1,8 @@
-﻿using Avalonia;
 using System;
+using Avalonia;
+using TakApp.Avalonia;
 
-namespace TakApp.Avalonia;
+namespace TakApp.Avalonia.Desktop;
 
 sealed class Program
 {

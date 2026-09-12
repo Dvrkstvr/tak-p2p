@@ -192,10 +192,24 @@ TakGame.sln / TakGame.slnx
 │   │   ├── wwwroot/                  # Static assets & GitHub Pages deployment
 │   │   └── .github/workflows/        # Automated GitHub Pages CI/CD pipeline
 │   │
-│   ├── TakApp.Avalonia/              # [Runnable Cross-Platform Desktop/Mobile GUI]
+│   ├── TakApp.Avalonia/              # [Shared Cross-Platform UI & MVVM Library]
 │   │   ├── ViewModels/               # MVVM ViewModels (CommunityToolkit.Mvvm)
-│   │   ├── Views/                    # Canvas/Skia board renderer, Match controls
+│   │   ├── Views/                    # Canvas/Skia board renderer, Match controls, MainView
 │   │   └── Services/                 # Local OS notification scheduler
+│   │
+│   ├── TakApp.Avalonia.Desktop/      # [Runnable Desktop GUI - Windows, macOS, Linux]
+│   │   ├── Program.cs                # Desktop entry point
+│   │   └── app.manifest              # Windows DPI awareness & OS compatibility
+│   │
+│   ├── TakApp.Avalonia.Android/      # [Runnable Android Native App - Phone & Tablet]
+│   │   ├── MainActivity.cs           # Android entry point & activity lifecycle
+│   │   ├── Application.cs            # Android application bootstrap
+│   │   └── Properties/               # AndroidManifest.xml & resources
+│   │
+│   ├── TakApp.Avalonia.iOS/          # [Runnable iOS & iPadOS Native App]
+│   │   ├── Main.cs                   # iOS entry point
+│   │   ├── AppDelegate.cs            # iOS application delegate
+│   │   └── Info.plist                # iPad & iPhone device family configuration
 │   │
 │   └── TakApp.Cli/                   # [Runnable Console App]
 │       ├── Program.cs                # Entry point, Interactive menus
@@ -218,7 +232,7 @@ TakGame.sln / TakGame.slnx
 ```powershell
 dotnet test TakGame.sln
 ```
-*(Verifies 100% of the 93 unit tests across engine core and transport suites).*
+*(Verifies 100% of the 107 unit tests across engine core and transport suites).*
 
 ### 2. Run the Web Client Locally
 ```powershell
@@ -228,18 +242,28 @@ Open `http://localhost:5000` in your web browser.
 
 ### 3. Run the Desktop Client (Windows / Linux / macOS)
 ```powershell
-dotnet run --project src/TakApp.Avalonia/TakApp.Avalonia.csproj
+dotnet run --project src/TakApp.Avalonia.Desktop/TakApp.Avalonia.Desktop.csproj
 ```
 
-### 4. Run the Terminal CLI
+### 4. Build Android APK / App Bundle (Phone & Tablet)
+```powershell
+dotnet build src/TakApp.Avalonia.Android/TakApp.Avalonia.Android.csproj
+```
+
+### 5. Build iOS & iPadOS App
+```powershell
+dotnet build src/TakApp.Avalonia.iOS/TakApp.Avalonia.iOS.csproj
+```
+
+### 6. Run the Terminal CLI
 ```powershell
 dotnet run --project src/TakApp.Cli/TakApp.Cli.csproj
 ```
 
-### 5. Publish Standalone Single-File Binaries (No .NET Required on Target)
+### 7. Publish Standalone Single-File Desktop Binaries
 To produce a portable standalone executable for Windows:
 ```powershell
-dotnet publish src/TakApp.Avalonia/TakApp.Avalonia.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:DebugType=None -o ./dist/windows
+dotnet publish src/TakApp.Avalonia.Desktop/TakApp.Avalonia.Desktop.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:DebugType=None -o ./dist/windows
 ```
 Or download automated pre-packaged builds directly from [GitHub Releases](https://github.com/Dvrkstvr/tak-p2p/releases).
 
