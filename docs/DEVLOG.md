@@ -8,6 +8,7 @@ This document tracks all project milestones, architectural additions, and commit
 
 | Commit | Timestamp (UTC+2) | Milestone / Scope | Key Deliverables | Tests Passing |
 | --- | --- | --- | --- | --- |
+| [`47704b8`](https://github.com/Dvrkstvr/tak-p2p/commit/47704b8) | 2026-09-12 07:36:21 | **Release Workflow CI/CD** | Added `.github/workflows/release.yml` with cross-platform matrix publishing for `TakApp.Avalonia` and `TakApp.Cli` (Windows `.zip`, Linux `.tar.gz`) with SHA-256 checksums and automated GitHub Releases; updated README with release badges and publishing guide. | 93 |
 | [`f6b209c`](https://github.com/Dvrkstvr/tak-p2p/commit/f6b209c) | 2026-09-12 07:27:06 | **CLI Hardening & MVP Audit** | Fixed Spectre.Console markup escaping crashes, added `SafeClear` for headless/redirected terminal execution, verified MVP user flows across Web and CLI, updated M1.9 status. | 93 |
 | [`93addfc`](https://github.com/Dvrkstvr/tak-p2p/commit/93addfc) | 2026-09-12 07:16:18 | **README Streamlining** | Removed the legacy Implementation Progress milestone table from README, deferring milestone tracking to DEVLOG. | 93 |
 | [`4e429f3`](https://github.com/Dvrkstvr/tak-p2p/commit/4e429f3) | 2026-09-12 07:13:00 | **README & Screenshots** | Added Play Now CTA for live GitHub Pages web client, full supported devices matrix (Windows, Linux, MacBook, Android, iPhone, Web), and responsive vector screenshot cards. | 93 |
@@ -28,6 +29,17 @@ This document tracks all project milestones, architectural additions, and commit
 ---
 
 ## Detailed Entry Logs
+
+### [47704b8](https://github.com/Dvrkstvr/tak-p2p/commit/47704b8) - Release Workflow CI/CD (Windows & Linux GUI/CLI)
+* **Timestamp**: `2026-09-12T07:36:21+02:00`
+* **Author**: Calvin Kohl
+* **Scope**: Automated packaging and distribution pipeline for native desktop and terminal clients.
+* **Changes**:
+  * [.github/workflows/release.yml](file:///e:/repos/tak-p2p/.github/workflows/release.yml): Configured matrix build targeting `win-x64` (`windows-latest`) and `linux-x64` (`ubuntu-latest`) for both `TakApp.Avalonia` and `TakApp.Cli`. Packages self-contained single-file releases with zipped archives, SHA-256 integrity checksums, and automated publishing via `softprops/action-gh-release@v2` on tag pushes (`v*`) and manual workflow dispatch.
+  * [README.md](file:///e:/repos/tak-p2p/README.md): Added GitHub Releases badge, updated the device overview matrix pointing to release downloads, and added standalone single-file publish commands to the execution guide.
+* **Test Suite**: 93 tests passing (100% pass rate).
+
+---
 
 ### [f6b209c](https://github.com/Dvrkstvr/tak-p2p/commit/f6b209c) - CLI Hardening & MVP Audit Verification
 * **Timestamp**: `2026-09-12T07:27:06+02:00`
