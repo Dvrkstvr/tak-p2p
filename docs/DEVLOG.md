@@ -8,6 +8,7 @@ This document tracks all project milestones, architectural additions, and commit
 
 | Commit | Timestamp (UTC+2) | Milestone / Scope | Key Deliverables | Tests Passing |
 | --- | --- | --- | --- | --- |
+| [`93addfc`](https://github.com/Dvrkstvr/tak-p2p/commit/93addfc) | 2026-09-12 07:16:18 | **README Streamlining** | Removed the legacy Implementation Progress milestone table from README, deferring milestone tracking to DEVLOG. | 93 |
 | [`4e429f3`](https://github.com/Dvrkstvr/tak-p2p/commit/4e429f3) | 2026-09-12 07:13:00 | **README & Screenshots** | Added Play Now CTA for live GitHub Pages web client, full supported devices matrix (Windows, Linux, MacBook, Android, iPhone, Web), and responsive vector screenshot cards. | 93 |
 | [`5ad1f87`](https://github.com/Dvrkstvr/tak-p2p/commit/5ad1f87) | 2026-09-12 07:11:45 | **Milestone M1.8** | Avalonia UI Prototype: Vector board renderer, MVVM CommunityToolkit bindings, piece stacks, `TakGameSession` implementation. | 93 |
 | [`f1afbfd`](https://github.com/Dvrkstvr/tak-p2p/commit/f1afbfd) | 2026-09-12 07:02:11 | **DevLog & Rule Sync** | Updated DevLog with recent commits and verified git push tracking. | 84 |
@@ -26,6 +27,16 @@ This document tracks all project milestones, architectural additions, and commit
 ---
 
 ## Detailed Entry Logs
+
+### [93addfc](https://github.com/Dvrkstvr/tak-p2p/commit/93addfc) - README Streamlining & Milestone Deferral
+* **Timestamp**: `2026-09-12T07:16:18+02:00`
+* **Author**: Calvin Kohl
+* **Scope**: README cleanup.
+* **Changes**:
+  * [README.md](file:///e:/repos/tak-p2p/README.md): Removed the static implementation progress milestone table, consolidating all historical and active milestone tracking inside [DEVLOG.md](file:///e:/repos/tak-p2p/docs/DEVLOG.md).
+* **Test Suite**: 93 tests passing.
+
+---
 
 ### [4e429f3](https://github.com/Dvrkstvr/tak-p2p/commit/4e429f3) - README Modernization, Play Now CTA & Device Matrix
 * **Timestamp**: `2026-09-12T07:13:00+02:00`
