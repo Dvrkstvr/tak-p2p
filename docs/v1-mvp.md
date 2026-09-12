@@ -178,4 +178,4 @@ public interface ITakGameSession
 | **M1.6** | Time & Stale System | NTP time fetcher integrated; Day 3 warning and Day 7 auto-draw logic verified via mock timestamps. | **COMPLETED** |
 | **M1.7** | Spectre.Console UI | Functional CLI game loop with live ANSI board updating, conversational stepped typed input, stack inspector, and PTN prompt. | **COMPLETED** |
 | **M1.8** | Avalonia UI Prototype | 2D vector board rendering, MVVM bindings to `ITakGameSession`, functioning across desktop and mobile. | **COMPLETED** |
-| **M1.9** | Blazor WASM Client | Zero-install browser client with GitHub Pages automated deployment. | **PLANNED** |
+| **M1.9** | Blazor WASM Client | Zero-install browser client with GitHub Pages automated deployment. | **COMPLETED** |

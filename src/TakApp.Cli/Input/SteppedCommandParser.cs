@@ -26,8 +26,11 @@ public static class SteppedCommandParser
         while (true)
         {
             string promptColor = board.ActivePlayer == PlayerColor.White ? "white" : "gold1";
-            AnsiConsole.Markup($"[{promptColor}][Turn {board.TurnNumber} - {board.ActivePlayer}][/] Enter square [bold]c3[/], command ([bold]3c3+12[/], [bold]inspect c3[/], [bold]resign[/], [bold]help[/]): ");
+            AnsiConsole.Markup($"[{promptColor}][[Turn {board.TurnNumber} - {board.ActivePlayer}]][/] Enter square [bold]c3[/], command ([bold]3c3+12[/], [bold]inspect c3[/], [bold]resign[/], [bold]help[/]): ");
             string? raw = Console.ReadLine();
+
+            if (raw == null)
+                return new PlayerCommand(PlayerActionType.Resign);
 
             if (string.IsNullOrWhiteSpace(raw))
                 continue;
@@ -157,7 +160,7 @@ public static class SteppedCommandParser
 
         if (maxLift > 1)
         {
-            AnsiConsole.Markup($"Stack height: [bold]{stack.Height}[/] (top: {stack.TopPiece!.Value.Type}). How many pieces to lift? [1-{maxLift}, default {maxLift}, or 'cancel']: ");
+            AnsiConsole.Markup($"Stack height: [bold]{stack.Height}[/] (top: {stack.TopPiece!.Value.Type}). How many pieces to lift? [[1-{maxLift}]], default {maxLift}, or 'cancel': ");
             string? liftInput = Console.ReadLine()?.Trim();
             if (string.Equals(liftInput, "cancel", StringComparison.OrdinalIgnoreCase) || string.Equals(liftInput, "q", StringComparison.OrdinalIgnoreCase))
                 return null;

@@ -26,19 +26,23 @@ public static class Program
 
         while (true)
         {
-            AnsiConsole.Clear();
+            SafeClear();
             RenderHeader();
 
             AnsiConsole.MarkupLine("[bold cyan]MAIN MENU[/]");
-            AnsiConsole.MarkupLine("[1] Local Match (Pass & Play)");
-            AnsiConsole.MarkupLine("[2] Quick Play Match (Nostr P2P)");
-            AnsiConsole.MarkupLine("[3] Create Direct Invite Code");
-            AnsiConsole.MarkupLine("[4] Join via Direct Invite Code");
-            AnsiConsole.MarkupLine("[5] Exit");
+            AnsiConsole.MarkupLine("[[1]] Local Match (Pass & Play)");
+            AnsiConsole.MarkupLine("[[2]] Quick Play Match (Nostr P2P)");
+            AnsiConsole.MarkupLine("[[3]] Create Direct Invite Code");
+            AnsiConsole.MarkupLine("[[4]] Join via Direct Invite Code");
+            AnsiConsole.MarkupLine("[[5]] Exit");
             AnsiConsole.WriteLine();
 
-            AnsiConsole.Markup("Select option [1-5]: ");
+            AnsiConsole.Markup("Select option [[1-5]]: ");
             string? choice = Console.ReadLine()?.Trim();
+            if (choice == null)
+            {
+                return;
+            }
 
             switch (choice)
             {
@@ -67,6 +71,21 @@ public static class Program
         }
     }
 
+    private static void SafeClear()
+    {
+        try
+        {
+            if (!Console.IsOutputRedirected && !Console.IsInputRedirected)
+            {
+                AnsiConsole.Clear();
+            }
+        }
+        catch
+        {
+            // Silently ignore clear errors on redirected or virtual handles
+        }
+    }
+
     private static void RenderHeader()
     {
         AnsiConsole.Write(
@@ -78,7 +97,7 @@ public static class Program
 
     private static async Task PlayLocalMatchAsync(SqliteGameStorage storage)
     {
-        AnsiConsole.Clear();
+        SafeClear();
         RenderHeader();
 
         AnsiConsole.Markup("Choose Board Size ([[4]], [[5]], [[6]], default 5): ");
@@ -114,7 +133,7 @@ public static class Program
 
         while (board.Phase != GamePhase.Completed)
         {
-            AnsiConsole.Clear();
+            SafeClear();
             RenderHeader();
             AnsiBoardRenderer.Render(board, lastMoveStr, statusMessage);
             statusMessage = null;
@@ -159,7 +178,7 @@ public static class Program
         }
 
         // Final board display
-        AnsiConsole.Clear();
+        SafeClear();
         RenderHeader();
         AnsiBoardRenderer.Render(board, lastMoveStr);
 
@@ -179,7 +198,7 @@ public static class Program
 
     private static async Task PlayQuickPlayAsync(SqliteGameStorage storage)
     {
-        AnsiConsole.Clear();
+        SafeClear();
         RenderHeader();
         AnsiConsole.MarkupLine("[bold cyan]Quick Play Matchmaking[/]");
         AnsiConsole.MarkupLine("Connecting to public Nostr relays: [grey]wss://relay.damus.io, wss://nos.lol, wss://relay.primal.net[/]...");
@@ -199,7 +218,7 @@ public static class Program
 
     private static void CreateInviteCode()
     {
-        AnsiConsole.Clear();
+        SafeClear();
         RenderHeader();
         AnsiConsole.MarkupLine("[bold cyan]Generate Direct Invite Code / QR[/]");
 
@@ -220,7 +239,7 @@ public static class Program
 
     private static async Task JoinInviteCodeAsync(SqliteGameStorage storage)
     {
-        AnsiConsole.Clear();
+        SafeClear();
         RenderHeader();
         AnsiConsole.MarkupLine("[bold cyan]Join Match via Invite Code[/]");
         AnsiConsole.Markup("Paste Invite URI or TAK1_ Code: ");
