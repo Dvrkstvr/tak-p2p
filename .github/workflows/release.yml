@@ -1,0 +1,137 @@
+name: Build & Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name for release (e.g. v1.0.0)'
+        required: false
+        default: ''
+      is_draft:
+        description: 'Publish as draft release'
+        type: boolean
+        default: false
+      is_prerelease:
+        description: 'Publish as pre-release'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.artifact_name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            project: src/TakApp.Avalonia/TakApp.Avalonia.csproj
+            rid: win-x64
+            artifact_name: tak-desktop-windows-x64
+            archive_ext: zip
+          - os: windows-latest
+            project: src/TakApp.Cli/TakApp.Cli.csproj
+            rid: win-x64
+            artifact_name: tak-cli-windows-x64
+            archive_ext: zip
+          - os: ubuntu-latest
+            project: src/TakApp.Avalonia/TakApp.Avalonia.csproj
+            rid: linux-x64
+            artifact_name: tak-desktop-linux-x64
+            archive_ext: tar.gz
+          - os: ubuntu-latest
+            project: src/TakApp.Cli/TakApp.Cli.csproj
+            rid: linux-x64
+            artifact_name: tak-cli-linux-x64
+            archive_ext: tar.gz
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish Binaries
+        shell: bash
+        run: |
+          dotnet publish ${{ matrix.project }} \
+            -c Release \
+            -r ${{ matrix.rid }} \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:DebugType=None \
+            -o publish-output
+
+      - name: Package Archive & Checksum (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $artifact = "${{ matrix.artifact_name }}.zip"
+          Compress-Archive -Path publish-output/* -DestinationPath $artifact
+          $hash = (Get-FileHash -Path $artifact -Algorithm SHA256).Hash.ToLower()
+          "$hash  $artifact" | Out-File -FilePath "$artifact.sha256" -Encoding ascii -NoNewline
+
+      - name: Package Archive & Checksum (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          artifact="${{ matrix.artifact_name }}.tar.gz"
+          tar -czvf "$artifact" -C publish-output .
+          sha256sum "$artifact" > "$artifact.sha256"
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            ${{ matrix.artifact_name }}.${{ matrix.archive_ext }}
+            ${{ matrix.artifact_name }}.${{ matrix.archive_ext }}.sha256
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: List Release Assets
+        run: |
+          ls -la release-assets
+
+      - name: Determine Release Tag
+        id: release_info
+        run: |
+          if [ -n "${{ github.event.inputs.tag_name }}" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+          else
+            TAG="v$(date +'%Y.%m.%d-%H%M%S')"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_info.outputs.tag }}
+          name: "Tak P2P ${{ steps.release_info.outputs.tag }}"
+          files: release-assets/*
+          draft: ${{ github.event.inputs.is_draft || false }}
+          prerelease: ${{ github.event.inputs.is_prerelease || false }}
+          generate_release_notes: true

@@ -3,6 +3,7 @@
 > A decentralized, peer-to-peer (P2P), zero-server implementation of the abstract strategy game **Tak**, supporting both synchronous (live) and asynchronous play across modern web browsers, Windows, Linux, macOS, Android, and iOS.
 
 [![GitHub Pages Deployment](https://img.shields.io/badge/GitHub%20Pages-Live%20Deploy-success?logo=github&style=flat-square)](https://dvrkstvr.github.io/tak-p2p/)
+[![GitHub Releases](https://img.shields.io/github/v/release/Dvrkstvr/tak-p2p?logo=github&style=flat-square&label=Release)](https://github.com/Dvrkstvr/tak-p2p/releases)
 [![Tests Passing](https://img.shields.io/badge/Tests-93%20passed-brightgreen?style=flat-square)](tests/)
 [![Runtime](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&style=flat-square)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
@@ -34,8 +35,8 @@ Tak P2P is engineered with a strict **Separation of Concerns**—the determinist
 | Device / Platform | Method of Play | Technology | Implementation Status | Quick Launch / Access |
 | :--- | :--- | :--- | :--- | :--- |
 | **🌐 Web Browser** | Zero-Install Web Client (PWA) | Blazor WebAssembly (.NET 10) | 🟢 **Implemented** | [Launch Web Client](https://dvrkstvr.github.io/tak-p2p/) |
-| **🪟 Windows PC** | Native Desktop App & Terminal CLI | Avalonia UI + Spectre.Console | 🟢 **Implemented** | `TakApp.Avalonia` / `TakApp.Cli` |
-| **🐧 Linux** | Native Desktop App & Terminal CLI | Avalonia UI (X11/Wayland) + CLI | 🟢 **Implemented** | `TakApp.Avalonia` / `TakApp.Cli` |
+| **🪟 Windows PC** | Native Desktop App & Terminal CLI | Avalonia UI + Spectre.Console | 🟢 **Implemented** | [GitHub Releases](https://github.com/Dvrkstvr/tak-p2p/releases) (`tak-desktop-windows-x64.zip`) |
+| **🐧 Linux** | Native Desktop App & Terminal CLI | Avalonia UI (X11/Wayland) + CLI | 🟢 **Implemented** | [GitHub Releases](https://github.com/Dvrkstvr/tak-p2p/releases) (`tak-desktop-linux-x64.tar.gz`) |
 | **💻 MacBook / macOS** | Native Desktop App & Terminal CLI | Avalonia Desktop + Terminal CLI | 🟡 **Supported / Compiles** | Cross-platform .NET 10 Desktop |
 | **🤖 Android** | Mobile Web / PWA & Native App | Mobile PWA (Current) / Avalonia | 🟡 **Playable via Web; Native in Progress** | Add to Home Screen in Chrome |
 | **📱 iPhone & iPad** | Mobile Web / PWA & Native App | Safari PWA (Current) / Avalonia | 🟡 **Playable via Web; Native Planned** | Add to Home Screen in Safari |
@@ -234,6 +235,13 @@ dotnet run --project src/TakApp.Avalonia/TakApp.Avalonia.csproj
 ```powershell
 dotnet run --project src/TakApp.Cli/TakApp.Cli.csproj
 ```
+
+### 5. Publish Standalone Single-File Binaries (No .NET Required on Target)
+To produce a portable standalone executable for Windows:
+```powershell
+dotnet publish src/TakApp.Avalonia/TakApp.Avalonia.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:DebugType=None -o ./dist/windows
+```
+Or download automated pre-packaged builds directly from [GitHub Releases](https://github.com/Dvrkstvr/tak-p2p/releases).
 
 ---
 
