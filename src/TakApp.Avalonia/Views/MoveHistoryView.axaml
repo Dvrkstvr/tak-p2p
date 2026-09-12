@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:TakApp.Avalonia.ViewModels"
+             x:Class="TakApp.Avalonia.Views.MoveHistoryView"
+             x:DataType="vm:GameViewModel">
+
+    <Border Background="#1C1814"
+            BorderBrush="#3D3227"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="10">
+        
+        <Grid RowDefinitions="Auto,*">
+            <TextBlock Grid.Row="0"
+                       Text="Move History (PTN)"
+                       FontWeight="Bold"
+                       FontSize="13"
+                       Foreground="#D5C7B8"
+                       Margin="0,0,0,6"/>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding MoveHistory}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <TextBlock Text="{Binding}"
+                                       FontFamily="Consolas,Cascadia Code,Monospace"
+                                       FontSize="12"
+                                       Foreground="#AFA396"
+                                       Padding="4,2"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</UserControl>

@@ -91,12 +91,12 @@ Detailed specifications and architectural guides:
 | **M1.5** | Quick Play & Direct Codes | **Completed** (Direct `tak://` URI and compact `TAK1_` QR tokens, `kind: 20001` ephemeral broadcasts, deterministic color resolution). |
 | **M1.6** | Time & Stale System | **Completed** (RFC 5905 NTP network time service, Day 3 stale warnings, Day 7 auto-draw timeout adjudication). |
 | **M1.7** | Spectre.Console CLI | **Completed** (ANSI board renderer, conversational stepped typed input, stack inspector, local/P2P game loop). |
-| **M1.8** | Avalonia UI Prototype | In Progress |
-| **M1.9** | Blazor WASM Web Client | Planned (GitHub Pages CI/CD workflow configured). |
+| **M1.8** | Avalonia UI Prototype | **Completed** (2D vector board renderer, MVVM CommunityToolkit bindings to `ITakGameSession`, functioning across desktop and mobile). |
+| **M1.9** | Blazor WASM Web Client | Planned (GitHub Pages CI/CD workflow configured, UI components authored). |
 
 ---
 
 ## Immediate Development Action Items
 
-1. Complete Milestone **M1.8: Avalonia UI Prototype** (Canvas/Skia 2D vector board renderer, MVVM bindings to `ITakGameSession`).
-2. Deploy **TakApp.Blazor** to GitHub Pages with live Nostr peer-to-peer matchmaking.
+1. Complete Milestone **M1.9: Blazor WASM Web Client** (Deploy interactive WebAssembly frontend to GitHub Pages with live Nostr P2P matchmaking).
+2. Wire mobile touch gestures and mobile application project heads for Avalonia (Android/iOS).

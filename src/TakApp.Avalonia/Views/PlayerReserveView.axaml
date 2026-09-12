@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:TakApp.Avalonia.ViewModels"
+             x:Class="TakApp.Avalonia.Views.PlayerReserveView"
+             x:DataType="vm:GameViewModel">
+
+    <Grid ColumnDefinitions="*,*" Margin="0,0,0,12">
+        <!-- WHITE RESERVES -->
+        <Border Grid.Column="0"
+                Background="#2A221B"
+                BorderBrush="#44372C"
+                BorderThickness="2"
+                CornerRadius="8"
+                Padding="10"
+                Margin="0,0,6,0">
+            <StackPanel Spacing="4">
+                <Grid ColumnDefinitions="Auto,*">
+                    <Ellipse Grid.Column="0" Width="14" Height="14" Fill="#F5EFE6" Margin="0,0,6,0"/>
+                    <TextBlock Grid.Column="1" Text="White Player" FontWeight="Bold" FontSize="13" Foreground="#F5EFE6"/>
+                </Grid>
+                <TextBlock Text="{Binding WhiteStones, StringFormat='Stones: {0}'}" FontSize="12" Foreground="#C8BEAB"/>
+                <TextBlock Text="{Binding WhiteCapstones, StringFormat='Capstones: {0}'}" FontSize="12" Foreground="#C8BEAB"/>
+            </StackPanel>
+        </Border>
+
+        <!-- BLACK RESERVES -->
+        <Border Grid.Column="1"
+                Background="#1E1D1D"
+                BorderBrush="#3D3B3A"
+                BorderThickness="2"
+                CornerRadius="8"
+                Padding="10"
+                Margin="6,0,0,0">
+            <StackPanel Spacing="4">
+                <Grid ColumnDefinitions="Auto,*">
+                    <Ellipse Grid.Column="0" Width="14" Height="14" Fill="#3D3B3A" Stroke="#777" StrokeThickness="1" Margin="0,0,6,0"/>
+                    <TextBlock Grid.Column="1" Text="Black Player" FontWeight="Bold" FontSize="13" Foreground="#D5D0CA"/>
+                </Grid>
+                <TextBlock Text="{Binding BlackStones, StringFormat='Stones: {0}'}" FontSize="12" Foreground="#9E9993"/>
+                <TextBlock Text="{Binding BlackCapstones, StringFormat='Capstones: {0}'}" FontSize="12" Foreground="#9E9993"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

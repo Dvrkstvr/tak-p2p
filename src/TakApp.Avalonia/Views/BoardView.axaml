@@ -1,0 +1,34 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:TakApp.Avalonia.ViewModels"
+             xmlns:views="using:TakApp.Avalonia.Views"
+             x:Class="TakApp.Avalonia.Views.BoardView"
+             x:DataType="vm:BoardViewModel">
+
+    <Border Background="#2B2119"
+            BorderBrush="#17120D"
+            BorderThickness="6"
+            CornerRadius="10"
+            Padding="8"
+            BoxShadow="0 10 25 #80000000"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center">
+
+        <ItemsControl ItemsSource="{Binding Squares}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Columns="{Binding Dimension}"
+                                 Rows="{Binding Dimension}"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:SquareViewModel">
+                    <views:SquareView Width="68"
+                                      Height="68"
+                                      DataContext="{Binding}"/>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </Border>
+</UserControl>

@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:TakApp.Avalonia.ViewModels"
+             x:Class="TakApp.Avalonia.Views.NewGameView"
+             x:DataType="vm:NewGameViewModel">
+
+    <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
+        <Border Width="460"
+                Background="#231B15"
+                BorderBrush="#3D3025"
+                BorderThickness="2"
+                CornerRadius="12"
+                Padding="28"
+                BoxShadow="0 12 30 #90000000">
+            
+            <StackPanel Spacing="20">
+                <!-- Title Header -->
+                <StackPanel Spacing="6" HorizontalAlignment="Center">
+                    <TextBlock Text="TAK: P2P DECENTRALIZED"
+                               FontWeight="Bold"
+                               FontSize="22"
+                               Foreground="#F39C12"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="Zero Servers • End-to-End Encrypted • Pure Strategy"
+                               FontSize="12"
+                               Foreground="#A69482"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Board Size Selector -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Select Board Size:"
+                               FontWeight="SemiBold"
+                               FontSize="13"
+                               Foreground="#D5C7B8"/>
+
+                    <ComboBox ItemsSource="{Binding AvailableSizes}"
+                              SelectedItem="{Binding SelectedSize}"
+                              HorizontalAlignment="Stretch"/>
+                </StackPanel>
+
+                <!-- Game Launch Actions -->
+                <StackPanel Spacing="10" Margin="0,10,0,0">
+                    <Button Content="Start Local Pass &amp; Play"
+                            Command="{Binding StartLocalGameCommand}"
+                            Background="#D35400"
+                            Foreground="White"
+                            FontWeight="Bold"
+                            FontSize="14"
+                            Padding="12"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"/>
+
+                    <Button Content="Start Remote P2P Match"
+                            Command="{Binding StartRemoteGameCommand}"
+                            Background="#2980B9"
+                            Foreground="White"
+                            FontWeight="Bold"
+                            FontSize="14"
+                            Padding="12"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" width="100%" height="100%">
+  <defs>
+    <linearGradient id="deskBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18181b" />
+      <stop offset="100%" stop-color="#27272a" />
+    </linearGradient>
+    <linearGradient id="avTitleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#6366f1" />
+    </linearGradient>
+    <filter id="deskShadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000000" flood-opacity="0.5" />
+    </filter>
+  </defs>
+
+  <!-- Desktop App Window Frame -->
+  <rect width="800" height="480" fill="url(#deskBgGrad)" rx="12" stroke="#3f3f46" stroke-width="1.5" />
+
+  <!-- Native Title Bar (Windows / Linux / macOS style) -->
+  <rect x="0" y="0" width="800" height="38" fill="#18181b" rx="12" />
+  <rect x="0" y="22" width="800" height="16" fill="#18181b" />
+  
+  <!-- macOS style window buttons -->
+  <circle cx="20" cy="19" r="6" fill="#ef4444" />
+  <circle cx="38" cy="19" r="6" fill="#f59e0b" />
+  <circle cx="56" cy="19" r="6" fill="#10b981" />
+  
+  <text x="320" y="24" fill="#e4e4e7" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="600">Tak App (Avalonia Desktop) — Windows • Linux • macOS</text>
+
+  <!-- App Header / Toolbar -->
+  <rect x="20" y="50" width="760" height="44" rx="8" fill="#27272a" stroke="#3f3f46" stroke-width="1" />
+  <rect x="32" y="58" width="110" height="28" rx="6" fill="url(#avTitleGrad)" />
+  <text x="50" y="77" fill="#ffffff" font-family="sans-serif" font-weight="bold" font-size="12">+ New Match</text>
+
+  <rect x="150" y="58" width="100" height="28" rx="6" fill="#3f3f46" />
+  <text x="168" y="77" fill="#f4f4f5" font-family="sans-serif" font-size="12">Join Code</text>
+
+  <text x="540" y="77" fill="#a1a1aa" font-family="sans-serif" font-size="12">Nostr Relay Pool: <tspan fill="#22c55e">● Connected (3/3)</tspan></text>
+
+  <!-- Left: Avalonia Board Canvas -->
+  <g transform="translate(40, 110)" filter="url(#deskShadow)">
+    <rect width="340" height="340" rx="12" fill="#3e2723" stroke="#5d4037" stroke-width="2" />
+    <!-- 4x4 Grid Demonstration -->
+    <!-- Row 0 -->
+    <rect x="16" y="16" width="70" height="70" rx="6" fill="#efebe9" />
+    <rect x="94" y="16" width="70" height="70" rx="6" fill="#8d6e63" />
+    <rect x="172" y="16" width="70" height="70" rx="6" fill="#efebe9" />
+    <rect x="250" y="16" width="70" height="70" rx="6" fill="#8d6e63" />
+
+    <!-- Row 1 -->
+    <rect x="16" y="94" width="70" height="70" rx="6" fill="#8d6e63" />
+    <rect x="94" y="94" width="70" height="70" rx="6" fill="#efebe9" stroke="#8b5cf6" stroke-width="3" />
+    <rect x="172" y="94" width="70" height="70" rx="6" fill="#8d6e63" />
+    <rect x="250" y="94" width="70" height="70" rx="6" fill="#efebe9" />
+
+    <!-- Row 2 -->
+    <rect x="16" y="172" width="70" height="70" rx="6" fill="#efebe9" />
+    <rect x="94" y="172" width="70" height="70" rx="6" fill="#8d6e63" />
+    <rect x="172" y="172" width="70" height="70" rx="6" fill="#efebe9" />
+    <rect x="250" y="172" width="70" height="70" rx="6" fill="#8d6e63" />
+
+    <!-- Row 3 -->
+    <rect x="16" y="250" width="70" height="70" rx="6" fill="#8d6e63" />
+    <rect x="94" y="250" width="70" height="70" rx="6" fill="#efebe9" />
+    <rect x="172" y="250" width="70" height="70" rx="6" fill="#8d6e63" />
+    <rect x="250" y="250" width="70" height="70" rx="6" fill="#efebe9" />
+
+    <!-- Active Stack -->
+    <rect x="106" y="120" width="46" height="34" rx="6" fill="#f5f5f5" stroke="#d4d4d8" stroke-width="1.5" />
+    <rect x="106" y="112" width="46" height="34" rx="6" fill="#27272a" stroke="#18181b" stroke-width="1.5" />
+    <rect x="106" y="104" width="46" height="34" rx="6" fill="#f5f5f5" stroke="#8b5cf6" stroke-width="2" />
+    <circle cx="143" cy="112" r="8" fill="#8b5cf6" />
+    <text x="140" y="116" fill="#ffffff" font-family="sans-serif" font-weight="bold" font-size="10">3</text>
+
+    <rect x="184" y="184" width="46" height="46" rx="6" fill="#27272a" stroke="#18181b" stroke-width="2" />
+    <rect x="28" y="28" width="46" height="46" rx="6" fill="#f5f5f5" stroke="#d4d4d8" stroke-width="2" />
+  </g>
+
+  <!-- Right: Native Desktop Panels -->
+  <!-- Session Status -->
+  <rect x="410" y="110" width="370" height="150" rx="10" fill="#27272a" stroke="#3f3f46" stroke-width="1" />
+  <text x="430" y="136" fill="#f4f4f5" font-family="sans-serif" font-weight="bold" font-size="14">Match Status: In Progress</text>
+  
+  <rect x="430" y="150" width="160" height="45" rx="6" fill="#18181b" />
+  <text x="440" y="168" fill="#e4e4e7" font-family="sans-serif" font-size="11">White (Local Client)</text>
+  <text x="440" y="184" fill="#8b5cf6" font-family="sans-serif" font-weight="bold" font-size="11">12 Flats • 1 Cap • 18:25</text>
+
+  <rect x="605" y="150" width="160" height="45" rx="6" fill="#18181b" />
+  <text x="615" y="168" fill="#a1a1aa" font-family="sans-serif" font-size="11">Black (Remote Peer)</text>
+  <text x="615" y="184" fill="#22c55e" font-family="sans-serif" font-weight="bold" font-size="11">13 Flats • 1 Cap • 19:10</text>
+
+  <text x="430" y="222" fill="#a1a1aa" font-family="sans-serif" font-size="11">Active Mode: <tspan fill="#f4f4f5">Local &amp; P2P Nostr Sync</tspan></text>
+  <text x="430" y="240" fill="#a1a1aa" font-family="sans-serif" font-size="11">Persistence: <tspan fill="#f4f4f5">SQLite (game_session.db)</tspan></text>
+
+  <!-- Reversible Move History & PTN Table -->
+  <rect x="410" y="275" width="370" height="175" rx="10" fill="#27272a" stroke="#3f3f46" stroke-width="1" />
+  <text x="430" y="300" fill="#f4f4f5" font-family="sans-serif" font-weight="bold" font-size="13">Reversible Move History (PTN)</text>
+  <line x1="430" y1="310" x2="760" y2="310" stroke="#3f3f46" stroke-width="1" />
+  
+  <text x="430" y="332" fill="#a1a1aa" font-family="monospace" font-size="11">Turn 1: a1 (White)   •  d4 (Black)</text>
+  <text x="430" y="352" fill="#a1a1aa" font-family="monospace" font-size="11">Turn 2: b2 (White)   •  c3 (Black)</text>
+  <text x="430" y="372" fill="#a1a1aa" font-family="monospace" font-size="11">Turn 3: Sb3 (White)  •  3b2+12 (Black)</text>
+  <text x="430" y="392" fill="#8b5cf6" font-family="monospace" font-weight="bold" font-size="11">Turn 4: c2 (White)   •  [Awaiting remote]</text>
+
+  <!-- Bottom Action Buttons -->
+  <rect x="430" y="412" width="95" height="26" rx="5" fill="#3f3f46" />
+  <text x="445" y="429" fill="#f4f4f5" font-family="sans-serif" font-size="11">◀ Prev Turn</text>
+
+  <rect x="535" y="412" width="95" height="26" rx="5" fill="#3f3f46" />
+  <text x="550" y="429" fill="#f4f4f5" font-family="sans-serif" font-size="11">Next Turn ▶</text>
+
+  <rect x="640" y="412" width="125" height="26" rx="5" fill="#10b981" />
+  <text x="655" y="429" fill="#ffffff" font-family="sans-serif" font-weight="bold" font-size="11">Export PTN File</text>
+</svg>

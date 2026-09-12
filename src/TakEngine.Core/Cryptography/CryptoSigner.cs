@@ -31,6 +31,14 @@ public static class CryptoSigner
             Convert.ToHexStringLower(privBytes));
     }
 
+    public static string GetPublicKeyHex(string privateKeyHex)
+    {
+        byte[] privBytes = Convert.FromHexString(privateKeyHex);
+        var privKey = new Ed25519PrivateKeyParameters(privBytes, 0);
+        var pubKey = privKey.GeneratePublicKey();
+        return Convert.ToHexStringLower(pubKey.GetEncoded());
+    }
+
     public static string Sign(string privateKeyHex, string data)
     {
         byte[] dataBytes = Encoding.UTF8.GetBytes(data);

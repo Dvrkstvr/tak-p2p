@@ -8,6 +8,8 @@ This document tracks all project milestones, architectural additions, and commit
 
 | Commit | Timestamp (UTC+2) | Milestone / Scope | Key Deliverables | Tests Passing |
 | --- | --- | --- | --- | --- |
+| `HEAD` | 2026-09-12 07:12:30 | **Milestone M1.8** | Avalonia UI Prototype: Vector board renderer, MVVM CommunityToolkit bindings, piece stacks, `TakGameSession` implementation. | 93 |
+| [`f1afbfd`](https://github.com/Dvrkstvr/tak-p2p/commit/f1afbfd) | 2026-09-12 07:02:11 | **DevLog & Rule Sync** | Updated DevLog with recent commits and verified git push tracking. | 84 |
 | [`4c40d56`](https://github.com/Dvrkstvr/tak-p2p/commit/4c40d56) | 2026-09-12 07:00:51 | **Workflow & Blazor Components** | Codified `AGENTS.md` and `.agents/rules/devlog-maintenance.md`; implemented Blazor interactive SVG board and UI components. | 84 |
 | [`a5e0e01`](https://github.com/Dvrkstvr/tak-p2p/commit/a5e0e01) | 2026-09-12 06:58:57 | **DevLog Foundation** | Created initial `docs/DEVLOG.md` tracking all commits, timestamps, deliverables, and test metrics. | 84 |
 | [`ea3fab7`](https://github.com/Dvrkstvr/tak-p2p/commit/ea3fab7) | 2026-09-12 06:57:02 | **Documentation Sync** | Synced `README.md`, `v1-mvp.md`, `system-overview.md`, `PROJECT_SPECIFICATION.md` with M1.1–M1.7, Blazor WASM, and Spectator features. | 84 |
@@ -23,6 +25,29 @@ This document tracks all project milestones, architectural additions, and commit
 ---
 
 ## Detailed Entry Logs
+
+### Milestone M1.8: Avalonia UI Prototype & TakGameSession Engine
+* **Timestamp**: `2026-09-12T07:12:30+02:00`
+* **Author**: Calvin Kohl
+* **Scope**: Cross-platform desktop/mobile Avalonia GUI and concrete `ITakGameSession` implementation.
+* **Changes**:
+  * [TakGameSession.cs](file:///e:/repos/tak-p2p/src/TakEngine.Core/Session/TakGameSession.cs): Concrete implementation of `ITakGameSession` in `TakEngine.Core` supporting both local pass-and-play and remote P2P play over Nostr, with Ed25519 payload signing, SHA-256 state hash chaining, move validation, and reactive event notifications (`OnMoveExecuted`, `OnGameEnded`, `OnStaleWarning`, `OnTransportStatusChanged`, `OnProtocolViolationDetected`).
+  * [SquareViewModel.cs](file:///e:/repos/tak-p2p/src/TakApp.Avalonia/ViewModels/SquareViewModel.cs): Observable square state managing piece representations, coordinate annotations, selection highlights, and legal target flags.
+  * [BoardViewModel.cs](file:///e:/repos/tak-p2p/src/TakApp.Avalonia/ViewModels/BoardViewModel.cs): Grid coordinate mapping, square selection, placement piece selection, and slide move builder with direction and drop distribution controls.
+  * [GameViewModel.cs](file:///e:/repos/tak-p2p/src/TakApp.Avalonia/ViewModels/GameViewModel.cs): Complete game lifecycle coordinator binding to `ITakGameSession`, tracking reserve counts, move history log, game over summaries, and transport status.
+  * [NewGameViewModel.cs](file:///e:/repos/tak-p2p/src/TakApp.Avalonia/ViewModels/NewGameViewModel.cs): Interactive game launcher supporting 4x4, 5x5, and 6x6 board sizes with local and remote game creation.
+  * [MainViewModel.cs](file:///e:/repos/tak-p2p/src/TakApp.Avalonia/ViewModels/MainViewModel.cs): Root navigation controller managing transitions between setup and active matches.
+  * [SquareView.axaml](file:///e:/repos/tak-p2p/src/TakApp.Avalonia/Views/SquareView.axaml) & [SquareView.axaml.cs](file:///e:/repos/tak-p2p/src/TakApp.Avalonia/Views/SquareView.axaml.cs): Vector piece stack rendering displaying flat stone disks, vertical standing walls, and crown capstones with multi-piece tower badges.
+  * [BoardView.axaml](file:///e:/repos/tak-p2p/src/TakApp.Avalonia/Views/BoardView.axaml) & [BoardView.axaml.cs](file:///e:/repos/tak-p2p/src/TakApp.Avalonia/Views/BoardView.axaml.cs): Dynamic `UniformGrid` vector board with wooden slate border and drop shadow.
+  * [GameControlsView.axaml](file:///e:/repos/tak-p2p/src/TakApp.Avalonia/Views/GameControlsView.axaml) & [GameControlsView.axaml.cs](file:///e:/repos/tak-p2p/src/TakApp.Avalonia/Views/GameControlsView.axaml.cs): Placement selector and directional slide cross with lift and drop inputs.
+  * [PlayerReserveView.axaml](file:///e:/repos/tak-p2p/src/TakApp.Avalonia/Views/PlayerReserveView.axaml): Side trays displaying White and Black reserve stones and capstones.
+  * [MoveHistoryView.axaml](file:///e:/repos/tak-p2p/src/TakApp.Avalonia/Views/MoveHistoryView.axaml): Scrollable PTN turn list with monospace typography.
+  * [GameView.axaml](file:///e:/repos/tak-p2p/src/TakApp.Avalonia/Views/GameView.axaml) & [NewGameView.axaml](file:///e:/repos/tak-p2p/src/TakApp.Avalonia/Views/NewGameView.axaml): Responsive layouts uniting board, reserves, controls, and game over announcements.
+  * [MainView.axaml](file:///e:/repos/tak-p2p/src/TakApp.Avalonia/Views/MainView.axaml) & [MainWindow.axaml](file:///e:/repos/tak-p2p/src/TakApp.Avalonia/Views/MainWindow.axaml): Reusable desktop/mobile UserControl container and desktop window frame.
+  * [TakGameSessionTests.cs](file:///e:/repos/tak-p2p/tests/TakEngine.Core.Tests/TakGameSessionTests.cs): 8 comprehensive unit tests covering local swap rule, legal move queries, slide moves, road victory adjudication, resignation, remote move exchange with hash verification, and protocol violation traps.
+* **Test Suite**: 93 tests passing (100% pass rate).
+
+---
 
 ### [4c40d56](https://github.com/Dvrkstvr/tak-p2p/commit/4c40d56) - Agent Rules & Blazor Interactive Components
 * **Timestamp**: `2026-09-12T07:00:51+02:00`
