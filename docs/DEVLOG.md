@@ -8,6 +8,7 @@ This document tracks all project milestones, architectural additions, and commit
 
 | Commit | Timestamp (UTC+2) | Milestone / Scope | Key Deliverables | Tests Passing |
 | --- | --- | --- | --- | --- |
+| [`23caed5`](https://github.com/Dvrkstvr/tak-p2p/commit/23caed5) | 2026-09-12 07:48:07 | **Offline AI Practice Bot** | Implemented `MinimaxTakBot` and `TakEvaluator` with Alpha-Beta pruning, in-memory `Clone`, `GetAllLegalMoves`, Blazor WASM AI practice mode with difficulty picker, and CLI vs AI option; 100 passing unit tests. | 100 |
 | [`47704b8`](https://github.com/Dvrkstvr/tak-p2p/commit/47704b8) | 2026-09-12 07:36:21 | **Release Workflow CI/CD** | Added `.github/workflows/release.yml` with cross-platform matrix publishing for `TakApp.Avalonia` and `TakApp.Cli` (Windows `.zip`, Linux `.tar.gz`) with SHA-256 checksums and automated GitHub Releases; updated README with release badges and publishing guide. | 93 |
 | [`f6b209c`](https://github.com/Dvrkstvr/tak-p2p/commit/f6b209c) | 2026-09-12 07:27:06 | **CLI Hardening & MVP Audit** | Fixed Spectre.Console markup escaping crashes, added `SafeClear` for headless/redirected terminal execution, verified MVP user flows across Web and CLI, updated M1.9 status. | 93 |
 | [`93addfc`](https://github.com/Dvrkstvr/tak-p2p/commit/93addfc) | 2026-09-12 07:16:18 | **README Streamlining** | Removed the legacy Implementation Progress milestone table from README, deferring milestone tracking to DEVLOG. | 93 |
@@ -29,6 +30,25 @@ This document tracks all project milestones, architectural additions, and commit
 ---
 
 ## Detailed Entry Logs
+
+### [23caed5](https://github.com/Dvrkstvr/tak-p2p/commit/23caed5) - Offline AI Practice Bot (Mobile, Web & Desktop)
+* **Timestamp**: `2026-09-12T07:48:07+02:00`
+* **Author**: Calvin Kohl
+* **Scope**: Zero-server offline AI practice bot for mobile, web, desktop, and CLI.
+* **Changes**:
+  * [BotDifficulty.cs](file:///e:/repos/tak-p2p/src/TakEngine.Abstractions/Enums/BotDifficulty.cs): Added difficulty tier enum (`Easy`, `Medium`, `Hard`).
+  * [ITakBot.cs](file:///e:/repos/tak-p2p/src/TakEngine.Abstractions/ITakBot.cs): Decoupled AI contract for move selection.
+  * [PieceStack.cs](file:///e:/repos/tak-p2p/src/TakEngine.Core/Board/PieceStack.cs) & [GameBoard.cs](file:///e:/repos/tak-p2p/src/TakEngine.Core/Board/GameBoard.cs): Added fast in-memory `Clone()` methods and `GameBoard.FromSnapshot()` for zero-allocation tree search.
+  * [MoveValidator.cs](file:///e:/repos/tak-p2p/src/TakEngine.Core/Rules/MoveValidator.cs): Added `GetAllLegalMoves(GameBoard board)` generating all valid placements and slide movements.
+  * [TakEvaluator.cs](file:///e:/repos/tak-p2p/src/TakEngine.Core/AI/TakEvaluator.cs): Heuristic evaluation scoring terminal wins (+/- 100k pts), orthogonal road connectivity and spanning threats, controlled flat stones, center control, and capstone mobility.
+  * [MinimaxTakBot.cs](file:///e:/repos/tak-p2p/src/TakEngine.Core/AI/MinimaxTakBot.cs): Alpha-Beta Minimax search implementation supporting Easy (1-ply random top selection), Medium (2-ply Minimax), and Hard (3-4 ply Minimax) with turn 1 & 2 swap optimizations.
+  * [WebGameSessionManager.cs](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Services/WebGameSessionManager.cs): Added `StartBotMatch(...)` and asynchronous `TriggerBotMoveAsync()` with ergonomic human-eye delay.
+  * [Home.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Pages/Home.razor) & [Play.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Pages/Play.razor): Added AI difficulty pills (`Easy`, `Medium`, `Hard`), `🤖 Practice vs AI` CTA, active turn lock during bot thinking, and status indicators.
+  * [Program.cs](file:///e:/repos/tak-p2p/src/TakApp.Cli/Program.cs): Added `[[2]] Practice vs AI Bot (Offline)` to Spectre.Console CLI.
+  * [TakBotTests.cs](file:///e:/repos/tak-p2p/tests/TakEngine.Core.Tests/TakBotTests.cs): 7 unit tests covering turn 1 swap rule, legal move queries, road victory seizing, threat neutralization, and benchmark execution time (< 100ms).
+* **Test Suite**: 100 tests passing (100% pass rate).
+
+---
 
 ### [47704b8](https://github.com/Dvrkstvr/tak-p2p/commit/47704b8) - Release Workflow CI/CD (Windows & Linux GUI/CLI)
 * **Timestamp**: `2026-09-12T07:36:21+02:00`
