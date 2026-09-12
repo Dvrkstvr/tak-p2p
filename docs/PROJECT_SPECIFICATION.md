@@ -35,22 +35,23 @@ This project is a decentralized, peer-to-peer (P2P), zero-server implementation 
 ### 2.1 Repository & Solution Layout
 
 ```
-TakGame.sln
+TakGame.sln / TakGame.slnx
 ├── src/
 │   ├── TakEngine.Abstractions/       # [Public NuGet candidate]
 │   │   ├── Enums/                    # PieceType, PlayerColor, Direction, GamePhase
-│   │   ├── Models/                   # Coord, StackSnapshot, BoardSnapshot, TakMove
-│   │   └── ITakGameSession.cs        # Primary interface consumed by all frontends
+│   │   ├── Models/                   # Coord, StackSnapshot, BoardSnapshot, TakMove, BroadcastModels
+│   │   ├── ITakGameSession.cs        # Primary interface consumed by all frontends
+│   │   └── ISpectatorGameSession.cs  # Spectator observable interface
 │   │
-│   ├── TakEngine.Core/               # [Private Implementation]
+│   ├── TakEngine.Core/               # [Engine & Rules Core]
 │   │   ├── Board/                    # Grid, Stacks, Piece Inventories, Move Execution
-│   │   ├── Rules/                    # Invariant rules, Carry limits, DFS Road finder
+│   │   ├── Rules/                    # Invariant rules, Carry limits, DFS Road finder, MoveValidator
 │   │   ├── Serialization/            # PTN (Portable Tak Notation) & TPS (Tak Positional System)
 │   │   ├── Cryptography/             # Keypairs, Signatures, SHA-256 State Hashing
 │   │   ├── Storage/                  # SQLite database engine, Match logs, Replay provider
-│   │   └── Session/                  # TakGameSession implementation, NTP time tracker
+│   │   └── Session/                  # TakGameSession, DelayedBroadcastQueue, SpectatorSession, NTP
 │   │
-│   ├── TakEngine.Transport/          # [Private / Infrastructure]
+│   ├── TakEngine.Transport/          # [Nostr P2P Infrastructure]
 │   │   ├── Nostr/                    # WebSocket client, NIP-01/NIP-44 wrappers
 │   │   ├── Matchmaking/              # Invite code parser, Ephemeral broadcast handler
 │   │   └── TransportEnvelope.cs      # Signed wire models
@@ -58,16 +59,20 @@ TakGame.sln
 │   ├── TakApp.Cli/                   # [Runnable Console App]
 │   │   ├── Program.cs                # Entry point, Interactive menus
 │   │   ├── Rendering/                # Spectre.Console ANSI board, stack layer inspector
-│   │   └── Input/                    # PTN CLI command parser
+│   │   └── Input/                    # Conversational stepped typed input & PTN command parser
 │   │
-│   └── TakApp.Avalonia/              # [Runnable Cross-Platform GUI]
-│       ├── ViewModels/               # MVVM ViewModels (CommunityToolkit.Mvvm)
-│       ├── Views/                    # Canvas/Skia board renderer, Match controls
-│       └── Services/                 # Local OS notification scheduler
+│   ├── TakApp.Avalonia/              # [Runnable Cross-Platform GUI]
+│   │   ├── ViewModels/               # MVVM ViewModels (CommunityToolkit.Mvvm)
+│   │   ├── Views/                    # Canvas/Skia board renderer, Match controls
+│   │   └── Services/                 # Local OS notification scheduler
+│   │
+│   └── TakApp.Blazor/                # [Runnable Zero-Install Web Client]
+│       ├── Pages/                    # Web board renderer, Lobby view
+│       └── wwwroot/                  # GitHub Pages deployment assets
 │
 └── tests/
-    ├── TakEngine.Core.Tests/         # Rule engine unit tests, DFS validation, PTN parser tests
-    └── TakEngine.Transport.Tests/    # Relay serialization, Round-trip latency tests
+    ├── TakEngine.Core.Tests/         # Rule engine unit tests, DFS validation, PTN parser, Crypto, SQLite, Spectator tests
+    └── TakEngine.Transport.Tests/    # Relay serialization, Round-trip latency tests, Invite codes, NIP-44 encryption
 ```
 
 ---
@@ -178,18 +183,19 @@ public interface ITakGameSession
 
 ---
 
-### 2.5 v1 Acceptance Criteria & Milestones
+### 2.5 v1 Acceptance Criteria & Milestone Status
 
-| Task ID | Milestone Description | Completion Criteria |
-| --- | --- | --- |
-| **M1.1** | `TakEngine.Core` Rule Foundation | 4x4, 5x5, 6x6 initialization; inventory rules; DFS road finder; passing 100% unit tests. |
-| **M1.2** | PTN / TPS Parser & Formatter | Able to serialize and deserialize games to standard PTN format; TPS string generator. |
-| **M1.3** | Crypto & SQLite Persistence | Hash chaining logic implemented; games and moves successfully written and restored from SQLite. |
-| **M1.4** | Nostr Transport MVP | Relay connection loop; NIP-44 encrypted payload round-trip verified under 300 ms on test peers. |
-| **M1.5** | Quick Play & Direct Codes | Invite code string parser and ephemeral Nostr broadcast discovery functional. |
-| **M1.6** | Time & Stale System | NTP time fetcher integrated; Day 3 warning and Day 7 auto-draw logic verified via mock timestamps. |
-| **M1.7** | Spectre.Console UI | Functional CLI game loop with live ANSI board updating, stack inspector, and PTN prompt. |
-| **M1.8** | Avalonia UI Prototype | 2D vector board rendering, MVVM bindings to `ITakGameSession`, functioning across desktop and mobile. |
+| Task ID | Milestone Description | Completion Criteria | Status |
+| --- | --- | --- | --- |
+| **M1.1** | `TakEngine.Core` Rule Foundation | 4x4, 5x5, 6x6 initialization; inventory rules; DFS road finder; passing 100% unit tests. | **COMPLETED** |
+| **M1.2** | PTN / TPS Parser & Formatter | Able to serialize and deserialize games to standard PTN format; TPS string generator. | **COMPLETED** |
+| **M1.3** | Crypto & SQLite Persistence | Hash chaining logic implemented; games and moves successfully written and restored from SQLite. | **COMPLETED** |
+| **M1.4** | Nostr Transport MVP | Relay connection loop; NIP-44 encrypted payload round-trip verified under 300 ms on test peers. | **COMPLETED** |
+| **M1.5** | Quick Play & Direct Codes | Invite code string parser and ephemeral Nostr broadcast discovery functional. | **COMPLETED** |
+| **M1.6** | Time & Stale System | NTP time fetcher integrated; Day 3 warning and Day 7 auto-draw logic verified via mock timestamps. | **COMPLETED** |
+| **M1.7** | Spectre.Console UI | Functional CLI game loop with live ANSI board updating, conversational stepped typed input, stack inspector, and PTN prompt. | **COMPLETED** |
+| **M1.8** | Avalonia UI Prototype | 2D vector board rendering, MVVM bindings to `ITakGameSession`, functioning across desktop and mobile. | **IN PROGRESS** |
+| **M1.9** | Blazor WASM Client | Zero-install browser client with GitHub Pages automated deployment. | **PLANNED** |
 
 ---
 
