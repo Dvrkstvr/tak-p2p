@@ -30,7 +30,7 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            project: src/TakApp.Avalonia/TakApp.Avalonia.csproj
+            project: src/TakApp.Avalonia.Desktop/TakApp.Avalonia.Desktop.csproj
             rid: win-x64
             artifact_name: tak-desktop-windows-x64
             archive_ext: zip
@@ -40,7 +40,7 @@ jobs:
             artifact_name: tak-cli-windows-x64
             archive_ext: zip
           - os: ubuntu-latest
-            project: src/TakApp.Avalonia/TakApp.Avalonia.csproj
+            project: src/TakApp.Avalonia.Desktop/TakApp.Avalonia.Desktop.csproj
             rid: linux-x64
             artifact_name: tak-desktop-linux-x64
             archive_ext: tar.gz

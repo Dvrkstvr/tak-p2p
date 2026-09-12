@@ -4,7 +4,7 @@
 
 [![GitHub Pages Deployment](https://img.shields.io/badge/GitHub%20Pages-Live%20Deploy-success?logo=github&style=flat-square)](https://dvrkstvr.github.io/tak-p2p/)
 [![GitHub Releases](https://img.shields.io/github/v/release/Dvrkstvr/tak-p2p?logo=github&style=flat-square&label=Release)](https://github.com/Dvrkstvr/tak-p2p/releases)
-[![Tests Passing](https://img.shields.io/badge/Tests-93%20passed-brightgreen?style=flat-square)](tests/)
+[![Tests Passing](https://img.shields.io/badge/Tests-107%20passed-brightgreen?style=flat-square)](tests/)
 [![Runtime](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&style=flat-square)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Nostr Protocol](https://img.shields.io/badge/Nostr-NIP--01%20%7C%20NIP--44-purple?style=flat-square)](https://nostr.com/)
@@ -21,8 +21,26 @@ You can play a full match of Tak right now without downloading or installing any
 
 * **No Accounts Required:** Deterministic Ed25519 identity keypairs are generated and stored locally in your browser.
 * **Zero Game Servers:** Direct peer-to-peer communications over encrypted public Nostr relays.
-* **Instant Matchmaking:** Share a short invite code or QR token (`tak://...`) with a friend to begin playing immediately.
+* **Instant Matchmaking:** Share a 1-click web link (`/?invite=TAK1_...`) or dark-mode SVG QR code with a friend to play instantly.
 * **Mobile & Desktop Ready:** Fully responsive touch and mouse controls with high-definition vector SVG rendering.
+
+---
+
+## 📦 Releases & Downloads
+
+Pre-built standalone packages and binaries are automatically generated and published with every release on [GitHub Releases](https://github.com/Dvrkstvr/tak-p2p/releases):
+
+| Package / Artifact | Platform | Format | Description | Quick Download |
+| :--- | :--- | :--- | :--- | :--- |
+| **Windows Desktop** | Windows 10 / 11 (x64) | `.zip` | Standalone GUI app (`TakApp.Avalonia.Desktop`) with hardware acceleration | [Download Windows App](https://github.com/Dvrkstvr/tak-p2p/releases/latest/download/tak-desktop-windows-x64.zip) |
+| **Windows CLI** | Windows 10 / 11 (x64) | `.zip` | Terminal client (`TakApp.Cli`) with rich Spectre.Console ANSI interface | [Download Windows CLI](https://github.com/Dvrkstvr/tak-p2p/releases/latest/download/tak-cli-windows-x64.zip) |
+| **Linux Desktop** | Ubuntu, Debian, Fedora, Arch, SteamOS | `.tar.gz` | Standalone Linux GUI app (X11 & Wayland native) | [Download Linux App](https://github.com/Dvrkstvr/tak-p2p/releases/latest/download/tak-desktop-linux-x64.tar.gz) |
+| **Linux CLI** | Linux (x64) | `.tar.gz` | Terminal client for all POSIX terminal emulators | [Download Linux CLI](https://github.com/Dvrkstvr/tak-p2p/releases/latest/download/tak-cli-linux-x64.tar.gz) |
+| **Android Native App** | Android Phones & Tablets (API 23+) | `.apk` | Native Android application (`TakApp.Avalonia.Android`) | [Build Source](src/TakApp.Avalonia.Android) |
+| **iOS & iPadOS Native App** | iPad & iPhone (iOS 13+) | Native Project | Native Avalonia iOS application (`TakApp.Avalonia.iOS`) | [Build Source](src/TakApp.Avalonia.iOS) |
+| **Web PWA Client** | All Browsers (Desktop & Mobile) | WebAssembly | Instant zero-install play; installable as standalone PWA | [Launch Web Client](https://dvrkstvr.github.io/tak-p2p/) |
+
+> *All release archives include corresponding `.sha256` checksum files for cryptographic verification.*
 
 ---
 
@@ -37,9 +55,9 @@ Tak P2P is engineered with a strict **Separation of Concerns**—the determinist
 | **🌐 Web Browser** | Zero-Install Web Client (PWA) | Blazor WebAssembly (.NET 10) | 🟢 **Implemented** | [Launch Web Client](https://dvrkstvr.github.io/tak-p2p/) |
 | **🪟 Windows PC** | Native Desktop App & Terminal CLI | Avalonia UI + Spectre.Console | 🟢 **Implemented** | [GitHub Releases](https://github.com/Dvrkstvr/tak-p2p/releases) (`tak-desktop-windows-x64.zip`) |
 | **🐧 Linux** | Native Desktop App & Terminal CLI | Avalonia UI (X11/Wayland) + CLI | 🟢 **Implemented** | [GitHub Releases](https://github.com/Dvrkstvr/tak-p2p/releases) (`tak-desktop-linux-x64.tar.gz`) |
-| **💻 MacBook / macOS** | Native Desktop App & Terminal CLI | Avalonia Desktop + Terminal CLI | 🟡 **Supported / Compiles** | Cross-platform .NET 10 Desktop |
-| **🤖 Android** | Mobile Web / PWA & Native App | Mobile PWA (Current) / Avalonia | 🟡 **Playable via Web; Native in Progress** | Add to Home Screen in Chrome |
-| **📱 iPhone & iPad** | Mobile Web / PWA & Native App | Safari PWA (Current) / Avalonia | 🟡 **Playable via Web; Native Planned** | Add to Home Screen in Safari |
+| **💻 MacBook / macOS** | Native Desktop App & Terminal CLI | Avalonia Desktop + Terminal CLI | 🟢 **Implemented / Compiles** | Cross-platform .NET 10 Desktop |
+| **🤖 Android** | Mobile Web / PWA & Native App | Web PWA + Avalonia Native App | 🟢 **Implemented** | [TakApp.Avalonia.Android](src/TakApp.Avalonia.Android) / Chrome PWA |
+| **📱 iPhone & iPad** | Mobile Web / PWA & Native App | Safari PWA + Avalonia Native App | 🟢 **Implemented** | [TakApp.Avalonia.iOS](src/TakApp.Avalonia.iOS) / Safari PWA |
 
 ---
 
@@ -98,31 +116,32 @@ Tak P2P is engineered with a strict **Separation of Concerns**—the determinist
   * Native macOS global menu bar integration and Dock badge indicators for pending moves.
 
 #### 5. 🤖 Android App
-* **Method of Play:** Mobile Web / PWA (Current) and Native Android Client (In Progress).
-* **Target Devices:** Android smartphones, foldable devices, and tablets running Android 8.0+.
+* **Method of Play:** Native Android Client (`TakApp.Avalonia.Android`) and Mobile Web / PWA.
+* **Target Devices:** Android smartphones, foldable devices, and tablets running Android 6.0+ (API 23+).
 * **✅ What's Already Implemented:**
-  * Fully touch-optimized mobile web client accessible via Chrome, Firefox, or Edge on Android.
-  * Single-tap piece placement and multi-step drop-distribution slider controls for tower movements.
-  * High-DPI SVG board rendering that scales smoothly to any smartphone aspect ratio.
-  * Camera-scannable QR code tokens for instant local peer handshakes.
+  * Dedicated native project head (`TakApp.Avalonia.Android`) using Avalonia UI for Android.
+  * Direct `.apk` build capability via `dotnet build src/TakApp.Avalonia.Android/TakApp.Avalonia.Android.csproj`.
+  * Touch-optimized UI with `IActivityApplicationLifetime` single-view lifecycle integration.
+  * Custom adaptive app icon, splash screen animations, and high-DPI scaling for both phones and tablets.
+  * `INTERNET` and `ACCESS_NETWORK_STATE` permissions configured in `AndroidManifest.xml` for resilient Nostr relay connectivity.
+  * Mobile web PWA option running in Chrome/Firefox with 1-click home screen install.
 * **⏳ What's Missing / Next:**
-  * Dedicated `TakApp.Android` project head using Avalonia for Android.
-  * Google Play Store package release (`.apk` / `.aab`).
-  * Android foreground service to maintain long-lived Nostr WebSocket connectivity for asynchronous turn notifications.
-  * Haptic vibration feedback on piece drops and wall flattening.
+  * Google Play Store package release (`.aab` bundle).
+  * Android background service for push-style turn notifications when app is suspended.
+  * Haptic vibration feedback on piece placement and wall flattening.
 
 #### 6. 📱 iPhone & iPad App
-* **Method of Play:** Mobile Web / Safari PWA (Current) and Native iOS Client (Planned).
-* **Target Devices:** iPhone and iPad running iOS / iPadOS 15+.
+* **Method of Play:** Native iOS/iPadOS Client (`TakApp.Avalonia.iOS`) and Mobile Safari PWA.
+* **Target Devices:** iPad and iPhone running iOS / iPadOS 13.0+.
 * **✅ What's Already Implemented:**
-  * High-performance Safari mobile experience with full touch gestures.
-  * "Add to Home Screen" PWA compatibility—runs as a standalone, distraction-free app without browser URL bars.
-  * Deterministic client-side game engine and Nostr WebSocket connectivity over mobile Safari.
+  * Dedicated native project head (`TakApp.Avalonia.iOS`) using Avalonia UI for iOS.
+  * Configured for **both iPad and iPhone** (`UIDeviceFamily = 1, 2`) with full landscape and portrait orientation support.
+  * Single-view application lifecycle (`ISingleViewApplicationLifetime`) connecting directly to shared MVVM views.
+  * Native compilation pipeline targeting iOS simulator and arm64 hardware devices.
+  * Full-screen Safari PWA mode ("Add to Home Screen") for instant play with zero app store installation friction.
 * **⏳ What's Missing / Next:**
-  * Dedicated `TakApp.iOS` native project head using Avalonia for iOS.
-  * Xcode project configuration and Apple provisioning profiles.
-  * Apple TestFlight beta program and App Store deployment.
-  * Apple Push Notification service (APNs) integration for asynchronous turn notifications when the app is suspended.
+  * Xcode project codesigning and Apple Developer provisioning profiles for App Store / TestFlight distribution.
+  * Apple Push Notification service (APNs) integration for background match alerts.
 
 ---
 
