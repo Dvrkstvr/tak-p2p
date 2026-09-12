@@ -8,6 +8,7 @@ This document tracks all project milestones, architectural additions, and commit
 
 | Commit | Timestamp (UTC+2) | Milestone / Scope | Key Deliverables | Tests Passing |
 | --- | --- | --- | --- | --- |
+| [`f6b209c`](https://github.com/Dvrkstvr/tak-p2p/commit/f6b209c) | 2026-09-12 07:27:06 | **CLI Hardening & MVP Audit** | Fixed Spectre.Console markup escaping crashes, added `SafeClear` for headless/redirected terminal execution, verified MVP user flows across Web and CLI, updated M1.9 status. | 93 |
 | [`93addfc`](https://github.com/Dvrkstvr/tak-p2p/commit/93addfc) | 2026-09-12 07:16:18 | **README Streamlining** | Removed the legacy Implementation Progress milestone table from README, deferring milestone tracking to DEVLOG. | 93 |
 | [`4e429f3`](https://github.com/Dvrkstvr/tak-p2p/commit/4e429f3) | 2026-09-12 07:13:00 | **README & Screenshots** | Added Play Now CTA for live GitHub Pages web client, full supported devices matrix (Windows, Linux, MacBook, Android, iPhone, Web), and responsive vector screenshot cards. | 93 |
 | [`5ad1f87`](https://github.com/Dvrkstvr/tak-p2p/commit/5ad1f87) | 2026-09-12 07:11:45 | **Milestone M1.8** | Avalonia UI Prototype: Vector board renderer, MVVM CommunityToolkit bindings, piece stacks, `TakGameSession` implementation. | 93 |
@@ -27,6 +28,18 @@ This document tracks all project milestones, architectural additions, and commit
 ---
 
 ## Detailed Entry Logs
+
+### [f6b209c](https://github.com/Dvrkstvr/tak-p2p/commit/f6b209c) - CLI Hardening & MVP Audit Verification
+* **Timestamp**: `2026-09-12T07:27:06+02:00`
+* **Author**: Calvin Kohl
+* **Scope**: CLI client stability and cross-platform verification during MVP comprehensive audit.
+* **Changes**:
+  * [Program.cs](file:///e:/repos/tak-p2p/src/TakApp.Cli/Program.cs): Implemented `SafeClear()` to catch and suppress `System.IO.IOException` when standard console buffers are absent in headless, CI/CD, or piped environments; escaped main menu bracket markup (`[[1]]` through `[[5]]`) and handled EOF/null input loops.
+  * [SteppedCommandParser.cs](file:///e:/repos/tak-p2p/src/TakApp.Cli/Input/SteppedCommandParser.cs): Escaped bracketed turn markers `[[Turn {turn} - {player}]]` and lift count prompts; added EOF null-guard.
+  * [v1-mvp.md](file:///e:/repos/tak-p2p/docs/v1-mvp.md): Promoted Milestone M1.9 (Blazor WASM Client) to **COMPLETED** following end-to-end user browser validation.
+* **Test Suite**: 93 tests passing (100% pass rate).
+
+---
 
 ### [93addfc](https://github.com/Dvrkstvr/tak-p2p/commit/93addfc) - README Streamlining & Milestone Deferral
 * **Timestamp**: `2026-09-12T07:16:18+02:00`
