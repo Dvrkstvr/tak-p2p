@@ -6,7 +6,9 @@ This document tracks all project milestones, architectural additions, and commit
 
 ## Commit & Milestone Timeline
 
-| [`c4276b0`](https://github.com/Dvrkstvr/tak-p2p/commit/c4276b0) | 2026-09-12 08:10:00 | **Avalonia Native Mobile (Android & iPad/iOS)** | Scaffolded `TakApp.Avalonia.Android` (targeting `net10.0-android`, APK output, splash screen, permissions) and `TakApp.Avalonia.iOS` (targeting `net10.0-ios`, iPad & iPhone device family profiles), transitioned `TakApp.Avalonia` into shared cross-platform library and `TakApp.Avalonia.Desktop` into desktop executable; 107 passing unit tests. | 107 |
+| Commit | Timestamp (UTC+2) | Milestone / Scope | Key Deliverables | Tests Passing |
+| --- | --- | --- | --- | --- |
+| [`2d5eee2`](https://github.com/Dvrkstvr/tak-p2p/commit/2d5eee2) | 2026-09-12 08:10:00 | **Avalonia Native Mobile (Android & iPad/iOS)** | Scaffolded `TakApp.Avalonia.Android` (targeting `net10.0-android`, APK output, splash screen, permissions) and `TakApp.Avalonia.iOS` (targeting `net10.0-ios`, iPad & iPhone device family profiles), transitioned `TakApp.Avalonia` into shared cross-platform library and `TakApp.Avalonia.Desktop` into desktop executable; 107 passing unit tests. | 107 |
 | [`114436a`](https://github.com/Dvrkstvr/tak-p2p/commit/114436a) | 2026-09-12 08:09:18 | **Nostr Player Nicknames & Profiles** | Implemented Nostr `kind: 0` user profile publishing and metadata queries with in-memory caching, custom nickname support in `InviteCode` URIs/tokens, Profile modal in Blazor WASM, and nickname badges in game headers; 107 passing unit tests. | 107 |
 | [`c330c89`](https://github.com/Dvrkstvr/tak-p2p/commit/c330c89) | 2026-09-12 07:56:47 | **Invite UX & Multi-Device Nostr Linking** | Implemented NIP-19 `npub`/`nsec` Bech32 codec, 1-click playable web invite links (`/?invite=TAK1_...`), native SVG QR code generator via `Net.Codecrete.QrCodeGenerator`, Web Share API (`navigator.share`), URL query challenge detection, and multi-device 'Link Mobile / Devices' pairing modal; 104 passing unit tests. | 104 |
 | [`23caed5`](https://github.com/Dvrkstvr/tak-p2p/commit/23caed5) | 2026-09-12 07:48:07 | **Offline AI Practice Bot** | Implemented `MinimaxTakBot` and `TakEvaluator` with Alpha-Beta pruning, in-memory `Clone`, `GetAllLegalMoves`, Blazor WASM AI practice mode with difficulty picker, and CLI vs AI option; 100 passing unit tests. | 100 |
@@ -32,7 +34,7 @@ This document tracks all project milestones, architectural additions, and commit
 
 ## Detailed Entry Logs
 
-### [c4276b0](https://github.com/Dvrkstvr/tak-p2p/commit/c4276b0) - Avalonia Native Mobile Scaffolding (Android & iPad/iOS)
+### [2d5eee2](https://github.com/Dvrkstvr/tak-p2p/commit/2d5eee2) - Avalonia Native Mobile Scaffolding (Android & iPad/iOS)
 * **Timestamp**: `2026-09-12T08:10:00+02:00`
 * **Author**: Calvin Kohl
 * **Scope**: Scaffolding native mobile projects for Android (phone/tablet) and iPad/iOS using Avalonia UI's canonical multi-platform architecture.
