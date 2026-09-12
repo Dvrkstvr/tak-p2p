@@ -5,6 +5,7 @@ using Spectre.Console;
 using TakApp.Cli.Input;
 using TakApp.Cli.Rendering;
 using TakEngine.Abstractions;
+using TakEngine.Core.AI;
 using TakEngine.Core.Board;
 using TakEngine.Core.Cryptography;
 using TakEngine.Core.Serialization;
@@ -31,13 +32,14 @@ public static class Program
 
             AnsiConsole.MarkupLine("[bold cyan]MAIN MENU[/]");
             AnsiConsole.MarkupLine("[[1]] Local Match (Pass & Play)");
-            AnsiConsole.MarkupLine("[[2]] Quick Play Match (Nostr P2P)");
-            AnsiConsole.MarkupLine("[[3]] Create Direct Invite Code");
-            AnsiConsole.MarkupLine("[[4]] Join via Direct Invite Code");
-            AnsiConsole.MarkupLine("[[5]] Exit");
+            AnsiConsole.MarkupLine("[[2]] Practice vs AI Bot (Offline)");
+            AnsiConsole.MarkupLine("[[3]] Quick Play Match (Nostr P2P)");
+            AnsiConsole.MarkupLine("[[4]] Create Direct Invite Code");
+            AnsiConsole.MarkupLine("[[5]] Join via Direct Invite Code");
+            AnsiConsole.MarkupLine("[[6]] Exit");
             AnsiConsole.WriteLine();
 
-            AnsiConsole.Markup("Select option [[1-5]]: ");
+            AnsiConsole.Markup("Select option [[1-6]]: ");
             string? choice = Console.ReadLine()?.Trim();
             if (choice == null)
             {
@@ -50,15 +52,18 @@ public static class Program
                     await PlayLocalMatchAsync(storage);
                     break;
                 case "2":
-                    await PlayQuickPlayAsync(storage);
+                    await PlayVsAiMatchAsync(storage);
                     break;
                 case "3":
-                    CreateInviteCode();
+                    await PlayQuickPlayAsync(storage);
                     break;
                 case "4":
-                    await JoinInviteCodeAsync(storage);
+                    CreateInviteCode();
                     break;
                 case "5":
+                    await JoinInviteCodeAsync(storage);
+                    break;
+                case "6":
                 case "exit":
                 case "q":
                     AnsiConsole.MarkupLine("[grey]Goodbye![/]");
@@ -157,6 +162,132 @@ public static class Program
                 }
 
                 lastMoveStr = cmd.Move.ToPtn();
+                string tpsSnapshot = TpsSerializer.Serialize(board);
+                string stateHash = StateHasher.ComputeStateHash(prevStateHash, moveIndex, keyPair.PublicKeyHex, lastMoveStr, tpsSnapshot);
+                string signature = CryptoSigner.Sign(keyPair.PrivateKeyHex, stateHash);
+
+                var moveEntity = new MoveEntity(
+                    GameId: gameId,
+                    TurnIndex: moveIndex++,
+                    PlayerPubKey: keyPair.PublicKeyHex,
+                    PtnMove: lastMoveStr,
+                    TpsSnapshot: tpsSnapshot,
+                    StateHash: stateHash,
+                    PrevStateHash: prevStateHash,
+                    TimestampUtc: DateTime.UtcNow,
+                    Signature: signature);
+
+                await storage.AppendMoveAsync(moveEntity);
+                prevStateHash = stateHash;
+            }
+        }
+
+        // Final board display
+        SafeClear();
+        RenderHeader();
+        AnsiBoardRenderer.Render(board, lastMoveStr);
+
+        var winner = board.Result?.Winner;
+        string reason = board.Result?.Reason.ToString() ?? "";
+
+        var winPanel = new Panel(
+            new Markup($"[bold green]Game Over![/]\nWinner: [bold yellow]{winner?.ToString() ?? "Draw"}[/] ({reason})\nSaved to database (Game ID: [grey]{gameId}[/])"))
+            .Header("[bold gold1]MATCH RESULT[/]")
+            .BorderColor(Color.Gold1);
+
+        AnsiConsole.Write(winPanel);
+        AnsiConsole.WriteLine();
+        AnsiConsole.MarkupLine("Press Enter to return to main menu...");
+        Console.ReadLine();
+    }
+
+    private static async Task PlayVsAiMatchAsync(SqliteGameStorage storage)
+    {
+        SafeClear();
+        RenderHeader();
+
+        AnsiConsole.MarkupLine("[bold cyan]PRACTICE VS AI PRACTICE BOT[/]");
+        AnsiConsole.Markup("Choose Board Size ([[4]], [[5]], [[6]], default 5): ");
+        string? sizeInput = Console.ReadLine()?.Trim();
+        BoardSize size = sizeInput switch
+        {
+            "4" => BoardSize.Four,
+            "6" => BoardSize.Six,
+            _ => BoardSize.Five
+        };
+
+        AnsiConsole.Markup("Choose Difficulty ([[1]] Easy, [[2]] Medium, [[3]] Hard, default 2): ");
+        string? diffInput = Console.ReadLine()?.Trim();
+        BotDifficulty difficulty = diffInput switch
+        {
+            "1" => BotDifficulty.Easy,
+            "3" => BotDifficulty.Hard,
+            _ => BotDifficulty.Medium
+        };
+
+        AnsiConsole.Markup("Choose Your Color ([[W]]hite, [[B]]lack, default White): ");
+        string? colorInput = Console.ReadLine()?.Trim().ToLowerInvariant();
+        PlayerColor humanColor = colorInput == "b" || colorInput == "black" ? PlayerColor.Black : PlayerColor.White;
+        PlayerColor botColor = humanColor == PlayerColor.White ? PlayerColor.Black : PlayerColor.White;
+
+        var bot = new MinimaxTakBot(difficulty);
+        var board = new GameBoard(size);
+        var gameId = Guid.NewGuid();
+        var keyPair = CryptoSigner.GenerateKeyPair();
+        string genesisHash = StateHasher.ComputeGenesisHash(size);
+        string prevStateHash = genesisHash;
+        int moveIndex = 1;
+
+        var gameEntity = new GameEntity(
+            Id: gameId,
+            BoardSize: size,
+            LocalPlayerColor: humanColor,
+            OpponentPubKey: $"BOT_{difficulty.ToString().ToUpperInvariant()}",
+            Status: GameStatus.Active,
+            WinnerPubKey: null,
+            StartedAt: DateTime.UtcNow,
+            LastUpdatedAt: DateTime.UtcNow);
+
+        await storage.CreateGameAsync(gameEntity);
+
+        string? lastMoveStr = null;
+        string? statusMessage = null;
+
+        while (board.Phase != GamePhase.Completed)
+        {
+            SafeClear();
+            RenderHeader();
+            AnsiBoardRenderer.Render(board, lastMoveStr, statusMessage);
+            statusMessage = null;
+
+            TakMove? move;
+            if (board.ActivePlayer == botColor)
+            {
+                AnsiConsole.MarkupLine($"[bold yellow]🤖 AI ({difficulty}) is thinking...[/]");
+                move = bot.SelectMove(board);
+            }
+            else
+            {
+                var cmd = SteppedCommandParser.PromptForMove(board);
+                if (cmd.Type == PlayerActionType.Resign)
+                {
+                    board.Resign(board.ActivePlayer);
+                    await storage.UpdateGameStatusAsync(gameId, GameStatus.Resigned, board.Result?.Winner?.ToString(), DateTime.UtcNow);
+                    break;
+                }
+                move = cmd.Move;
+            }
+
+            if (move != null)
+            {
+                var execResult = board.Execute(move);
+                if (!execResult.IsSuccess)
+                {
+                    statusMessage = $"[red]Illegal move: {execResult.ErrorMessage}[/]";
+                    continue;
+                }
+
+                lastMoveStr = move.ToPtn();
                 string tpsSnapshot = TpsSerializer.Serialize(board);
                 string stateHash = StateHasher.ComputeStateHash(prevStateHash, moveIndex, keyPair.PublicKeyHex, lastMoveStr, tpsSnapshot);
                 string signature = CryptoSigner.Sign(keyPair.PrivateKeyHex, stateHash);

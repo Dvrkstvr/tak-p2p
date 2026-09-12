@@ -15,6 +15,28 @@ public static class MoveValidator
         Direction.West
     ];
 
+    public static IReadOnlyList<TakMove> GetAllLegalMoves(GameBoard board)
+    {
+        var allMoves = new List<TakMove>();
+        if (board.Phase == GamePhase.Completed)
+            return allMoves;
+
+        int size = (int)board.Size;
+        for (int x = 0; x < size; x++)
+        {
+            for (int y = 0; y < size; y++)
+            {
+                var moves = GetLegalMovesForSquare(board, new Coord(x, y));
+                for (int i = 0; i < moves.Count; i++)
+                {
+                    allMoves.Add(moves[i]);
+                }
+            }
+        }
+
+        return allMoves;
+    }
+
     public static IReadOnlyList<TakMove> GetLegalMovesForSquare(GameBoard board, Coord coord)
     {
         var legalMoves = new List<TakMove>();

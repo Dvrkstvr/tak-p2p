@@ -30,12 +30,28 @@
                 }
             </div>
 
-            <button class="btn-tak btn-primary" @onclick="StartLocalGame">
-                ▶ Play Local (Pass & Play)
+            <!-- Bot Difficulty Picker -->
+            <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.3); padding: 0.35rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--bg-card-border);">
+                <span style="font-size: 0.85rem; color: var(--text-muted);">AI:</span>
+                @foreach (var diff in new[] { BotDifficulty.Easy, BotDifficulty.Medium, BotDifficulty.Hard })
+                {
+                    <button class="btn-tak btn-sm @(SelectedDifficulty == diff ? "btn-cyan" : "btn-ghost")"
+                            @onclick="() => SelectedDifficulty = diff">
+                        @diff
+                    </button>
+                }
+            </div>
+
+            <button class="btn-tak btn-cyan" @onclick="StartBotGame">
+                🤖 Practice vs AI
             </button>
 
-            <button class="btn-tak btn-cyan" @onclick="OpenCreateInvite">
-                🔗 Create Direct Invite
+            <button class="btn-tak btn-primary" @onclick="StartLocalGame">
+                ▶ Pass & Play
+            </button>
+
+            <button class="btn-tak btn-ghost" @onclick="OpenCreateInvite">
+                🔗 Direct Invite
             </button>
 
             <button class="btn-tak btn-ghost" @onclick="OpenJoinModal">
@@ -85,10 +101,17 @@
 
 @code {
     private BoardSize SelectedSize { get; set; } = BoardSize.Five;
+    private BotDifficulty SelectedDifficulty { get; set; } = BotDifficulty.Medium;
     private bool IsInviteModalOpen { get; set; }
     private bool IsInviteGenerateMode { get; set; } = true;
     private string InviteModalTitle { get; set; } = "Direct Invite";
     private string GeneratedInviteCode { get; set; } = "";
+
+    private void StartBotGame()
+    {
+        Session.StartBotMatch(SelectedSize, SelectedDifficulty, PlayerColor.White);
+        Nav.NavigateTo("play");
+    }
 
     private void StartLocalGame()
     {

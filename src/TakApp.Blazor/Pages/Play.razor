@@ -33,6 +33,11 @@
         <div class="glass-panel panel-section">
             <span class="panel-title">Game Invariant Status</span>
             <div style="font-size: 0.8rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 0.35rem;">
+                <div>Mode: <strong>@(Session.IsBotMatch ? $"🤖 AI Practice ({Session.BotDifficulty})" : (Session.IsLocalOnly ? "Pass & Play" : "Nostr Remote"))</strong></div>
+                @if (Session.IsBotThinking)
+                {
+                    <div style="color: var(--accent-gold); font-weight: 600;">⏳ AI is thinking...</div>
+                }
                 <div>Board: <strong>@((int)Session.CurrentSize)x@((int)Session.CurrentSize)</strong></div>
                 <div>Carry Limit: <strong>@((int)Session.CurrentSize)</strong></div>
                 <div>Hash: <span style="font-family: var(--font-mono); color: #38bdf8; font-size: 0.75rem;">@(Session.PrevStateHash?[..16] ?? "GENESIS")...</span></div>
@@ -105,7 +110,7 @@
     private void HandleSquareClick(Coord coord)
     {
         ErrorMessage = null;
-        if (Session.Board == null) return;
+        if (Session.Board == null || Session.IsBotThinking) return;
 
         var stack = Session.Board.GetStack(coord);
 

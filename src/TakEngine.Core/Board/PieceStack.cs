@@ -58,4 +58,14 @@ public sealed class PieceStack
     {
         return new StackSnapshot(position, _pieces.ToArray());
     }
+
+    public PieceStack Clone()
+    {
+        var clone = new PieceStack();
+        for (int i = 0; i < _pieces.Count; i++)
+        {
+            clone.Push(_pieces[i]);
+        }
+        return clone;
+    }
 }

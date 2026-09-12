@@ -405,6 +405,52 @@ public sealed class GameBoard
             BlackReserves);
     }
 
+    public GameBoard Clone()
+    {
+        var clone = new GameBoard(Size)
+        {
+            TurnNumber = TurnNumber,
+            ActivePlayer = ActivePlayer,
+            Phase = Phase,
+            Result = Result,
+            WhiteReserves = WhiteReserves,
+            BlackReserves = BlackReserves
+        };
+
+        for (int x = 0; x < _sizeInt; x++)
+        {
+            for (int y = 0; y < _sizeInt; y++)
+            {
+                clone._grid[x, y] = _grid[x, y].Clone();
+            }
+        }
+
+        return clone;
+    }
+
+    public static GameBoard FromSnapshot(TakBoardSnapshot snapshot)
+    {
+        var board = new GameBoard(snapshot.Size)
+        {
+            TurnNumber = snapshot.TurnNumber,
+            ActivePlayer = snapshot.ActivePlayer,
+            Phase = snapshot.TurnNumber <= 2 ? GamePhase.FirstTurnPlacement : GamePhase.Playing,
+            WhiteReserves = snapshot.WhiteReserves,
+            BlackReserves = snapshot.BlackReserves
+        };
+
+        foreach (var (coord, stackSnapshot) in snapshot.Stacks)
+        {
+            var stack = board._grid[coord.X, coord.Y];
+            for (int i = 0; i < stackSnapshot.Pieces.Count; i++)
+            {
+                stack.Push(stackSnapshot.Pieces[i]);
+            }
+        }
+
+        return board;
+    }
+
     private void ValidateBounds(Coord coord)
     {
         if (!IsInBounds(coord))

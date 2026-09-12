@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using TakEngine.Abstractions;
+using TakEngine.Core.AI;
 using TakEngine.Core.Board;
 using TakEngine.Core.Cryptography;
 using TakEngine.Core.Rules;
@@ -23,6 +25,10 @@ public sealed class WebGameSessionManager
     public BoardSize CurrentSize { get; private set; } = BoardSize.Five;
     public PlayerColor LocalPlayerColor { get; private set; } = PlayerColor.White;
     public bool IsLocalOnly { get; private set; } = true;
+    public bool IsBotMatch { get; private set; }
+    public BotDifficulty? BotDifficulty { get; private set; }
+    public MinimaxTakBot? Bot { get; private set; }
+    public bool IsBotThinking { get; private set; }
     public string? OpponentPubKey { get; private set; }
 
     public List<string> MoveHistoryPtn { get; } = new();
@@ -40,6 +46,10 @@ public sealed class WebGameSessionManager
         GameId = Guid.NewGuid();
         LocalPlayerColor = PlayerColor.White;
         IsLocalOnly = true;
+        IsBotMatch = false;
+        BotDifficulty = null;
+        Bot = null;
+        IsBotThinking = false;
         OpponentPubKey = null;
 
         MoveHistoryPtn.Clear();
@@ -49,6 +59,33 @@ public sealed class WebGameSessionManager
         WinningRoadCoords.Clear();
 
         NotifyStateChanged();
+    }
+
+    public void StartBotMatch(BoardSize size, BotDifficulty difficulty, PlayerColor humanColor = PlayerColor.White)
+    {
+        CurrentSize = size;
+        Board = new GameBoard(size);
+        GameId = Guid.NewGuid();
+        LocalPlayerColor = humanColor;
+        IsLocalOnly = false;
+        IsBotMatch = true;
+        BotDifficulty = difficulty;
+        Bot = new MinimaxTakBot(difficulty);
+        IsBotThinking = false;
+        OpponentPubKey = $"BOT_{difficulty.ToString().ToUpperInvariant()}";
+
+        MoveHistoryPtn.Clear();
+        LastMovePtn = null;
+        GenesisHash = StateHasher.ComputeGenesisHash(size);
+        PrevStateHash = GenesisHash;
+        WinningRoadCoords.Clear();
+
+        NotifyStateChanged();
+
+        if (Board.ActivePlayer != LocalPlayerColor)
+        {
+            _ = TriggerBotMoveAsync();
+        }
     }
 
     public CommandResult ExecuteMove(TakMove move)
@@ -86,7 +123,37 @@ public sealed class WebGameSessionManager
         }
 
         NotifyStateChanged();
+
+        if (IsBotMatch && Board.Phase != GamePhase.Completed && Board.ActivePlayer != LocalPlayerColor)
+        {
+            _ = TriggerBotMoveAsync();
+        }
+
         return CommandResult.Success();
+    }
+
+    private async Task TriggerBotMoveAsync()
+    {
+        if (Board == null || Bot == null || Board.Phase == GamePhase.Completed)
+            return;
+
+        IsBotThinking = true;
+        NotifyStateChanged();
+
+        // Brief delay (350ms) for human ergonomics and UI transition
+        await Task.Delay(350);
+
+        try
+        {
+            var move = Bot.SelectMove(Board);
+            IsBotThinking = false;
+            ExecuteMove(move);
+        }
+        catch
+        {
+            IsBotThinking = false;
+            NotifyStateChanged();
+        }
     }
 
     public CommandResult Resign(PlayerColor player)
