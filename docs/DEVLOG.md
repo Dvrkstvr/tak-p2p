@@ -8,6 +8,8 @@ This document tracks all project milestones, architectural additions, and commit
 
 | Commit | Timestamp (UTC+2) | Milestone / Scope | Key Deliverables | Tests Passing |
 | --- | --- | --- | --- | --- |
+| [`4c40d56`](https://github.com/Dvrkstvr/tak-p2p/commit/4c40d56) | 2026-09-12 07:00:51 | **Workflow & Blazor Components** | Codified `AGENTS.md` and `.agents/rules/devlog-maintenance.md`; implemented Blazor interactive SVG board and UI components. | 84 |
+| [`a5e0e01`](https://github.com/Dvrkstvr/tak-p2p/commit/a5e0e01) | 2026-09-12 06:58:57 | **DevLog Foundation** | Created initial `docs/DEVLOG.md` tracking all commits, timestamps, deliverables, and test metrics. | 84 |
 | [`ea3fab7`](https://github.com/Dvrkstvr/tak-p2p/commit/ea3fab7) | 2026-09-12 06:57:02 | **Documentation Sync** | Synced `README.md`, `v1-mvp.md`, `system-overview.md`, `PROJECT_SPECIFICATION.md` with M1.1–M1.7, Blazor WASM, and Spectator features. | 84 |
 | [`eb303e8`](https://github.com/Dvrkstvr/tak-p2p/commit/eb303e8) | 2026-09-12 06:54:26 | **Milestone M1.7** | Spectre.Console CLI UI: ANSI board renderer, conversational stepped typed input, stack inspector, interactive menus. | 84 |
 | [`9e7cb32`](https://github.com/Dvrkstvr/tak-p2p/commit/9e7cb32) | 2026-09-12 06:46:25 | **Milestone M1.6** | Time & Stale System: RFC 5905 NTP network time service, Day 3 stale match alerts, Day 7 auto-draw timeouts. | 84 |
@@ -21,6 +23,34 @@ This document tracks all project milestones, architectural additions, and commit
 ---
 
 ## Detailed Entry Logs
+
+### [4c40d56](https://github.com/Dvrkstvr/tak-p2p/commit/4c40d56) - Agent Rules & Blazor Interactive Components
+* **Timestamp**: `2026-09-12T07:00:51+02:00`
+* **Author**: Calvin Kohl
+* **Scope**: Coding agent automation rules and Blazor WebAssembly frontend components.
+* **Changes**:
+  * [AGENTS.md](file:///e:/repos/tak-p2p/AGENTS.md): Codified project architectural invariants, strict DevLog maintenance protocol, and documentation cross-reference map for all AI agents.
+  * [.agents/rules/devlog-maintenance.md](file:///e:/repos/tak-p2p/.agents/rules/devlog-maintenance.md): Workspace rule mandating that every milestone and commit updates `docs/DEVLOG.md` with commit hashes, test results, and timestamps.
+  * [TakBoardView.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Board/TakBoardView.razor): Scalable SVG 2D board with responsive square selection, move direction indicators, and drag-and-drop support.
+  * [PieceStackSvg.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Board/PieceStackSvg.razor): 3D isometric SVG rendering of piece stacks, capstones, and standing walls.
+  * [PieceInventoryView.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Board/PieceInventoryView.razor): Player piece reserve inventory trays.
+  * [StackSlideBar.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Board/StackSlideBar.razor): Slide drop distribution widget for tower movements.
+  * [InviteModal.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Modals/InviteModal.razor): Direct invite and QR code token exchange modal.
+  * [GameStatusHeader.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Panels/GameStatusHeader.razor) & [MoveHistoryPanel.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Panels/MoveHistoryPanel.razor): Turn indicators, clocks, and live PTN move scrubber.
+  * [Play.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Pages/Play.razor): Main game page integrating local and online Nostr multiplayer.
+* **Test Suite**: 84 tests passing.
+
+---
+
+### [a5e0e01](https://github.com/Dvrkstvr/tak-p2p/commit/a5e0e01) - Initial DevLog Creation
+* **Timestamp**: `2026-09-12T06:58:57+02:00`
+* **Author**: Calvin Kohl
+* **Scope**: Project progress auditing and historical milestone tracking.
+* **Changes**:
+  * [docs/DEVLOG.md](file:///e:/repos/tak-p2p/docs/DEVLOG.md): Comprehensive timeline table and entry logs for all initial commits from `5faacbe` through `ea3fab7`.
+* **Test Suite**: 84 tests passing.
+
+---
 
 ### [ea3fab7](https://github.com/Dvrkstvr/tak-p2p/commit/ea3fab7) - Documentation Synchronization
 * **Timestamp**: `2026-09-12T06:57:02+02:00`
