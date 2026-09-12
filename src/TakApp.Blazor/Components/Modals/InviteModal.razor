@@ -1,0 +1,94 @@
+@inject IJSRuntime JS
+
+@if (IsOpen)
+{
+    <div class="modal-backdrop" @onclick="Close">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="font-size: 1.2rem; font-weight: 700; color: #f1f5f9;">@Title</h3>
+                <button class="btn-tak btn-ghost btn-sm" @onclick="Close">✕</button>
+            </div>
+
+            @if (IsGenerateMode)
+            {
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+                    Share this invite code or link with your opponent. As soon as they enter it, your match will sync over public Nostr relays.
+                </p>
+
+                <div style="background: rgba(0,0,0,0.4); border: 1px solid var(--bg-card-border); padding: 0.75rem; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 0.85rem; word-break: break-all; margin-bottom: 1rem; color: #38bdf8;">
+                    @InviteCode
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                    <button class="btn-tak btn-primary" @onclick="CopyToClipboard">
+                        📋 @(Copied ? "Copied!" : "Copy Link")
+                    </button>
+                    <button class="btn-tak btn-ghost" @onclick="Close">Done</button>
+                </div>
+            }
+            else
+            {
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+                    Paste a Tak direct invite code or URL from your opponent:
+                </p>
+
+                <input type="text"
+                       @bind="InputCode"
+                       placeholder="TAK1_... or tak://..."
+                       style="width: 100%; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); color: #f1f5f9; font-family: var(--font-mono); margin-bottom: 1rem;" />
+
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                    <button class="btn-tak btn-cyan" @onclick="SubmitJoin">
+                        Join Match
+                    </button>
+                    <button class="btn-tak btn-ghost" @onclick="Close">Cancel</button>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public bool IsGenerateMode { get; set; } = true;
+    [Parameter] public string Title { get; set; } = "Direct Invite";
+    [Parameter] public string InviteCode { get; set; } = "";
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<string> OnJoinCodeSubmitted { get; set; }
+
+    private string InputCode { get; set; } = "";
+    private bool Copied { get; set; } = false;
+
+    private async Task CopyToClipboard()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", InviteCode);
+            Copied = true;
+            StateHasChanged();
+        }
+        catch
+        {
+            // fallback
+        }
+    }
+
+    private async Task SubmitJoin()
+    {
+        if (!string.IsNullOrWhiteSpace(InputCode) && OnJoinCodeSubmitted.HasDelegate)
+        {
+            await OnJoinCodeSubmitted.InvokeAsync(InputCode.Trim());
+            InputCode = "";
+            await Close();
+        }
+    }
+
+    private async Task Close()
+    {
+        Copied = false;
+        if (OnClose.HasDelegate)
+        {
+            await OnClose.InvokeAsync();
+        }
+    }
+}

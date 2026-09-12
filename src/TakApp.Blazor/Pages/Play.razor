@@ -1,0 +1,221 @@
+@page "/play"
+@inject WebGameSessionManager Session
+@inject NavigationManager Nav
+@inject BrowserStorage Storage
+@implements IDisposable
+
+<div class="arena-container">
+    
+    <!-- Left Column: White Inventory & Quick Match Info -->
+    <div class="side-panel">
+        <div class="glass-panel panel-section">
+            <span class="panel-title">Players</span>
+            <PieceInventoryView Board="@Session.Board"
+                                Color="PlayerColor.White"
+                                SelectedPieceType="@SelectedPieceType"
+                                OnPieceSelected="HandlePieceSelected" />
+
+            <div style="height: 0.5rem;"></div>
+
+            <PieceInventoryView Board="@Session.Board"
+                                Color="PlayerColor.Black"
+                                SelectedPieceType="@SelectedPieceType"
+                                OnPieceSelected="HandlePieceSelected" />
+        </div>
+
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div style="background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.4); border-radius: var(--radius-sm); padding: 0.75rem; color: #fda4af; font-size: 0.85rem;">
+                ⚠️ @ErrorMessage
+            </div>
+        }
+
+        <div class="glass-panel panel-section">
+            <span class="panel-title">Game Invariant Status</span>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 0.35rem;">
+                <div>Board: <strong>@((int)Session.CurrentSize)x@((int)Session.CurrentSize)</strong></div>
+                <div>Carry Limit: <strong>@((int)Session.CurrentSize)</strong></div>
+                <div>Hash: <span style="font-family: var(--font-mono); color: #38bdf8; font-size: 0.75rem;">@(Session.PrevStateHash?[..16] ?? "GENESIS")...</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Center Column: Board & Action Controls -->
+    <div style="display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 580px;">
+        <div style="width: 100%; margin-bottom: 1rem;">
+            <GameStatusHeader Board="@Session.Board"
+                              OnResignRequested="HandleResign"
+                              OnNewGameRequested="HandleLeave" />
+        </div>
+
+        <!-- SVG Board -->
+        <TakBoardView Board="@Session.Board"
+                      SelectedCoord="@SelectedCoord"
+                      LastMoveTarget="@LastMoveTarget"
+                      LegalTargets="@LegalPlacementTargets"
+                      WinningRoad="@Session.WinningRoadCoords"
+                      OnSquareClick="HandleSquareClick" />
+
+        <!-- Stack Slide Bar (appears when a stack is selected) -->
+        <StackSlideBar OriginCoord="@SlideOriginCoord"
+                       Board="@Session.Board"
+                       OnSlideConfirmed="HandleSlideConfirmed"
+                       OnCancelRequested="HandleSlideCancelled" />
+    </div>
+
+    <!-- Right Column: Move History -->
+    <div class="side-panel">
+        <MoveHistoryPanel Moves="@Session.MoveHistoryPtn" />
+    </div>
+
+</div>
+
+@code {
+    private Coord? SelectedCoord { get; set; }
+    private Coord? SlideOriginCoord { get; set; }
+    private Coord? LastMoveTarget { get; set; }
+    private PieceType? SelectedPieceType { get; set; } = PieceType.Flat;
+    private HashSet<Coord> LegalPlacementTargets { get; set; } = new();
+    private string? ErrorMessage { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Session.Board == null)
+        {
+            Session.StartLocalMatch(BoardSize.Five);
+        }
+
+        Session.OnStateChanged += HandleSessionChanged;
+        RefreshLegalTargets();
+    }
+
+    private void HandleSessionChanged()
+    {
+        RefreshLegalTargets();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandlePieceSelected(PieceType type)
+    {
+        SelectedPieceType = type;
+        SlideOriginCoord = null;
+        RefreshLegalTargets();
+    }
+
+    private void HandleSquareClick(Coord coord)
+    {
+        ErrorMessage = null;
+        if (Session.Board == null) return;
+
+        var stack = Session.Board.GetStack(coord);
+
+        // Case A: Square is empty -> place piece
+        if (stack.IsEmpty)
+        {
+            SlideOriginCoord = null;
+            SelectedCoord = coord;
+
+            PieceType pieceToPlace = SelectedPieceType ?? PieceType.Flat;
+            var move = new PlaceMove(coord, pieceToPlace);
+            var result = Session.ExecuteMove(move);
+
+            if (!result.IsSuccess)
+            {
+                ErrorMessage = result.ErrorMessage;
+            }
+            else
+            {
+                LastMoveTarget = coord;
+                SelectedCoord = null;
+            }
+        }
+        // Case B: Square is occupied
+        else
+        {
+            // If owned by active player and not first turn placement, open slide bar
+            if (Session.Board.Phase == GamePhase.Playing && stack.Owner == Session.Board.ActivePlayer)
+            {
+                SelectedCoord = coord;
+                SlideOriginCoord = coord;
+            }
+            else
+            {
+                SlideOriginCoord = null;
+                SelectedCoord = coord;
+            }
+        }
+
+        RefreshLegalTargets();
+    }
+
+    private void HandleSlideConfirmed(SlideMove move)
+    {
+        ErrorMessage = null;
+        var res = Session.ExecuteMove(move);
+        if (!res.IsSuccess)
+        {
+            ErrorMessage = res.ErrorMessage;
+        }
+        else
+        {
+            // Last step destination
+            (int dx, int dy) = move.Direction switch
+            {
+                Direction.North => (0, 1),
+                Direction.South => (0, -1),
+                Direction.East => (1, 0),
+                Direction.West => (-1, 0),
+                _ => (0, 0)
+            };
+            LastMoveTarget = new Coord(move.Origin.X + dx * move.Drops.Count, move.Origin.Y + dy * move.Drops.Count);
+            SlideOriginCoord = null;
+            SelectedCoord = null;
+        }
+
+        RefreshLegalTargets();
+    }
+
+    private void HandleSlideCancelled()
+    {
+        SlideOriginCoord = null;
+        SelectedCoord = null;
+        RefreshLegalTargets();
+    }
+
+    private void HandleResign()
+    {
+        if (Session.Board != null)
+        {
+            Session.Resign(Session.Board.ActivePlayer);
+        }
+    }
+
+    private void HandleLeave()
+    {
+        Nav.NavigateTo("");
+    }
+
+    private void RefreshLegalTargets()
+    {
+        LegalPlacementTargets.Clear();
+        if (Session.Board == null || Session.Board.Phase == GamePhase.Completed) return;
+
+        int size = (int)Session.Board.Size;
+        for (int x = 0; x < size; x++)
+        {
+            for (int y = 0; y < size; y++)
+            {
+                var c = new Coord(x, y);
+                if (Session.Board.GetStack(c).IsEmpty)
+                {
+                    LegalPlacementTargets.Add(c);
+                }
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        Session.OnStateChanged -= HandleSessionChanged;
+    }
+}

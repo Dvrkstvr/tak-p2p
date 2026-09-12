@@ -289,6 +289,18 @@ body {
   filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.4));
 }
 
+.piece-layer-white {
+  fill: #cbd5e1;
+  stroke: #94a3b8;
+  stroke-width: 1;
+}
+
+.piece-layer-black {
+  fill: #0f172a;
+  stroke: #334155;
+  stroke-width: 1;
+}
+
 .piece-flat-black {
   fill: url(#grad-black-flat);
   stroke: #475569;

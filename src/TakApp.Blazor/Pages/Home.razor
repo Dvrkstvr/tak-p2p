@@ -1,7 +1,134 @@
-﻿@page "/"
+@page "/"
+@inject WebGameSessionManager Session
+@inject NavigationManager Nav
+@inject BrowserStorage Storage
 
-<PageTitle>Home</PageTitle>
+<div style="max-width: 960px; margin: 2.5rem auto; padding: 0 1.5rem;">
+    
+    <!-- Hero Banner -->
+    <div class="glass-panel" style="padding: 2.5rem; text-align: center; margin-bottom: 2rem; position: relative; overflow: hidden;">
+        <div style="display: inline-block; font-size: 2.5rem; margin-bottom: 0.5rem;">◈</div>
+        <h1 style="font-size: 2.5rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.75rem; background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 50%, #f59e0b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            TAK P2P
+        </h1>
+        <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 620px; margin: 0 auto 1.5rem auto;">
+            A beautiful, decentralized, zero-server implementation of the abstract strategy game <strong>Tak</strong>. 
+            Play instantly in your browser with zero install.
+        </p>
 
-<h1>Hello, world!</h1>
+        <!-- Quick Start Buttons -->
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1.5rem;">
+            <!-- Board Size Picker -->
+            <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.3); padding: 0.35rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--bg-card-border);">
+                <span style="font-size: 0.85rem; color: var(--text-muted);">Size:</span>
+                @foreach (var size in new[] { BoardSize.Four, BoardSize.Five, BoardSize.Six })
+                {
+                    <button class="btn-tak btn-sm @(SelectedSize == size ? "btn-primary" : "btn-ghost")"
+                            @onclick="() => SelectedSize = size">
+                        @((int)size)x@((int)size)
+                    </button>
+                }
+            </div>
 
-Welcome to your new app.
+            <button class="btn-tak btn-primary" @onclick="StartLocalGame">
+                ▶ Play Local (Pass & Play)
+            </button>
+
+            <button class="btn-tak btn-cyan" @onclick="OpenCreateInvite">
+                🔗 Create Direct Invite
+            </button>
+
+            <button class="btn-tak btn-ghost" @onclick="OpenJoinModal">
+                📥 Join Game
+            </button>
+        </div>
+    </div>
+
+    <!-- Feature Architecture Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+        
+        <div class="glass-panel panel-section">
+            <div style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #f59e0b;">⚡</div>
+            <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.35rem;">Zero Server Dependency</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary);">
+                All game rules, carry limits, and DFS road detection run locally inside your browser via WebAssembly.
+            </p>
+        </div>
+
+        <div class="glass-panel panel-section">
+            <div style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #06b6d4;">🌐</div>
+            <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.35rem;">Nostr Relay Transport</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary);">
+                Communicate peer-to-peer across public encrypted WebSocket relays without requiring an account or central authority.
+            </p>
+        </div>
+
+        <div class="glass-panel panel-section">
+            <div style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #10b981;">🔒</div>
+            <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.35rem;">Cryptographic State Chaining</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary);">
+                Every move generates a SHA-256 state hash verified bit-for-bit across platforms, making illegal moves impossible to force.
+            </p>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Invite Modal -->
+<InviteModal IsOpen="@IsInviteModalOpen"
+             IsGenerateMode="@IsInviteGenerateMode"
+             Title="@InviteModalTitle"
+             InviteCode="@GeneratedInviteCode"
+             OnClose="() => IsInviteModalOpen = false"
+             OnJoinCodeSubmitted="HandleJoinCode" />
+
+@code {
+    private BoardSize SelectedSize { get; set; } = BoardSize.Five;
+    private bool IsInviteModalOpen { get; set; }
+    private bool IsInviteGenerateMode { get; set; } = true;
+    private string InviteModalTitle { get; set; } = "Direct Invite";
+    private string GeneratedInviteCode { get; set; } = "";
+
+    private void StartLocalGame()
+    {
+        Session.StartLocalMatch(SelectedSize);
+        Nav.NavigateTo("play");
+    }
+
+    private async Task OpenCreateInvite()
+    {
+        var (priv, pub) = await Storage.GetOrCreateKeypairAsync();
+        var invite = new InviteCode(
+            GameId: Guid.NewGuid(),
+            HostPubKey: pub,
+            BoardSize: SelectedSize,
+            Relays: new[] { "wss://relay.damus.io", "wss://nos.lol" });
+
+        GeneratedInviteCode = invite.ToCompactCode();
+        InviteModalTitle = $"Invite for {(int)SelectedSize}x{(int)SelectedSize} Match";
+        IsInviteGenerateMode = true;
+        IsInviteModalOpen = true;
+    }
+
+    private void OpenJoinModal()
+    {
+        InviteModalTitle = "Join Tak Match";
+        IsInviteGenerateMode = false;
+        IsInviteModalOpen = true;
+    }
+
+    private void HandleJoinCode(string code)
+    {
+        try
+        {
+            var payload = InviteCode.Parse(code);
+            Session.StartLocalMatch(payload.BoardSize);
+            Nav.NavigateTo("play");
+        }
+        catch
+        {
+            // Invalid code ignored
+        }
+    }
+}

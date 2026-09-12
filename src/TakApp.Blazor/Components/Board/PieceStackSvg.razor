@@ -1,0 +1,128 @@
+@using TakEngine.Abstractions
+@using TakEngine.Core.Board
+
+@if (Stack != null && !Stack.IsEmpty)
+{
+    var pieces = Stack.Pieces;
+    int count = pieces.Count;
+    var top = Stack.TopPiece!.Value;
+
+    <!-- Render base layers if height > 1 -->
+    @if (count > 1)
+    {
+        for (int i = 0; i < Math.Min(count - 1, 4); i++)
+        {
+            var p = pieces[i];
+            double layerOffsetY = -(i + 1) * 3.5;
+            string fillClass = p.Color == PlayerColor.White ? "piece-layer-white" : "piece-layer-black";
+
+            <ellipse cx="@CenterX"
+                     cy="@(CenterY + layerOffsetY)"
+                     rx="@(Radius * 0.88)"
+                     ry="@(Radius * 0.52)"
+                     class="@fillClass" />
+        }
+    }
+
+    <!-- Render top piece -->
+    double topOffsetY = -(count - 1) * 3.5;
+    double topY = CenterY + topOffsetY;
+
+    @if (top.Type == PieceType.Flat)
+    {
+        string flatClass = top.Color == PlayerColor.White ? "piece-flat-white" : "piece-flat-black";
+        <g>
+            <ellipse cx="@CenterX"
+                     cy="@topY"
+                     rx="@(Radius * 0.88)"
+                     ry="@(Radius * 0.52)"
+                     class="@flatClass" />
+            <ellipse cx="@CenterX"
+                     cy="@(topY - 1)"
+                     rx="@(Radius * 0.7)"
+                     ry="@(Radius * 0.38)"
+                     fill="none"
+                     stroke="@(top.Color == PlayerColor.White ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.15)")"
+                     stroke-width="1" />
+        </g>
+    }
+    else if (top.Type == PieceType.Standing)
+    {
+        string wallClass = top.Color == PlayerColor.White ? "piece-wall-white" : "piece-wall-black";
+        double wallWidth = Radius * 0.45;
+        double wallHeight = Radius * 1.35;
+        <g>
+            <!-- Drop shadow ellipse -->
+            <ellipse cx="@CenterX"
+                     cy="@(CenterY + 2)"
+                     rx="@(Radius * 0.6)"
+                     ry="@(Radius * 0.25)"
+                     fill="rgba(0,0,0,0.5)" />
+            <!-- Standing wall prism -->
+            <rect x="@(CenterX - wallWidth / 2)"
+                  y="@(topY - wallHeight * 0.8)"
+                  width="@wallWidth"
+                  height="@wallHeight"
+                  rx="3"
+                  class="@wallClass" />
+            <!-- Bevel ridge -->
+            <line x1="@CenterX"
+                  y1="@(topY - wallHeight * 0.75)"
+                  x2="@CenterX"
+                  y2="@(topY + wallHeight * 0.15)"
+                  stroke="@(top.Color == PlayerColor.White ? "#ffffff" : "#94a3b8")"
+                  stroke-width="1.5" />
+        </g>
+    }
+    else if (top.Type == PieceType.Capstone)
+    {
+        string capClass = top.Color == PlayerColor.White ? "piece-cap-white" : "piece-cap-black";
+        double capRadius = Radius * 0.75;
+        <g>
+            <!-- Drop shadow -->
+            <ellipse cx="@CenterX"
+                     cy="@(CenterY + 3)"
+                     rx="@(Radius * 0.75)"
+                     ry="@(Radius * 0.3)"
+                     fill="rgba(0,0,0,0.6)" />
+            <!-- Capstone body -->
+            <circle cx="@CenterX"
+                    cy="@(topY - 4)"
+                    r="@capRadius"
+                    class="@capClass" />
+            <!-- Inner crown ring -->
+            <circle cx="@CenterX"
+                    cy="@(topY - 4)"
+                    r="@(capRadius * 0.55)"
+                    fill="none"
+                    stroke="#f59e0b"
+                    stroke-width="1.8" />
+            <!-- Crown diamond / jewel -->
+            <polygon points="@($"{CenterX},{topY - 4 - capRadius * 0.3} {CenterX + capRadius * 0.3},{topY - 4} {CenterX},{topY - 4 + capRadius * 0.3} {CenterX - capRadius * 0.3},{topY - 4}")"
+                     fill="#f59e0b" />
+        </g>
+    }
+
+    <!-- Height badge if height > 1 -->
+    @if (count > 1)
+    {
+        <g transform="translate(@(CenterX + Radius * 0.55), @(topY - 8))">
+            <circle r="9" fill="#0f172a" stroke="#38bdf8" stroke-width="1.2" />
+            <text font-family="'JetBrains Mono', monospace"
+                  font-size="9"
+                  font-weight="700"
+                  fill="#f1f5f9"
+                  text-anchor="middle"
+                  dominant-baseline="central">
+                @count
+            </text>
+        </g>
+    }
+}
+
+@code {
+    [Parameter] public PieceStack? Stack { get; set; }
+    [Parameter] public double CenterX { get; set; }
+    [Parameter] public double CenterY { get; set; }
+    [Parameter] public double Radius { get; set; } = 28;
+}

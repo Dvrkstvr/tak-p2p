@@ -1,0 +1,69 @@
+@using TakEngine.Abstractions
+@using TakEngine.Core.Board
+
+@if (Board != null)
+{
+    var activeColor = Board.ActivePlayer;
+    var reserves = Color == PlayerColor.White ? Board.WhiteReserves : Board.BlackReserves;
+    bool isTurn = activeColor == Color && Board.Phase != GamePhase.Completed;
+    string badgeClass = Color == PlayerColor.White ? "badge-white" : "badge-black";
+    string colorName = Color.ToString();
+
+    <div class="inventory-tray @(isTurn ? "active-turn" : "")">
+        <div class="inventory-player">
+            <span class="player-badge @badgeClass"></span>
+            <div>
+                <strong style="font-size: 0.95rem;">@colorName</strong>
+                @if (isTurn)
+                {
+                    <span style="font-size: 0.75rem; color: #f59e0b; margin-left: 0.5rem; font-weight: 600;">ACTIVE TURN</span>
+                }
+            </div>
+        </div>
+
+        <div class="inventory-counts">
+            <!-- Flat Stone Button -->
+            <button class="inventory-item-btn @(SelectedPieceType == PieceType.Flat && isTurn ? "selected" : "")"
+                    disabled="@(!isTurn || reserves.Stones <= 0)"
+                    @onclick="() => SelectPiece(PieceType.Flat)">
+                <span>○ Flat</span>
+                <strong>@reserves.Stones</strong>
+            </button>
+
+            <!-- Standing Wall Button (only in Playing phase, not first turn swap) -->
+            @if (Board.Phase != GamePhase.FirstTurnPlacement)
+            {
+                <button class="inventory-item-btn @(SelectedPieceType == PieceType.Standing && isTurn ? "selected" : "")"
+                        disabled="@(!isTurn || reserves.Stones <= 0)"
+                        @onclick="() => SelectPiece(PieceType.Standing)">
+                    <span>▲ Wall</span>
+                </button>
+
+                @if (reserves.Capstones > 0 || (Board.Size != BoardSize.Four))
+                {
+                    <button class="inventory-item-btn @(SelectedPieceType == PieceType.Capstone && isTurn ? "selected" : "")"
+                            disabled="@(!isTurn || reserves.Capstones <= 0)"
+                            @onclick="() => SelectPiece(PieceType.Capstone)">
+                        <span>◈ Cap</span>
+                        <strong>@reserves.Capstones</strong>
+                    </button>
+                }
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public GameBoard? Board { get; set; }
+    [Parameter] public PlayerColor Color { get; set; }
+    [Parameter] public PieceType? SelectedPieceType { get; set; }
+    [Parameter] public EventCallback<PieceType> OnPieceSelected { get; set; }
+
+    private async Task SelectPiece(PieceType type)
+    {
+        if (OnPieceSelected.HasDelegate)
+        {
+            await OnPieceSelected.InvokeAsync(type);
+        }
+    }
+}

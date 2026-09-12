@@ -1,0 +1,135 @@
+@using TakEngine.Abstractions
+@using TakEngine.Core.Board
+@using TakEngine.Core.Rules
+
+@if (OriginCoord.HasValue && Board != null && AvailableSlideMoves.Any())
+{
+    var origin = OriginCoord.Value;
+    var stack = Board.GetStack(origin);
+
+    <div class="slide-control-bar">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.9rem; font-weight: 600; color: #38bdf8;">
+                Slide Stack from @origin.ToAlgebraic() (Height: @stack.Height, Carry Limit: @Board.CarryLimit)
+            </span>
+            <button class="btn-tak btn-ghost btn-sm" @onclick="OnCancel">✕ Cancel</button>
+        </div>
+
+        <!-- Direction Picker -->
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 0.85rem; color: #94a3b8;">1. Choose Direction:</span>
+            <div class="dir-buttons">
+                @foreach (var dir in new[] { Direction.North, Direction.West, Direction.East, Direction.South })
+                {
+                    bool hasMoves = AvailableSlideMoves.Any(m => m.Direction == dir);
+                    string arrow = dir switch
+                    {
+                        Direction.North => "↑",
+                        Direction.South => "↓",
+                        Direction.East => "→",
+                        Direction.West => "←",
+                        _ => "?"
+                    };
+
+                    <button class="btn-dir @(SelectedDirection == dir ? "selected" : "")"
+                            disabled="@(!hasMoves)"
+                            style="@(!hasMoves ? "opacity: 0.3; cursor: not-allowed;" : "")"
+                            @onclick="() => SelectDirection(dir)">
+                        @arrow
+                    </button>
+                }
+            </div>
+        </div>
+
+        <!-- Drop Distribution Picker for selected direction -->
+        @if (SelectedDirection.HasValue)
+        {
+            var matchingMoves = AvailableSlideMoves.Where(m => m.Direction == SelectedDirection.Value).ToList();
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.5rem;">
+                <span style="font-size: 0.85rem; color: #94a3b8;">2. Choose Drops (Squares & Counts):</span>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    @foreach (var move in matchingMoves)
+                    {
+                        string dropDesc = $"{move.LiftCount} piece{(move.LiftCount > 1 ? "s" : "")} → {string.Join("-", move.Drops)}";
+                        bool isSelected = SelectedMove == move;
+
+                        <button class="btn-tak @(isSelected ? "btn-primary" : "btn-ghost") btn-sm"
+                                @onclick="() => SelectMove(move)">
+                            @dropDesc
+                        </button>
+                    }
+                </div>
+            </div>
+
+            @if (SelectedMove != null)
+            {
+                <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
+                    <button class="btn-tak btn-primary" @onclick="ConfirmSlide">
+                        Confirm Move (@SelectedMove.ToPtn())
+                    </button>
+                </div>
+            }
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public Coord? OriginCoord { get; set; }
+    [Parameter] public GameBoard? Board { get; set; }
+    [Parameter] public EventCallback<SlideMove> OnSlideConfirmed { get; set; }
+    [Parameter] public EventCallback OnCancelRequested { get; set; }
+
+    private Direction? SelectedDirection { get; set; }
+    private SlideMove? SelectedMove { get; set; }
+
+    private List<SlideMove> AvailableSlideMoves
+    {
+        get
+        {
+            if (!OriginCoord.HasValue || Board == null) return new();
+            var moves = MoveValidator.GetLegalMovesForSquare(Board, OriginCoord.Value);
+            return moves.OfType<SlideMove>().ToList();
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Auto-select direction if only one available
+        if (OriginCoord.HasValue && SelectedDirection == null && AvailableSlideMoves.Any())
+        {
+            SelectedDirection = AvailableSlideMoves.First().Direction;
+            SelectedMove = AvailableSlideMoves.FirstOrDefault(m => m.Direction == SelectedDirection);
+        }
+    }
+
+    private void SelectDirection(Direction dir)
+    {
+        SelectedDirection = dir;
+        SelectedMove = AvailableSlideMoves.FirstOrDefault(m => m.Direction == dir);
+    }
+
+    private void SelectMove(SlideMove move)
+    {
+        SelectedMove = move;
+    }
+
+    private async Task ConfirmSlide()
+    {
+        if (SelectedMove != null && OnSlideConfirmed.HasDelegate)
+        {
+            await OnSlideConfirmed.InvokeAsync(SelectedMove);
+            SelectedDirection = null;
+            SelectedMove = null;
+        }
+    }
+
+    private async Task OnCancel()
+    {
+        SelectedDirection = null;
+        SelectedMove = null;
+        if (OnCancelRequested.HasDelegate)
+        {
+            await OnCancelRequested.InvokeAsync();
+        }
+    }
+}
