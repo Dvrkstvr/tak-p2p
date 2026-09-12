@@ -63,6 +63,9 @@ Every game turn is transmitted as an encrypted event containing the current move
 | --- | --- | --- |
 | `kind: 4` | NIP-44 Encrypted | Turn move envelope & peer-to-peer challenge handshakes. |
 | `kind: 20001` | Ephemeral | Quick Play matchmaking search broadcasts (TTL: 60s). |
+| `kind: 20002` | Ephemeral | Live Match Directory heartbeat (active broadcastable games). |
+| `kind: 21000` | Regular / Ephemeral | Public spectator move broadcast envelope (delayed or real-time). |
+| `kind: 21001` | Parameterized Replaceable | Mid-game TPS state checkpoint for spectator fast catch-up. |
 | `kind: 31923` | Parameterized Replaceable | Admin tournament announcements & parameters. |
 | `kind: 30000` | Replaceable | Admin / Oracle weekly signed Elo ratings & rank tiers. |
 | `kind: 30001` | Replaceable | Admin append-only blacklist event for revoked certificates. |

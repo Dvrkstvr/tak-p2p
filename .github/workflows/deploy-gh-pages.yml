@@ -1,0 +1,66 @@
+name: Deploy Blazor WebAssembly to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore src/TakApp.Blazor/TakApp.Blazor.csproj
+
+      - name: Publish Blazor WASM
+        run: |
+          dotnet publish src/TakApp.Blazor/TakApp.Blazor.csproj \
+            -c Release \
+            -o release-output \
+            --nologo
+
+      - name: Prepare GitHub Pages Assets & Base Href
+        run: |
+          cd release-output/wwwroot
+
+          # Rewrite base href for GitHub Pages (<base href="/<repo-name>/" />)
+          sed -i 's|<base href="/" />|<base href="/${{ github.event.repository.name }}/" />|g' index.html
+
+          # Copy index.html to 404.html to support client-side SPA routing
+          cp index.html 404.html
+
+          # Add .nojekyll to prevent Jekyll from omitting _framework directory
+          touch .nojekyll
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: release-output/wwwroot
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

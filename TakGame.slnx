@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/TakApp.Avalonia/TakApp.Avalonia.csproj" />
+    <Project Path="src/TakApp.Blazor/TakApp.Blazor.csproj" />
     <Project Path="src/TakApp.Cli/TakApp.Cli.csproj" />
     <Project Path="src/TakEngine.Abstractions/TakEngine.Abstractions.csproj" />
     <Project Path="src/TakEngine.Core/TakEngine.Core.csproj" />

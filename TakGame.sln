@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakEngine.Core.Tests", "tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakEngine.Transport.Tests", "tests\TakEngine.Transport.Tests\TakEngine.Transport.Tests.csproj", "{2DD978C5-949F-4B6B-BDBB-4F442E713CE4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakApp.Blazor", "src\TakApp.Blazor\TakApp.Blazor.csproj", "{A5E05E36-6349-49FB-82B9-F8D884705541}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -115,6 +117,18 @@ Global
 		{2DD978C5-949F-4B6B-BDBB-4F442E713CE4}.Release|x64.Build.0 = Release|Any CPU
 		{2DD978C5-949F-4B6B-BDBB-4F442E713CE4}.Release|x86.ActiveCfg = Release|Any CPU
 		{2DD978C5-949F-4B6B-BDBB-4F442E713CE4}.Release|x86.Build.0 = Release|Any CPU
+		{A5E05E36-6349-49FB-82B9-F8D884705541}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5E05E36-6349-49FB-82B9-F8D884705541}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5E05E36-6349-49FB-82B9-F8D884705541}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A5E05E36-6349-49FB-82B9-F8D884705541}.Debug|x64.Build.0 = Debug|Any CPU
+		{A5E05E36-6349-49FB-82B9-F8D884705541}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A5E05E36-6349-49FB-82B9-F8D884705541}.Debug|x86.Build.0 = Debug|Any CPU
+		{A5E05E36-6349-49FB-82B9-F8D884705541}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5E05E36-6349-49FB-82B9-F8D884705541}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A5E05E36-6349-49FB-82B9-F8D884705541}.Release|x64.ActiveCfg = Release|Any CPU
+		{A5E05E36-6349-49FB-82B9-F8D884705541}.Release|x64.Build.0 = Release|Any CPU
+		{A5E05E36-6349-49FB-82B9-F8D884705541}.Release|x86.ActiveCfg = Release|Any CPU
+		{A5E05E36-6349-49FB-82B9-F8D884705541}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -127,5 +141,6 @@ Global
 		{802830BD-562E-411E-BB70-4A4441F0EC84} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{A92DCC91-52B8-449E-BD22-50C92E3687FE} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{2DD978C5-949F-4B6B-BDBB-4F442E713CE4} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{A5E05E36-6349-49FB-82B9-F8D884705541} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

@@ -9,6 +9,7 @@
 3. **Admin Oracle Elo Rating Engine:** Verified match receipts, Sybil attack filters, and signed leaderboard publications.
 4. **Economic Anti-Cheat (Verified Profiles):** Cryptographic attestation receipts issued upon payment to gate verified matchmaking pools.
 5. **UI Extensions:** Tournament brackets and global leaderboards in CLI and Avalonia.
+6. **Spectator & Broadcast System:** Real-time admin/moderator match observation, delayed public streams, and high-Elo feature broadcasting (see [spectator-implementation-plan.md](file:///e:/repos/tak-p2p/docs/spectator-implementation-plan.md)).
 
 ---
 

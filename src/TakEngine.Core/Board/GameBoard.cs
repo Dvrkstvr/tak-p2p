@@ -234,6 +234,16 @@ public sealed class GameBoard
         return CommandResult.Success();
     }
 
+    public CommandResult Slide(Coord origin, Direction direction, int liftCount, IReadOnlyList<int> drops) =>
+        Move(origin, direction, drops);
+
+    public CommandResult Execute(TakMove move) => move switch
+    {
+        PlaceMove pm => Place(pm.Target, pm.PieceType),
+        SlideMove sm => Slide(sm.Origin, sm.Direction, sm.LiftCount, sm.Drops),
+        _ => CommandResult.Fail($"Unsupported move type: {move.GetType().Name}")
+    };
+
     private void AdvanceFirstTurns()
     {
         if (ActivePlayer == PlayerColor.White)

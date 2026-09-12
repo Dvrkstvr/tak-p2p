@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace TakEngine.Transport;
@@ -22,4 +24,14 @@ public sealed record TransportEnvelope(
     [property: JsonPropertyName("timestamp_utc")] DateTime TimestampUtc,
     [property: JsonPropertyName("action_type")] string ActionType,
     [property: JsonPropertyName("action_data")] ActionData ActionData,
-    [property: JsonPropertyName("signature")] string Signature);
+    [property: JsonPropertyName("signature")] string Signature)
+{
+    public static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+
+    public string ToJson() => JsonSerializer.Serialize(this, SerializerOptions);
+    public static TransportEnvelope? FromJson(string json) => JsonSerializer.Deserialize<TransportEnvelope>(json, SerializerOptions);
+}
