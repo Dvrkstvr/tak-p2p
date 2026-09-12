@@ -1,0 +1,275 @@
+@using TakApp.Blazor.Services
+@using TakEngine.Core.Cryptography
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+@inject BrowserStorage Storage
+
+@if (IsOpen)
+{
+    <div class="modal-backdrop" @onclick="Close">
+        <div class="modal-content" @onclick:stopPropagation="true" style="max-width: 540px; width: 95%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                <h3 style="font-size: 1.25rem; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 0.5rem;">
+                    🔗 Nostr Identity & Linked Devices
+                </h3>
+                <button class="btn-tak btn-ghost btn-sm" @onclick="Close">✕</button>
+            </div>
+
+            <!-- Identity Summary Card -->
+            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--bg-card-border); border-radius: var(--radius-sm); padding: 0.85rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;">
+                <div style="overflow: hidden;">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.05em; margin-bottom: 0.2rem;">
+                        Your Public Identifier (npub)
+                    </div>
+                    <div style="font-family: var(--font-mono); font-size: 0.85rem; color: #38bdf8; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                        @FormattedNpub
+                    </div>
+                </div>
+                <button class="btn-tak btn-ghost btn-sm" @onclick="CopyNpub" title="Copy npub">
+                    📋 @(CopiedNpub ? "Copied" : "Copy")
+                </button>
+            </div>
+
+            <!-- Tab Selector -->
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--bg-card-border); padding-bottom: 0.75rem; overflow-x: auto;">
+                <button class="btn-tak btn-sm @(ActiveTab == "pair" ? "btn-purple" : "btn-ghost")"
+                        @onclick='() => ActiveTab = "pair"'>
+                    📱 Link Another Device
+                </button>
+                <button class="btn-tak btn-sm @(ActiveTab == "import" ? "btn-purple" : "btn-ghost")"
+                        @onclick='() => ActiveTab = "import"'>
+                    🔑 Connect Existing Key
+                </button>
+                <button class="btn-tak btn-sm @(ActiveTab == "backup" ? "btn-purple" : "btn-ghost")"
+                        @onclick='() => ActiveTab = "backup"'>
+                    🛡️ Backup Private Key
+                </button>
+            </div>
+
+            @if (ActiveTab == "pair")
+            {
+                <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+                        Scan this pairing QR code with your mobile camera. Your phone will immediately link to your Nostr identity and sync all ongoing matches.
+                    </p>
+
+                    @if (ShowPairingQr)
+                    {
+                        <div style="background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(168, 85, 247, 0.4); padding: 1.25rem; border-radius: 1rem; box-shadow: 0 0 25px rgba(168, 85, 247, 0.2); margin-bottom: 1rem; display: inline-flex; justify-content: center; align-items: center;">
+                            <div style="width: 200px; height: 200px; display: flex; align-items: center; justify-content: center;">
+                                @((MarkupString)PairingQrSvg)
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                            <button class="btn-tak btn-ghost btn-sm" @onclick="() => ShowPairingQr = false">
+                                🙈 Hide QR (Privacy)
+                            </button>
+                            <button class="btn-tak btn-primary btn-sm" @onclick="CopyPairingUrl">
+                                📋 @(CopiedPairingUrl ? "Link Copied!" : "Copy Pairing Link")
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="padding: 2.5rem; border: 1px dashed rgba(168, 85, 247, 0.4); border-radius: 1rem; margin-bottom: 1.25rem; width: 100%; max-width: 320px; background: rgba(0,0,0,0.2);">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🔒</div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                                Pairing QR hidden to protect your private key from shoulder surfing.
+                            </div>
+                            <button class="btn-tak btn-purple" @onclick="() => ShowPairingQr = true">
+                                👁️ Reveal Pairing QR
+                            </button>
+                        </div>
+                    }
+
+                    <div style="font-size: 0.78rem; color: #a1a1aa; max-width: 440px;">
+                        💡 <em>Once linked, both devices share your sovereign Nostr keypair. You can take turns from desktop or mobile interchangeably!</em>
+                    </div>
+                </div>
+            }
+            else if (ActiveTab == "import")
+            {
+                <div style="display: flex; flex-direction: column;">
+                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+                        Link this device to an existing Nostr account by entering your private key (<code style="color: #c084fc;">nsec1...</code> or 64-char hex):
+                    </p>
+
+                    <input type="password"
+                           @bind="InputPrivateKey"
+                           placeholder="nsec1... or 64-character hex private key"
+                           style="width: 100%; padding: 0.75rem 0.9rem; border-radius: var(--radius-sm); background: rgba(0,0,0,0.35); border: 1px solid var(--bg-card-border); color: #f1f5f9; font-family: var(--font-mono); font-size: 0.85rem; margin-bottom: 0.75rem;" />
+
+                    @if (!string.IsNullOrEmpty(ImportError))
+                    {
+                        <div style="background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.4); border-radius: var(--radius-sm); padding: 0.6rem 0.85rem; color: #fda4af; font-size: 0.85rem; margin-bottom: 0.75rem;">
+                            ⚠️ @ImportError
+                        </div>
+                    }
+
+                    @if (ImportSuccess)
+                    {
+                        <div style="background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.4); border-radius: var(--radius-sm); padding: 0.6rem 0.85rem; color: #86efac; font-size: 0.85rem; margin-bottom: 0.75rem;">
+                            ✓ Identity linked successfully!
+                        </div>
+                    }
+
+                    <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 0.5rem;">
+                        <button class="btn-tak btn-purple" @onclick="SubmitImport">
+                            Link This Device
+                        </button>
+                    </div>
+                </div>
+            }
+            else if (ActiveTab == "backup")
+            {
+                <div style="display: flex; flex-direction: column;">
+                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+                        Your sovereign signing key (<code style="color: #c084fc;">nsec1...</code>). Keep this private and store it securely in a password manager.
+                    </p>
+
+                    <div style="background: rgba(0,0,0,0.5); border: 1px solid var(--bg-card-border); padding: 0.75rem; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 0.82rem; word-break: break-all; margin-bottom: 1rem; color: #c084fc;">
+                        @(RevealNsec ? FullNsec : "••••••••••••••••••••••••••••••••••••••••••••••••••••••••")
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                        <button class="btn-tak btn-ghost btn-sm" @onclick="() => RevealNsec = !RevealNsec">
+                            @(RevealNsec ? "🙈 Hide" : "👁️ Reveal")
+                        </button>
+                        <button class="btn-tak btn-primary btn-sm" @onclick="CopyNsec">
+                            📋 @(CopiedNsec ? "Copied!" : "Copy nsec")
+                        </button>
+                    </div>
+                </div>
+            }
+
+            <div style="display: flex; justify-content: flex-end; margin-top: 1.25rem; border-top: 1px solid var(--bg-card-border); padding-top: 0.75rem;">
+                <button class="btn-tak btn-ghost" @onclick="Close">Close</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnIdentityChanged { get; set; }
+
+    private string ActiveTab { get; set; } = "pair";
+    private string FormattedNpub { get; set; } = "";
+    private string FullNpub { get; set; } = "";
+    private string FullNsec { get; set; } = "";
+    private string PrivateKeyHex { get; set; } = "";
+    private string PublicKeyHex { get; set; } = "";
+
+    private bool ShowPairingQr { get; set; } = false;
+    private string PairingQrSvg { get; set; } = "";
+    private string PairingUrl { get; set; } = "";
+
+    private string InputPrivateKey { get; set; } = "";
+    private string? ImportError { get; set; }
+    private bool ImportSuccess { get; set; } = false;
+
+    private bool RevealNsec { get; set; } = false;
+    private bool CopiedNpub { get; set; } = false;
+    private bool CopiedNsec { get; set; } = false;
+    private bool CopiedPairingUrl { get; set; } = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsOpen)
+        {
+            await RefreshKeys();
+        }
+    }
+
+    private async Task RefreshKeys()
+    {
+        var (privHex, pubHex) = await Storage.GetOrCreateKeypairAsync();
+        PrivateKeyHex = privHex;
+        PublicKeyHex = pubHex;
+
+        try
+        {
+            FullNpub = Nip19.ToNpub(pubHex);
+            FullNsec = Nip19.ToNsec(privHex);
+            FormattedNpub = FullNpub.Length > 20 ? $"{FullNpub[..12]}...{FullNpub[^8..]}" : FullNpub;
+        }
+        catch
+        {
+            FullNpub = pubHex;
+            FullNsec = privHex;
+            FormattedNpub = $"{pubHex[..8]}...{pubHex[^6..]}";
+        }
+
+        string baseUri = Nav.BaseUri.TrimEnd('/');
+        PairingUrl = $"{baseUri}/?link_identity={privHex}";
+        PairingQrSvg = QrCodeSvgHelper.GenerateSvg(PairingUrl, "#c084fc", 2);
+    }
+
+    private async Task CopyNpub()
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", FullNpub);
+        CopiedNpub = true;
+        StateHasChanged();
+    }
+
+    private async Task CopyNsec()
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", FullNsec);
+        CopiedNsec = true;
+        StateHasChanged();
+    }
+
+    private async Task CopyPairingUrl()
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", PairingUrl);
+        CopiedPairingUrl = true;
+        StateHasChanged();
+    }
+
+    private async Task SubmitImport()
+    {
+        ImportError = null;
+        ImportSuccess = false;
+
+        if (string.IsNullOrWhiteSpace(InputPrivateKey))
+        {
+            ImportError = "Please provide a private key.";
+            return;
+        }
+
+        try
+        {
+            await Storage.ImportPrivateKeyAsync(InputPrivateKey.Trim());
+            await RefreshKeys();
+            InputPrivateKey = "";
+            ImportSuccess = true;
+
+            if (OnIdentityChanged.HasDelegate)
+            {
+                await OnIdentityChanged.InvokeAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            ImportError = $"Invalid key: {ex.Message}";
+        }
+    }
+
+    private async Task Close()
+    {
+        ShowPairingQr = false;
+        RevealNsec = false;
+        ImportError = null;
+        ImportSuccess = false;
+        CopiedNpub = false;
+        CopiedNsec = false;
+        CopiedPairingUrl = false;
+
+        if (OnClose.HasDelegate)
+        {
+            await OnClose.InvokeAsync();
+        }
+    }
+}

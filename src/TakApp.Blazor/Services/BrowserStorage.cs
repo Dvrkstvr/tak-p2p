@@ -55,4 +55,41 @@ public sealed class BrowserStorage
 
         return (generatedPriv, generatedPub);
     }
+
+    public async Task SetKeypairAsync(string privKeyHex, string pubKeyHex)
+    {
+        await SetItemAsync("tak_p2p_privkey", privKeyHex);
+        await SetItemAsync("tak_p2p_pubkey", pubKeyHex);
+    }
+
+    public async Task<(string PrivKeyHex, string PubKeyHex)> ImportPrivateKeyAsync(string privateKeyOrNsec)
+    {
+        string privHex;
+        if (privateKeyOrNsec.StartsWith("nsec1", StringComparison.OrdinalIgnoreCase))
+        {
+            var (_, hex) = Nip19.Decode(privateKeyOrNsec);
+            privHex = hex;
+        }
+        else
+        {
+            privHex = privateKeyOrNsec.Trim().ToLowerInvariant();
+        }
+
+        string pubHex = CryptoSigner.GetPublicKeyHex(privHex);
+        await SetKeypairAsync(privHex, pubHex);
+        return (privHex, pubHex);
+    }
+
+    public async Task ClearIdentityAsync()
+    {
+        try
+        {
+            await _js.InvokeVoidAsync("localStorage.removeItem", "tak_p2p_privkey");
+            await _js.InvokeVoidAsync("localStorage.removeItem", "tak_p2p_pubkey");
+        }
+        catch
+        {
+            // Ignore in restricted environments
+        }
+    }
 }

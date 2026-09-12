@@ -1,10 +1,66 @@
 @page "/"
+@using TakApp.Blazor.Components.Modals
+@using TakApp.Blazor.Services
+@using TakEngine.Core.Cryptography
 @inject WebGameSessionManager Session
 @inject NavigationManager Nav
 @inject BrowserStorage Storage
 
-<div style="max-width: 960px; margin: 2.5rem auto; padding: 0 1.5rem;">
+<div style="max-width: 960px; margin: 1.5rem auto; padding: 0 1.5rem;">
     
+    <!-- Top Identity Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--bg-card-border); border-radius: var(--radius-sm); padding: 0.65rem 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+            <span style="color: #38bdf8; font-size: 1rem;">🔑</span>
+            <span>Nostr ID:</span>
+            <span style="font-family: var(--font-mono); color: #f1f5f9; font-weight: 600;" title="@FullNpub">
+                @ShortNpub
+            </span>
+        </div>
+
+        <button class="btn-tak btn-purple btn-sm" @onclick="() => IsLinkModalOpen = true">
+            🔗 Link Mobile / Devices
+        </button>
+    </div>
+
+    <!-- Incoming Notifications -->
+    @if (!string.IsNullOrEmpty(LinkedSuccessMessage))
+    {
+        <div style="background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.4); border-radius: var(--radius-sm); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; color: #86efac;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
+                <span>✓</span>
+                <span>@LinkedSuccessMessage</span>
+            </div>
+            <button class="btn-tak btn-ghost btn-sm" @onclick="() => LinkedSuccessMessage = null">✕</button>
+        </div>
+    }
+
+    @if (PendingChallenge != null)
+    {
+        <div class="glass-panel" style="border: 1px solid rgba(6, 182, 212, 0.45); padding: 1.25rem 1.5rem; margin-bottom: 2rem; background: rgba(6, 182, 212, 0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <div style="font-size: 0.8rem; text-transform: uppercase; color: #38bdf8; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.25rem;">
+                    ⚔️ Match Invitation Received
+                </div>
+                <div style="font-size: 1.05rem; font-weight: 700; color: #f1f5f9; margin-bottom: 0.25rem;">
+                    @((int)PendingChallenge.BoardSize)x@((int)PendingChallenge.BoardSize) Tak Challenge
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary); font-family: var(--font-mono);">
+                    From: @(PendingChallenge.HostPubKey.Length > 16 ? $"{PendingChallenge.HostPubKey[..10]}...{PendingChallenge.HostPubKey[^6..]}" : PendingChallenge.HostPubKey)
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem;">
+                <button class="btn-tak btn-cyan" @onclick="AcceptPendingChallenge">
+                    Accept & Play
+                </button>
+                <button class="btn-tak btn-ghost" @onclick="() => PendingChallenge = null">
+                    Decline
+                </button>
+            </div>
+        </div>
+    }
+
     <!-- Hero Banner -->
     <div class="glass-panel" style="padding: 2.5rem; text-align: center; margin-bottom: 2rem; position: relative; overflow: hidden;">
         <div style="display: inline-block; font-size: 2.5rem; margin-bottom: 0.5rem;">◈</div>
@@ -80,10 +136,10 @@
         </div>
 
         <div class="glass-panel panel-section">
-            <div style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #10b981;">🔒</div>
-            <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.35rem;">Cryptographic State Chaining</h3>
+            <div style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #a855f7;">📱</div>
+            <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.35rem;">Universal Multi-Device</h3>
             <p style="font-size: 0.85rem; color: var(--text-secondary);">
-                Every move generates a SHA-256 state hash verified bit-for-bit across platforms, making illegal moves impossible to force.
+                Link your phone, tablet, and desktop using sovereign Nostr keys. Play asynchronous matches seamlessly across all your devices.
             </p>
         </div>
 
@@ -91,13 +147,17 @@
 
 </div>
 
-<!-- Invite Modal -->
+<!-- Modals -->
 <InviteModal IsOpen="@IsInviteModalOpen"
              IsGenerateMode="@IsInviteGenerateMode"
              Title="@InviteModalTitle"
              InviteCode="@GeneratedInviteCode"
              OnClose="() => IsInviteModalOpen = false"
              OnJoinCodeSubmitted="HandleJoinCode" />
+
+<LinkDeviceModal IsOpen="@IsLinkModalOpen"
+                 OnClose="() => IsLinkModalOpen = false"
+                 OnIdentityChanged="RefreshIdentity" />
 
 @code {
     private BoardSize SelectedSize { get; set; } = BoardSize.Five;
@@ -106,6 +166,82 @@
     private bool IsInviteGenerateMode { get; set; } = true;
     private string InviteModalTitle { get; set; } = "Direct Invite";
     private string GeneratedInviteCode { get; set; } = "";
+
+    private bool IsLinkModalOpen { get; set; } = false;
+    private string ShortNpub { get; set; } = "Loading...";
+    private string FullNpub { get; set; } = "";
+    private string? LinkedSuccessMessage { get; set; }
+    private InviteCode? PendingChallenge { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckUrlParameters();
+        await RefreshIdentity();
+    }
+
+    private async Task CheckUrlParameters()
+    {
+        var uri = new Uri(Nav.Uri);
+        string query = uri.Query.TrimStart('?');
+
+        if (string.IsNullOrEmpty(query)) return;
+
+        string? linkIdentity = null;
+        string? inviteParam = null;
+
+        foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var kvp = part.Split('=');
+            if (kvp.Length == 2)
+            {
+                string key = kvp[0].ToLowerInvariant();
+                string val = Uri.UnescapeDataString(kvp[1]);
+
+                if (key == "link_identity")
+                    linkIdentity = val;
+                else if (key is "invite" or "c" or "code")
+                    inviteParam = val;
+            }
+        }
+
+        // 1. Device Pairing URL check
+        if (!string.IsNullOrEmpty(linkIdentity))
+        {
+            try
+            {
+                await Storage.ImportPrivateKeyAsync(linkIdentity);
+                LinkedSuccessMessage = "Device linked successfully to your Nostr identity! Ready for cross-device play.";
+                Nav.NavigateTo("/", replace: true);
+            }
+            catch { }
+        }
+
+        // 2. Direct Challenge Invite URL check
+        if (!string.IsNullOrEmpty(inviteParam))
+        {
+            try
+            {
+                PendingChallenge = InviteCode.Parse(inviteParam);
+            }
+            catch { }
+        }
+    }
+
+    private async Task RefreshIdentity()
+    {
+        var (_, pubHex) = await Storage.GetOrCreateKeypairAsync();
+        try
+        {
+            FullNpub = Nip19.ToNpub(pubHex);
+            ShortNpub = FullNpub.Length > 18 ? $"{FullNpub[..10]}...{FullNpub[^6..]}" : FullNpub;
+        }
+        catch
+        {
+            FullNpub = pubHex;
+            ShortNpub = pubHex.Length > 12 ? $"{pubHex[..8]}...{pubHex[^4..]}" : pubHex;
+        }
+        StateHasChanged();
+    }
 
     private void StartBotGame()
     {
@@ -149,9 +285,15 @@
             Session.StartLocalMatch(payload.BoardSize);
             Nav.NavigateTo("play");
         }
-        catch
+        catch { }
+    }
+
+    private void AcceptPendingChallenge()
+    {
+        if (PendingChallenge != null)
         {
-            // Invalid code ignored
+            Session.StartLocalMatch(PendingChallenge.BoardSize);
+            Nav.NavigateTo("play");
         }
     }
 }

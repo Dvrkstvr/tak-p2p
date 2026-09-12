@@ -34,12 +34,38 @@ public sealed record InviteCode(
         return $"{CompactPrefix}{base64}";
     }
 
+    public string ToWebUrl(string baseUrl)
+    {
+        string baseTrimmed = baseUrl.TrimEnd('/');
+        return $"{baseTrimmed}/?invite={ToCompactCode()}";
+    }
+
     public static InviteCode Parse(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
             throw new ArgumentException("Invite code text cannot be empty.", nameof(text));
 
         text = text.Trim();
+
+        // Handle HTTP / HTTPS shareable links: https://domain/?invite=TAK1_...
+        if (text.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+            text.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            var uri = new Uri(text);
+            string query = uri.Query.TrimStart('?');
+            foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var kvp = part.Split('=');
+                if (kvp.Length == 2)
+                {
+                    string key = kvp[0].ToLowerInvariant();
+                    if (key is "invite" or "c" or "code")
+                    {
+                        return Parse(Uri.UnescapeDataString(kvp[1]));
+                    }
+                }
+            }
+        }
 
         if (text.StartsWith(CompactPrefix, StringComparison.OrdinalIgnoreCase))
         {

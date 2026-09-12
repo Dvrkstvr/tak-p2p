@@ -61,6 +61,24 @@ public class InviteCodeTests
     }
 
     [Fact]
+    public void InviteCode_ToWebUrlAndParse_RoundTripsAccurately()
+    {
+        var gameId = Guid.NewGuid();
+        string hostPub = "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
+        var relays = new[] { "wss://relay.damus.io" };
+
+        var original = new InviteCode(gameId, hostPub, BoardSize.Four, relays);
+        string url = original.ToWebUrl("https://tak.game/play/");
+
+        Assert.StartsWith("https://tak.game/play/?invite=TAK1_", url);
+
+        var parsed = InviteCode.Parse(url);
+        Assert.Equal(original.GameId, parsed.GameId);
+        Assert.Equal(original.HostPubKey, parsed.HostPubKey);
+        Assert.Equal(original.BoardSize, parsed.BoardSize);
+    }
+
+    [Fact]
     public void InviteCode_ParseMalformedUri_ThrowsFormatException()
     {
         Assert.Throws<FormatException>(() => InviteCode.Parse("tak://invite?invalid=123"));

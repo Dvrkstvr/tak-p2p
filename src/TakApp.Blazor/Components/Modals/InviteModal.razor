@@ -1,41 +1,112 @@
+@using TakApp.Blazor.Services
 @inject IJSRuntime JS
+@inject NavigationManager Nav
 
 @if (IsOpen)
 {
     <div class="modal-backdrop" @onclick="Close">
-        <div class="modal-content" @onclick:stopPropagation="true">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3 style="font-size: 1.2rem; font-weight: 700; color: #f1f5f9;">@Title</h3>
+        <div class="modal-content" @onclick:stopPropagation="true" style="max-width: 520px; width: 95%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                <h3 style="font-size: 1.25rem; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 0.5rem;">
+                    @Title
+                </h3>
                 <button class="btn-tak btn-ghost btn-sm" @onclick="Close">✕</button>
             </div>
 
             @if (IsGenerateMode)
             {
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
-                    Share this invite code or link with your opponent. As soon as they enter it, your match will sync over public Nostr relays.
-                </p>
-
-                <div style="background: rgba(0,0,0,0.4); border: 1px solid var(--bg-card-border); padding: 0.75rem; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 0.85rem; word-break: break-all; margin-bottom: 1rem; color: #38bdf8;">
-                    @InviteCode
+                <!-- Tab Selector -->
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--bg-card-border); padding-bottom: 0.75rem;">
+                    <button class="btn-tak btn-sm @(ActiveTab == "qr" ? "btn-cyan" : "btn-ghost")"
+                            @onclick='() => ActiveTab = "qr"'>
+                        📱 QR & Shareable Link
+                    </button>
+                    <button class="btn-tak btn-sm @(ActiveTab == "code" ? "btn-cyan" : "btn-ghost")"
+                            @onclick='() => ActiveTab = "code"'>
+                        🔢 Raw Token
+                    </button>
                 </div>
 
-                <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
-                    <button class="btn-tak btn-primary" @onclick="CopyToClipboard">
-                        📋 @(Copied ? "Copied!" : "Copy Link")
-                    </button>
+                @if (ActiveTab == "qr")
+                {
+                    <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.25rem;">
+                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+                            Scan with any smartphone camera or send the 1-click link to start playing instantly.
+                        </p>
+
+                        <!-- SVG QR Code Display -->
+                        <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(56, 189, 248, 0.35); padding: 1.25rem; border-radius: 1rem; box-shadow: 0 0 25px rgba(56, 189, 248, 0.15); margin-bottom: 1rem; display: inline-flex; justify-content: center; align-items: center;">
+                            @if (!string.IsNullOrEmpty(QrSvg))
+                            {
+                                <div style="width: 200px; height: 200px; display: flex; align-items: center; justify-content: center;">
+                                    @((MarkupString)QrSvg)
+                                </div>
+                            }
+                            else
+                            {
+                                <div style="width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary);">
+                                    Generating QR...
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Full Link Monospace Box -->
+                        <div style="width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--bg-card-border); padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 0.8rem; word-break: break-all; color: #38bdf8; text-align: left; margin-bottom: 1rem;">
+                            @FullWebUrl
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div style="display: flex; gap: 0.65rem; width: 100%; justify-content: center; flex-wrap: wrap;">
+                            <button class="btn-tak btn-primary" style="flex: 1; min-width: 140px;" @onclick="CopyFullUrlToClipboard">
+                                📋 @(CopiedUrl ? "Link Copied!" : "Copy Game Link")
+                            </button>
+
+                            <button class="btn-tak btn-cyan" style="flex: 1; min-width: 130px;" @onclick="ShareViaWebShare">
+                                📤 Share Invite
+                            </button>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+                        This compact token is compatible with the Tak CLI, native desktop clients, or manual web entry:
+                    </p>
+
+                    <div style="background: rgba(0,0,0,0.5); border: 1px solid var(--bg-card-border); padding: 0.75rem; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 0.82rem; word-break: break-all; margin-bottom: 1.25rem; color: #38bdf8;">
+                        @InviteCode
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                        <button class="btn-tak btn-primary" @onclick="CopyTokenToClipboard">
+                            📋 @(CopiedToken ? "Token Copied!" : "Copy Token")
+                        </button>
+                    </div>
+                }
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 1rem; border-top: 1px solid var(--bg-card-border); padding-top: 0.75rem;">
                     <button class="btn-tak btn-ghost" @onclick="Close">Done</button>
                 </div>
             }
             else
             {
                 <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
-                    Paste a Tak direct invite code or URL from your opponent:
+                    Paste a Tak match link, compact token (<code style="color: #38bdf8;">TAK1_...</code>), or URI (<code style="color: #38bdf8;">tak://...</code>):
                 </p>
 
                 <input type="text"
                        @bind="InputCode"
-                       placeholder="TAK1_... or tak://..."
-                       style="width: 100%; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); color: #f1f5f9; font-family: var(--font-mono); margin-bottom: 1rem;" />
+                       @bind:event="oninput"
+                       @onkeydown="HandleKeyDown"
+                       placeholder="https://tak.game/?invite=... or TAK1_..."
+                       style="width: 100%; padding: 0.75rem 0.9rem; border-radius: var(--radius-sm); background: rgba(0,0,0,0.35); border: 1px solid var(--bg-card-border); color: #f1f5f9; font-family: var(--font-mono); margin-bottom: 1rem;" />
+
+                @if (!string.IsNullOrEmpty(JoinErrorMessage))
+                {
+                    <div style="background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.4); border-radius: var(--radius-sm); padding: 0.6rem 0.85rem; color: #fda4af; font-size: 0.85rem; margin-bottom: 1rem;">
+                        ⚠️ @JoinErrorMessage
+                    </div>
+                }
 
                 <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
                     <button class="btn-tak btn-cyan" @onclick="SubmitJoin">
@@ -56,36 +127,115 @@
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<string> OnJoinCodeSubmitted { get; set; }
 
+    private string ActiveTab { get; set; } = "qr";
     private string InputCode { get; set; } = "";
-    private bool Copied { get; set; } = false;
+    private string? JoinErrorMessage { get; set; }
+    private bool CopiedUrl { get; set; } = false;
+    private bool CopiedToken { get; set; } = false;
+    private string FullWebUrl { get; set; } = "";
+    private string QrSvg { get; set; } = "";
 
-    private async Task CopyToClipboard()
+    protected override void OnParametersSet()
+    {
+        if (IsOpen && IsGenerateMode && !string.IsNullOrWhiteSpace(InviteCode))
+        {
+            string baseUri = Nav.BaseUri.TrimEnd('/');
+            FullWebUrl = $"{baseUri}/?invite={InviteCode}";
+            QrSvg = QrCodeSvgHelper.GenerateSvg(FullWebUrl, "#38bdf8", 2);
+        }
+        else if (!IsOpen)
+        {
+            CopiedUrl = false;
+            CopiedToken = false;
+            JoinErrorMessage = null;
+        }
+    }
+
+    private async Task CopyFullUrlToClipboard()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", FullWebUrl);
+            CopiedUrl = true;
+            CopiedToken = false;
+            StateHasChanged();
+        }
+        catch { }
+    }
+
+    private async Task CopyTokenToClipboard()
     {
         try
         {
             await JS.InvokeVoidAsync("navigator.clipboard.writeText", InviteCode);
-            Copied = true;
+            CopiedToken = true;
+            CopiedUrl = false;
             StateHasChanged();
+        }
+        catch { }
+    }
+
+    private async Task ShareViaWebShare()
+    {
+        try
+        {
+            // Trigger OS share sheet
+            await JS.InvokeVoidAsync("eval", $@"
+                if (navigator.share) {{
+                    navigator.share({{
+                        title: 'Tak P2P Match Challenge',
+                        text: 'I challenge you to a game of Tak! Tap to play:',
+                        url: '{FullWebUrl}'
+                    }}).catch(function(e) {{ console.log('Share dismissed', e); }});
+                }} else {{
+                    navigator.clipboard.writeText('{FullWebUrl}');
+                    alert('Invite link copied to clipboard!');
+                }}
+            ");
         }
         catch
         {
-            // fallback
+            await CopyFullUrlToClipboard();
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SubmitJoin();
         }
     }
 
     private async Task SubmitJoin()
     {
-        if (!string.IsNullOrWhiteSpace(InputCode) && OnJoinCodeSubmitted.HasDelegate)
+        JoinErrorMessage = null;
+        if (string.IsNullOrWhiteSpace(InputCode))
         {
-            await OnJoinCodeSubmitted.InvokeAsync(InputCode.Trim());
-            InputCode = "";
-            await Close();
+            JoinErrorMessage = "Please paste an invite link or token.";
+            return;
+        }
+
+        try
+        {
+            if (OnJoinCodeSubmitted.HasDelegate)
+            {
+                await OnJoinCodeSubmitted.InvokeAsync(InputCode.Trim());
+                InputCode = "";
+                await Close();
+            }
+        }
+        catch (Exception ex)
+        {
+            JoinErrorMessage = $"Invalid invite code: {ex.Message}";
         }
     }
 
     private async Task Close()
     {
-        Copied = false;
+        CopiedUrl = false;
+        CopiedToken = false;
+        JoinErrorMessage = null;
         if (OnClose.HasDelegate)
         {
             await OnClose.InvokeAsync();

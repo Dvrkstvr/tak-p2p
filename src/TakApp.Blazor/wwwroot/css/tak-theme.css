@@ -108,6 +108,16 @@ body {
   box-shadow: 0 6px 20px var(--accent-cyan-glow);
 }
 
+.btn-purple {
+  background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
+  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.35);
+}
+
+.btn-purple:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.45);
+}
+
 .btn-ghost {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--bg-card-border);
