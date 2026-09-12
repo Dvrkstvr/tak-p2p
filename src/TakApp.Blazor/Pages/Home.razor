@@ -10,17 +10,32 @@
     
     <!-- Top Identity Bar -->
     <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--bg-card-border); border-radius: var(--radius-sm); padding: 0.65rem 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;">
-        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">
-            <span style="color: #38bdf8; font-size: 1rem;">🔑</span>
-            <span>Nostr ID:</span>
-            <span style="font-family: var(--font-mono); color: #f1f5f9; font-weight: 600;" title="@FullNpub">
-                @ShortNpub
-            </span>
+        <div style="display: flex; align-items: center; gap: 0.85rem; font-size: 0.85rem; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" @onclick="() => IsProfileModalOpen = true" title="Click to edit profile">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #06b6d4, #a855f7); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; color: #fff;">
+                    @(string.IsNullOrWhiteSpace(PlayerNickname) ? "◈" : (PlayerNickname.Length >= 2 ? PlayerNickname[..2].ToUpperInvariant() : PlayerNickname.ToUpperInvariant()))
+                </div>
+                <strong style="color: #f1f5f9; font-size: 0.95rem;">
+                    @(string.IsNullOrWhiteSpace(PlayerNickname) ? "Set Nickname" : PlayerNickname)
+                </strong>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.4rem; color: var(--text-secondary);">
+                <span style="color: #38bdf8; font-size: 0.85rem;">🔑</span>
+                <span style="font-family: var(--font-mono); color: #94a3b8; font-size: 0.8rem;" title="@FullNpub">
+                    @ShortNpub
+                </span>
+            </div>
         </div>
 
-        <button class="btn-tak btn-purple btn-sm" @onclick="() => IsLinkModalOpen = true">
-            🔗 Link Mobile / Devices
-        </button>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <button class="btn-tak btn-ghost btn-sm" @onclick="() => IsProfileModalOpen = true">
+                👤 Profile
+            </button>
+            <button class="btn-tak btn-purple btn-sm" @onclick="() => IsLinkModalOpen = true">
+                🔗 Link Devices
+            </button>
+        </div>
     </div>
 
     <!-- Incoming Notifications -->
@@ -45,8 +60,11 @@
                 <div style="font-size: 1.05rem; font-weight: 700; color: #f1f5f9; margin-bottom: 0.25rem;">
                     @((int)PendingChallenge.BoardSize)x@((int)PendingChallenge.BoardSize) Tak Challenge
                 </div>
-                <div style="font-size: 0.8rem; color: var(--text-secondary); font-family: var(--font-mono);">
-                    From: @(PendingChallenge.HostPubKey.Length > 16 ? $"{PendingChallenge.HostPubKey[..10]}...{PendingChallenge.HostPubKey[^6..]}" : PendingChallenge.HostPubKey)
+                <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                    From: <strong style="color: #f59e0b;">@(PendingChallenge.HostNickname ?? "Anonymous")</strong>
+                    <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); margin-left: 0.35rem;">
+                        (@(PendingChallenge.HostPubKey.Length > 16 ? $"{PendingChallenge.HostPubKey[..8]}...{PendingChallenge.HostPubKey[^4..]}" : PendingChallenge.HostPubKey))
+                    </span>
                 </div>
             </div>
 
@@ -159,6 +177,10 @@
                  OnClose="() => IsLinkModalOpen = false"
                  OnIdentityChanged="RefreshIdentity" />
 
+<ProfileModal IsOpen="@IsProfileModalOpen"
+              OnClose="() => IsProfileModalOpen = false"
+              OnProfileSaved="RefreshIdentity" />
+
 @code {
     private BoardSize SelectedSize { get; set; } = BoardSize.Five;
     private BotDifficulty SelectedDifficulty { get; set; } = BotDifficulty.Medium;
@@ -168,6 +190,8 @@
     private string GeneratedInviteCode { get; set; } = "";
 
     private bool IsLinkModalOpen { get; set; } = false;
+    private bool IsProfileModalOpen { get; set; } = false;
+    private string? PlayerNickname { get; set; }
     private string ShortNpub { get; set; } = "Loading...";
     private string FullNpub { get; set; } = "";
     private string? LinkedSuccessMessage { get; set; }
@@ -230,6 +254,7 @@
     private async Task RefreshIdentity()
     {
         var (_, pubHex) = await Storage.GetOrCreateKeypairAsync();
+        PlayerNickname = await Storage.GetNicknameAsync();
         try
         {
             FullNpub = Nip19.ToNpub(pubHex);
@@ -245,13 +270,13 @@
 
     private void StartBotGame()
     {
-        Session.StartBotMatch(SelectedSize, SelectedDifficulty, PlayerColor.White);
+        Session.StartBotMatch(SelectedSize, SelectedDifficulty, PlayerColor.White, PlayerNickname);
         Nav.NavigateTo("play");
     }
 
     private void StartLocalGame()
     {
-        Session.StartLocalMatch(SelectedSize);
+        Session.StartLocalMatch(SelectedSize, PlayerNickname, "Opponent");
         Nav.NavigateTo("play");
     }
 
@@ -262,7 +287,8 @@
             GameId: Guid.NewGuid(),
             HostPubKey: pub,
             BoardSize: SelectedSize,
-            Relays: new[] { "wss://relay.damus.io", "wss://nos.lol" });
+            Relays: new[] { "wss://relay.damus.io", "wss://nos.lol" },
+            HostNickname: PlayerNickname);
 
         GeneratedInviteCode = invite.ToCompactCode();
         InviteModalTitle = $"Invite for {(int)SelectedSize}x{(int)SelectedSize} Match";
@@ -282,7 +308,7 @@
         try
         {
             var payload = InviteCode.Parse(code);
-            Session.StartLocalMatch(payload.BoardSize);
+            Session.StartLocalMatch(payload.BoardSize, payload.HostNickname ?? "Host", PlayerNickname ?? "You");
             Nav.NavigateTo("play");
         }
         catch { }
@@ -292,7 +318,7 @@
     {
         if (PendingChallenge != null)
         {
-            Session.StartLocalMatch(PendingChallenge.BoardSize);
+            Session.StartLocalMatch(PendingChallenge.BoardSize, PendingChallenge.HostNickname ?? "Host", PlayerNickname ?? "You");
             Nav.NavigateTo("play");
         }
     }

@@ -22,6 +22,7 @@ public sealed class NostrTransportClient : IAsyncDisposable
     ];
 
     public event Action<TransportEnvelope>? OnMoveEnvelopeReceived;
+    public event Action<string, NostrProfile>? OnProfileReceived;
     public event Action<string>? OnStatusMessage;
 
     public IReadOnlyList<NostrRelayConnection> Relays => _relays.AsReadOnly();
@@ -136,11 +137,73 @@ public sealed class NostrTransportClient : IAsyncDisposable
         return publishedCount;
     }
 
+    public async Task<int> PublishProfileAsync(
+        NostrProfile profile,
+        CancellationToken cancellationToken = default)
+    {
+        var evt = NostrProfile.CreateMetadataEvent(_localPubKey, profile);
+        int publishedCount = 0;
+        foreach (var relay in _relays)
+        {
+            if (relay.State == RelayConnectionState.Connected)
+            {
+                try
+                {
+                    await relay.SendEventAsync(evt, cancellationToken);
+                    publishedCount++;
+                }
+                catch (Exception ex)
+                {
+                    OnStatusMessage?.Invoke($"Failed to publish profile to {relay.RelayUri.Host}: {ex.Message}");
+                }
+            }
+        }
+
+        return publishedCount;
+    }
+
+    public async Task SubscribeProfileAsync(
+        string targetPubKey,
+        string subId = "tak_profile",
+        CancellationToken cancellationToken = default)
+    {
+        var filter = new NostrFilter
+        {
+            Kinds = [0],
+            Authors = [targetPubKey],
+            Limit = 1
+        };
+
+        foreach (var relay in _relays)
+        {
+            if (relay.State == RelayConnectionState.Connected)
+            {
+                try
+                {
+                    await relay.SubscribeAsync(subId, filter, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    OnStatusMessage?.Invoke($"Profile subscription failed on {relay.RelayUri.Host}: {ex.Message}");
+                }
+            }
+        }
+    }
+
     private void HandleRelayMessage(NostrRelayConnection conn, NostrRelayMessage message)
     {
         if (message is EventRelayMessage eventMsg)
         {
             var evt = eventMsg.Event;
+
+            // Handle Kind 0 Metadata (Profile / Nickname)
+            if (evt.Kind == 0)
+            {
+                var profile = NostrProfile.Parse(evt.Content);
+                OnProfileReceived?.Invoke(evt.Pubkey, profile);
+                return;
+            }
+
             if (evt.Kind != 4)
                 return;
 

@@ -13,7 +13,11 @@
         <div class="inventory-player">
             <span class="player-badge @badgeClass"></span>
             <div>
-                <strong style="font-size: 0.95rem;">@colorName</strong>
+                <strong style="font-size: 0.95rem;">@(string.IsNullOrWhiteSpace(PlayerName) ? colorName : PlayerName)</strong>
+                @if (!string.IsNullOrWhiteSpace(PlayerName) && PlayerName != colorName)
+                {
+                    <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 0.35rem;">(@colorName)</span>
+                }
                 @if (isTurn)
                 {
                     <span style="font-size: 0.75rem; color: #f59e0b; margin-left: 0.5rem; font-weight: 600;">ACTIVE TURN</span>
@@ -56,6 +60,7 @@
 @code {
     [Parameter] public GameBoard? Board { get; set; }
     [Parameter] public PlayerColor Color { get; set; }
+    [Parameter] public string? PlayerName { get; set; }
     [Parameter] public PieceType? SelectedPieceType { get; set; }
     [Parameter] public EventCallback<PieceType> OnPieceSelected { get; set; }
 

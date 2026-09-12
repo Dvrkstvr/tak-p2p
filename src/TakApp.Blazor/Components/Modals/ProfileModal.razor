@@ -1,0 +1,228 @@
+@using TakApp.Blazor.Services
+@using TakEngine.Core.Cryptography
+@using TakEngine.Transport.Nostr
+@inject BrowserStorage Storage
+@inject IJSRuntime JS
+
+@if (IsOpen)
+{
+    <div class="modal-backdrop" @onclick="Close">
+        <div class="modal-content" @onclick:stopPropagation="true" style="max-width: 520px; width: 95%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                <h3 style="font-size: 1.25rem; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 0.5rem;">
+                    👤 Player Profile & Nickname
+                </h3>
+                <button class="btn-tak btn-ghost btn-sm" @onclick="Close">✕</button>
+            </div>
+
+            <!-- Profile Live Preview Card -->
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--bg-card-border); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #06b6d4, #a855f7); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: bold; color: #ffffff; overflow: hidden; flex-shrink: 0; box-shadow: 0 0 15px rgba(6,182,212,0.3);">
+                    @if (!string.IsNullOrWhiteSpace(InputPicture))
+                    {
+                        <img src="@InputPicture" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;" @onerror="HandleImageError" />
+                    }
+                    else
+                    {
+                        <span>@(GetInitials(InputDisplayName))</span>
+                    }
+                </div>
+                <div style="overflow: hidden; flex: 1;">
+                    <div style="font-size: 1.1rem; font-weight: 700; color: #f1f5f9; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                        @(string.IsNullOrWhiteSpace(InputDisplayName) ? "Anonymous Player" : InputDisplayName)
+                    </div>
+                    <div style="font-size: 0.75rem; color: #38bdf8; font-family: var(--font-mono); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                        @FormattedNpub
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(InputAbout))
+                    {
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem; font-style: italic; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                            "@InputAbout"
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Form Fields -->
+            <div style="display: flex; flex-direction: column; gap: 0.85rem; margin-bottom: 1.25rem;">
+                <div>
+                    <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.3rem; font-weight: 600;">
+                        Nickname / Display Name
+                    </label>
+                    <input type="text"
+                           @bind="InputDisplayName"
+                           @bind:event="oninput"
+                           placeholder="e.g. Kvothe, Reshi, TakMaster"
+                           maxlength="32"
+                           style="width: 100%; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); background: rgba(0,0,0,0.35); border: 1px solid var(--bg-card-border); color: #f1f5f9; font-size: 0.9rem;" />
+                    <span style="font-size: 0.72rem; color: var(--text-muted);">
+                        Attached to direct challenge invites and visible to opponents.
+                    </span>
+                </div>
+
+                <div>
+                    <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.3rem; font-weight: 600;">
+                        About / Bio (Optional)
+                    </label>
+                    <input type="text"
+                           @bind="InputAbout"
+                           @bind:event="oninput"
+                           placeholder="e.g. Sovereign player on Nostr"
+                           maxlength="100"
+                           style="width: 100%; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); background: rgba(0,0,0,0.35); border: 1px solid var(--bg-card-border); color: #f1f5f9; font-size: 0.85rem;" />
+                </div>
+
+                <div>
+                    <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.3rem; font-weight: 600;">
+                        Avatar Picture URL (Optional)
+                    </label>
+                    <input type="url"
+                           @bind="InputPicture"
+                           @bind:event="oninput"
+                           placeholder="https://example.com/avatar.png"
+                           style="width: 100%; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); background: rgba(0,0,0,0.35); border: 1px solid var(--bg-card-border); color: #f1f5f9; font-size: 0.85rem;" />
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 0.6rem; margin-top: 0.3rem; background: rgba(0,0,0,0.25); padding: 0.6rem 0.8rem; border-radius: var(--radius-sm); border: 1px solid var(--bg-card-border);">
+                    <input type="checkbox" id="broadcastNostr" @bind="BroadcastToRelays" style="cursor: pointer; width: 16px; height: 16px;" />
+                    <label for="broadcastNostr" style="font-size: 0.82rem; color: #cbd5e1; cursor: pointer;">
+                        Broadcast <strong>NIP-01 Kind 0</strong> event to Nostr relays
+                    </label>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(StatusMessage))
+            {
+                <div style="background: @(IsError ? "rgba(244,63,94,0.15)" : "rgba(34,197,94,0.15)"); border: 1px solid @(IsError ? "rgba(244,63,94,0.4)" : "rgba(34,197,94,0.4)"); border-radius: var(--radius-sm); padding: 0.6rem 0.85rem; color: @(IsError ? "#fda4af" : "#86efac"); font-size: 0.85rem; margin-bottom: 1rem;">
+                    @(IsError ? "⚠️ " : "✓ ") @StatusMessage
+                </div>
+            }
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; border-top: 1px solid var(--bg-card-border); padding-top: 0.85rem;">
+                <button class="btn-tak btn-ghost" @onclick="Close">Cancel</button>
+                <button class="btn-tak btn-primary" @onclick="SaveProfile" disabled="@IsSaving">
+                    @(IsSaving ? "Saving..." : "Save Profile")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnProfileSaved { get; set; }
+
+    private string InputDisplayName { get; set; } = "";
+    private string InputAbout { get; set; } = "";
+    private string InputPicture { get; set; } = "";
+    private bool BroadcastToRelays { get; set; } = true;
+
+    private string FormattedNpub { get; set; } = "";
+    private string? StatusMessage { get; set; }
+    private bool IsError { get; set; }
+    private bool IsSaving { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsOpen)
+        {
+            StatusMessage = null;
+            IsError = false;
+            var (_, pubHex) = await Storage.GetOrCreateKeypairAsync();
+            try
+            {
+                string npub = Nip19.ToNpub(pubHex);
+                FormattedNpub = npub.Length > 20 ? $"{npub[..12]}...{npub[^8..]}" : npub;
+            }
+            catch
+            {
+                FormattedNpub = pubHex.Length > 12 ? $"{pubHex[..8]}...{pubHex[^4..]}" : pubHex;
+            }
+
+            var profile = await Storage.GetProfileAsync();
+            InputDisplayName = profile.DisplayName ?? profile.Name ?? "";
+            InputAbout = profile.About ?? "";
+            InputPicture = profile.Picture ?? "";
+        }
+    }
+
+    private string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return "◈";
+
+        string trimmed = name.Trim();
+        return trimmed.Length >= 2 ? trimmed[..2].ToUpperInvariant() : trimmed.ToUpperInvariant();
+    }
+
+    private void HandleImageError()
+    {
+        InputPicture = "";
+    }
+
+    private async Task SaveProfile()
+    {
+        IsSaving = true;
+        StatusMessage = null;
+        IsError = false;
+
+        try
+        {
+            var profile = new NostrProfile(
+                Name: InputDisplayName.Trim(),
+                DisplayName: InputDisplayName.Trim(),
+                About: string.IsNullOrWhiteSpace(InputAbout) ? null : InputAbout.Trim(),
+                Picture: string.IsNullOrWhiteSpace(InputPicture) ? null : InputPicture.Trim());
+
+            await Storage.SetProfileAsync(profile);
+
+            if (BroadcastToRelays)
+            {
+                try
+                {
+                    var (privHex, pubHex) = await Storage.GetOrCreateKeypairAsync();
+                    await using var transport = new NostrTransportClient(pubHex, privHex);
+                    await transport.ConnectAllAsync();
+                    int sentCount = await transport.PublishProfileAsync(profile);
+                    StatusMessage = sentCount > 0
+                        ? $"Profile saved & published to {sentCount} Nostr relay(s)!"
+                        : "Profile saved locally.";
+                }
+                catch
+                {
+                    StatusMessage = "Profile saved locally (relays unavailable).";
+                }
+            }
+            else
+            {
+                StatusMessage = "Profile saved successfully!";
+            }
+
+            if (OnProfileSaved.HasDelegate)
+            {
+                await OnProfileSaved.InvokeAsync();
+            }
+
+            await Task.Delay(500);
+            await Close();
+        }
+        catch (Exception ex)
+        {
+            IsError = true;
+            StatusMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+
+    private async Task Close()
+    {
+        if (OnClose.HasDelegate)
+        {
+            await OnClose.InvokeAsync();
+        }
+    }
+}

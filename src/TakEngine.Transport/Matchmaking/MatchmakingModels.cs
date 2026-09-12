@@ -16,13 +16,15 @@ public sealed record ChallengeProposal(
     [property: JsonPropertyName("game_id")] Guid GameId,
     [property: JsonPropertyName("board_size")] BoardSize BoardSize,
     [property: JsonPropertyName("proposer_pubkey")] string ProposerPubKey,
-    [property: JsonPropertyName("random_seed")] string RandomSeedHex);
+    [property: JsonPropertyName("random_seed")] string RandomSeedHex,
+    [property: JsonPropertyName("nickname")] string? Nickname = null);
 
 public sealed record ChallengeAcceptance(
     [property: JsonPropertyName("game_id")] Guid GameId,
     [property: JsonPropertyName("accepter_pubkey")] string AccepterPubKey,
     [property: JsonPropertyName("proposer_pubkey")] string ProposerPubKey,
-    [property: JsonPropertyName("signature")] string Signature);
+    [property: JsonPropertyName("signature")] string Signature,
+    [property: JsonPropertyName("nickname")] string? Nickname = null);
 
 public sealed record MatchSessionParams(
     Guid GameId,

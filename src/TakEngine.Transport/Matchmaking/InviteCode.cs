@@ -13,7 +13,8 @@ public sealed record InviteCode(
     [property: JsonPropertyName("host")] string HostPubKey,
     [property: JsonPropertyName("size")] BoardSize BoardSize,
     [property: JsonPropertyName("relays")] IReadOnlyList<string> Relays,
-    [property: JsonPropertyName("seed")] string? SeedHex = null)
+    [property: JsonPropertyName("seed")] string? SeedHex = null,
+    [property: JsonPropertyName("nick")] string? HostNickname = null)
 {
     private const string UriScheme = "tak";
     private const string UriHost = "invite";
@@ -23,7 +24,8 @@ public sealed record InviteCode(
     {
         string relaysJoined = Uri.EscapeDataString(string.Join(';', Relays));
         string seedParam = !string.IsNullOrEmpty(SeedHex) ? $"&seed={SeedHex}" : "";
-        return $"{UriScheme}://{UriHost}?gid={GameId}&host={HostPubKey}&size={(int)BoardSize}&relays={relaysJoined}{seedParam}";
+        string nickParam = !string.IsNullOrEmpty(HostNickname) ? $"&nick={Uri.EscapeDataString(HostNickname)}" : "";
+        return $"{UriScheme}://{UriHost}?gid={GameId}&host={HostPubKey}&size={(int)BoardSize}&relays={relaysJoined}{seedParam}{nickParam}";
     }
 
     public string ToCompactCode()
@@ -116,6 +118,7 @@ public sealed record InviteCode(
         BoardSize size = BoardSize.Five;
         var relays = new List<string>();
         string? seed = null;
+        string? nick = null;
 
         foreach (string pair in pairs)
         {
@@ -143,12 +146,17 @@ public sealed record InviteCode(
                 case "seed":
                     seed = val;
                     break;
+                case "nick":
+                case "nickname":
+                case "name":
+                    nick = val;
+                    break;
             }
         }
 
         if (gid == Guid.Empty || string.IsNullOrEmpty(host))
             throw new FormatException("Invite URI missing required parameters (gid, host).");
 
-        return new InviteCode(gid, host, size, relays, seed);
+        return new InviteCode(gid, host, size, relays, seed, nick);
     }
 }

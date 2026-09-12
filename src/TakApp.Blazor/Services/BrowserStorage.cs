@@ -80,12 +80,58 @@ public sealed class BrowserStorage
         return (privHex, pubHex);
     }
 
+    public async Task<string?> GetNicknameAsync()
+    {
+        return await GetItemAsync("tak_p2p_nickname");
+    }
+
+    public async Task SetNicknameAsync(string nickname)
+    {
+        if (string.IsNullOrWhiteSpace(nickname))
+        {
+            try
+            {
+                await _js.InvokeVoidAsync("localStorage.removeItem", "tak_p2p_nickname");
+            }
+            catch { }
+        }
+        else
+        {
+            await SetItemAsync("tak_p2p_nickname", nickname.Trim());
+        }
+    }
+
+    public async Task<TakEngine.Transport.Nostr.NostrProfile> GetProfileAsync()
+    {
+        string? json = await GetItemAsync("tak_p2p_profile");
+        if (!string.IsNullOrEmpty(json))
+        {
+            return TakEngine.Transport.Nostr.NostrProfile.Parse(json);
+        }
+
+        string? nick = await GetNicknameAsync();
+        return new TakEngine.Transport.Nostr.NostrProfile(Name: nick, DisplayName: nick);
+    }
+
+    public async Task SetProfileAsync(TakEngine.Transport.Nostr.NostrProfile profile)
+    {
+        string json = JsonSerializer.Serialize(profile);
+        await SetItemAsync("tak_p2p_profile", json);
+        string bestName = profile.BestDisplayName();
+        if (!string.IsNullOrWhiteSpace(bestName))
+        {
+            await SetItemAsync("tak_p2p_nickname", bestName);
+        }
+    }
+
     public async Task ClearIdentityAsync()
     {
         try
         {
             await _js.InvokeVoidAsync("localStorage.removeItem", "tak_p2p_privkey");
             await _js.InvokeVoidAsync("localStorage.removeItem", "tak_p2p_pubkey");
+            await _js.InvokeVoidAsync("localStorage.removeItem", "tak_p2p_nickname");
+            await _js.InvokeVoidAsync("localStorage.removeItem", "tak_p2p_profile");
         }
         catch
         {

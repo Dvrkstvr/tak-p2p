@@ -12,6 +12,7 @@
             <span class="panel-title">Players</span>
             <PieceInventoryView Board="@Session.Board"
                                 Color="PlayerColor.White"
+                                PlayerName="@Session.WhitePlayerName"
                                 SelectedPieceType="@SelectedPieceType"
                                 OnPieceSelected="HandlePieceSelected" />
 
@@ -19,6 +20,7 @@
 
             <PieceInventoryView Board="@Session.Board"
                                 Color="PlayerColor.Black"
+                                PlayerName="@Session.BlackPlayerName"
                                 SelectedPieceType="@SelectedPieceType"
                                 OnPieceSelected="HandlePieceSelected" />
         </div>
@@ -49,6 +51,8 @@
     <div style="display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 580px;">
         <div style="width: 100%; margin-bottom: 1rem;">
             <GameStatusHeader Board="@Session.Board"
+                              WhitePlayerName="@Session.WhitePlayerName"
+                              BlackPlayerName="@Session.BlackPlayerName"
                               OnResignRequested="HandleResign"
                               OnNewGameRequested="HandleLeave" />
         </div>

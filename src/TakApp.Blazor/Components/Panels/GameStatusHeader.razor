@@ -10,25 +10,26 @@
             @if (Board.Phase == GamePhase.Completed && Board.Result != null)
             {
                 var winner = Board.Result.Winner;
+                string winPlayerName = winner.HasValue ? (winner.Value == PlayerColor.White ? WhitePlayerName : BlackPlayerName) : "Nobody";
                 string winColorName = winner.HasValue ? winner.Value.ToString() : "Nobody";
                 string reasonName = Board.Result.Reason.ToString();
 
                 <div class="win-banner" style="padding: 0.4rem 1rem;">
                     <strong style="color: #f59e0b; font-size: 1rem;">
-                        @(winner.HasValue ? $"🏆 {winColorName} Wins by {reasonName}!" : "🤝 Game Drawn!")
+                        @(winner.HasValue ? $"🏆 {winPlayerName} ({winColorName}) Wins by {reasonName}!" : "🤝 Game Drawn!")
                     </strong>
                 </div>
             }
             else
             {
                 var activeColor = Board.ActivePlayer;
-                string activeName = activeColor.ToString();
+                string activePlayerName = activeColor == PlayerColor.White ? WhitePlayerName : BlackPlayerName;
                 string dotClass = activeColor == PlayerColor.White ? "badge-white" : "badge-black";
 
                 <div style="display: flex; align-items: center; gap: 0.6rem;">
                     <span class="player-badge @dotClass" style="width: 18px; height: 18px;"></span>
                     <strong style="font-size: 1.05rem;">
-                        Turn @(Board.TurnNumber): @activeName's Move
+                        Turn @(Board.TurnNumber): @activePlayerName's Move
                     </strong>
                 </div>
 
@@ -59,6 +60,8 @@
 
 @code {
     [Parameter] public GameBoard? Board { get; set; }
+    [Parameter] public string WhitePlayerName { get; set; } = "White";
+    [Parameter] public string BlackPlayerName { get; set; } = "Black";
     [Parameter] public EventCallback OnResignRequested { get; set; }
     [Parameter] public EventCallback OnNewGameRequested { get; set; }
 

@@ -30,6 +30,8 @@ public sealed class WebGameSessionManager
     public MinimaxTakBot? Bot { get; private set; }
     public bool IsBotThinking { get; private set; }
     public string? OpponentPubKey { get; private set; }
+    public string WhitePlayerName { get; private set; } = "White";
+    public string BlackPlayerName { get; private set; } = "Black";
 
     public List<string> MoveHistoryPtn { get; } = new();
     public string? LastMovePtn { get; private set; }
@@ -39,7 +41,10 @@ public sealed class WebGameSessionManager
 
     public event Action? OnStateChanged;
 
-    public void StartLocalMatch(BoardSize size)
+    public string GetPlayerName(PlayerColor color) =>
+        color == PlayerColor.White ? WhitePlayerName : BlackPlayerName;
+
+    public void StartLocalMatch(BoardSize size, string? whiteName = null, string? blackName = null)
     {
         CurrentSize = size;
         Board = new GameBoard(size);
@@ -51,6 +56,8 @@ public sealed class WebGameSessionManager
         Bot = null;
         IsBotThinking = false;
         OpponentPubKey = null;
+        WhitePlayerName = !string.IsNullOrWhiteSpace(whiteName) ? whiteName : "White";
+        BlackPlayerName = !string.IsNullOrWhiteSpace(blackName) ? blackName : "Black";
 
         MoveHistoryPtn.Clear();
         LastMovePtn = null;
@@ -61,7 +68,7 @@ public sealed class WebGameSessionManager
         NotifyStateChanged();
     }
 
-    public void StartBotMatch(BoardSize size, BotDifficulty difficulty, PlayerColor humanColor = PlayerColor.White)
+    public void StartBotMatch(BoardSize size, BotDifficulty difficulty, PlayerColor humanColor = PlayerColor.White, string? humanName = null)
     {
         CurrentSize = size;
         Board = new GameBoard(size);
@@ -73,6 +80,19 @@ public sealed class WebGameSessionManager
         Bot = new MinimaxTakBot(difficulty);
         IsBotThinking = false;
         OpponentPubKey = $"BOT_{difficulty.ToString().ToUpperInvariant()}";
+
+        string userDisplayName = !string.IsNullOrWhiteSpace(humanName) ? humanName : "You";
+        string botDisplayName = $"AI ({difficulty})";
+        if (humanColor == PlayerColor.White)
+        {
+            WhitePlayerName = userDisplayName;
+            BlackPlayerName = botDisplayName;
+        }
+        else
+        {
+            WhitePlayerName = botDisplayName;
+            BlackPlayerName = userDisplayName;
+        }
 
         MoveHistoryPtn.Clear();
         LastMovePtn = null;
