@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TakApp.Avalonia/TakApp.Avalonia.csproj" />
+    <Project Path="src/TakApp.Cli/TakApp.Cli.csproj" />
+    <Project Path="src/TakEngine.Abstractions/TakEngine.Abstractions.csproj" />
+    <Project Path="src/TakEngine.Core/TakEngine.Core.csproj" />
+    <Project Path="src/TakEngine.Transport/TakEngine.Transport.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TakEngine.Core.Tests/TakEngine.Core.Tests.csproj" />
+    <Project Path="tests/TakEngine.Transport.Tests/TakEngine.Transport.Tests.csproj" />
+  </Folder>
+</Solution>
