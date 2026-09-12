@@ -8,6 +8,7 @@ This document tracks all project milestones, architectural additions, and commit
 
 | Commit | Timestamp (UTC+2) | Milestone / Scope | Key Deliverables | Tests Passing |
 | --- | --- | --- | --- | --- |
+| [`4e429f3`](https://github.com/Dvrkstvr/tak-p2p/commit/4e429f3) | 2026-09-12 07:13:00 | **README & Screenshots** | Added Play Now CTA for live GitHub Pages web client, full supported devices matrix (Windows, Linux, MacBook, Android, iPhone, Web), and responsive vector screenshot cards. | 93 |
 | [`5ad1f87`](https://github.com/Dvrkstvr/tak-p2p/commit/5ad1f87) | 2026-09-12 07:11:45 | **Milestone M1.8** | Avalonia UI Prototype: Vector board renderer, MVVM CommunityToolkit bindings, piece stacks, `TakGameSession` implementation. | 93 |
 | [`f1afbfd`](https://github.com/Dvrkstvr/tak-p2p/commit/f1afbfd) | 2026-09-12 07:02:11 | **DevLog & Rule Sync** | Updated DevLog with recent commits and verified git push tracking. | 84 |
 | [`4c40d56`](https://github.com/Dvrkstvr/tak-p2p/commit/4c40d56) | 2026-09-12 07:00:51 | **Workflow & Blazor Components** | Codified `AGENTS.md` and `.agents/rules/devlog-maintenance.md`; implemented Blazor interactive SVG board and UI components. | 84 |
@@ -25,6 +26,21 @@ This document tracks all project milestones, architectural additions, and commit
 ---
 
 ## Detailed Entry Logs
+
+### [4e429f3](https://github.com/Dvrkstvr/tak-p2p/commit/4e429f3) - README Modernization, Play Now CTA & Device Matrix
+* **Timestamp**: `2026-09-12T07:13:00+02:00`
+* **Author**: Calvin Kohl
+* **Scope**: GitHub repository presentation, direct Web client access, multi-platform play status, and interface previews.
+* **Changes**:
+  * [README.md](file:///e:/repos/tak-p2p/README.md): Added high-prominence Play Now banner pointing directly to the live GitHub Pages app, comprehensive device matrix and status breakdowns for Windows app, Linux app, MacBook app, Android app, iPhone app, and Web client; added UI previews and local build guides.
+  * [web-board.svg](file:///e:/repos/tak-p2p/docs/assets/screenshots/web-board.svg): Visual preview of the zero-install Blazor WebAssembly browser client.
+  * [desktop-avalonia.svg](file:///e:/repos/tak-p2p/docs/assets/screenshots/desktop-avalonia.svg): Visual preview of the Avalonia native desktop client on Windows, Linux, and macOS.
+  * [cli-ansi.svg](file:///e:/repos/tak-p2p/docs/assets/screenshots/cli-ansi.svg): Visual preview of the Spectre.Console ANSI terminal board.
+  * [mobile-board.svg](file:///e:/repos/tak-p2p/docs/assets/screenshots/mobile-board.svg): Visual preview of the mobile PWA touchscreen experience on iPhone and Android.
+  * [docs/assets/screenshots/README.md](file:///e:/repos/tak-p2p/docs/assets/screenshots/README.md): Guidelines and specifications for capturing real application screenshots.
+* **Test Suite**: 93 tests passing (100%).
+
+---
 
 ### [5ad1f87](https://github.com/Dvrkstvr/tak-p2p/commit/5ad1f87) - Milestone M1.8: Avalonia UI Prototype & TakGameSession Engine
 * **Timestamp**: `2026-09-12T07:11:45+02:00`
