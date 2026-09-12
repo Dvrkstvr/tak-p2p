@@ -36,8 +36,8 @@ Pre-built standalone packages and binaries are automatically generated and publi
 | **Windows CLI** | Windows 10 / 11 (x64) | `.zip` | Terminal client (`TakApp.Cli`) with rich Spectre.Console ANSI interface | [Download Windows CLI](https://github.com/Dvrkstvr/tak-p2p/releases/latest/download/tak-cli-windows-x64.zip) |
 | **Linux Desktop** | Ubuntu, Debian, Fedora, Arch, SteamOS | `.tar.gz` | Standalone Linux GUI app (X11 & Wayland native) | [Download Linux App](https://github.com/Dvrkstvr/tak-p2p/releases/latest/download/tak-desktop-linux-x64.tar.gz) |
 | **Linux CLI** | Linux (x64) | `.tar.gz` | Terminal client for all POSIX terminal emulators | [Download Linux CLI](https://github.com/Dvrkstvr/tak-p2p/releases/latest/download/tak-cli-linux-x64.tar.gz) |
-| **Android Native App** | Android Phones & Tablets (API 23+) | `.apk` | Native Android application (`TakApp.Avalonia.Android`) | [Build Source](src/TakApp.Avalonia.Android) |
-| **iOS & iPadOS Native App** | iPad & iPhone (iOS 13+) | Native Project | Native Avalonia iOS application (`TakApp.Avalonia.iOS`) | [Build Source](src/TakApp.Avalonia.iOS) |
+| **Android Native App** | Android Phones & Tablets (API 23+) | `.apk` | Native Android application (`TakApp.Avalonia.Android`) | [Download APK](https://github.com/Dvrkstvr/tak-p2p/releases/latest/download/tak-android.apk) • *(To be released on Google Play Store soon)* |
+| **iOS & iPadOS Native App** | iPad & iPhone (iOS 13+) | Native Project | Native Avalonia iOS application (`TakApp.Avalonia.iOS`) | [Play Web PWA](https://dvrkstvr.github.io/tak-p2p/) • *(To be released on App Store soon)* |
 | **Web PWA Client** | All Browsers (Desktop & Mobile) | WebAssembly | Instant zero-install play; installable as standalone PWA | [Launch Web Client](https://dvrkstvr.github.io/tak-p2p/) |
 
 > *All release archives include corresponding `.sha256` checksum files for cryptographic verification.*
@@ -56,8 +56,8 @@ Tak P2P is engineered with a strict **Separation of Concerns**—the determinist
 | **🪟 Windows PC** | Native Desktop App & Terminal CLI | Avalonia UI + Spectre.Console | 🟢 **Implemented** | [GitHub Releases](https://github.com/Dvrkstvr/tak-p2p/releases) (`tak-desktop-windows-x64.zip`) |
 | **🐧 Linux** | Native Desktop App & Terminal CLI | Avalonia UI (X11/Wayland) + CLI | 🟢 **Implemented** | [GitHub Releases](https://github.com/Dvrkstvr/tak-p2p/releases) (`tak-desktop-linux-x64.tar.gz`) |
 | **💻 MacBook / macOS** | Native Desktop App & Terminal CLI | Avalonia Desktop + Terminal CLI | 🟢 **Implemented / Compiles** | Cross-platform .NET 10 Desktop |
-| **🤖 Android** | Mobile Web / PWA & Native App | Web PWA + Avalonia Native App | 🟢 **Implemented** | [TakApp.Avalonia.Android](src/TakApp.Avalonia.Android) / Chrome PWA |
-| **📱 iPhone & iPad** | Mobile Web / PWA & Native App | Safari PWA + Avalonia Native App | 🟢 **Implemented** | [TakApp.Avalonia.iOS](src/TakApp.Avalonia.iOS) / Safari PWA |
+| **🤖 Android** | Mobile Web / PWA & Native App | Web PWA + Native APK (`TakApp.Avalonia.Android`) | 🟢 **Implemented** | [Download APK](https://github.com/Dvrkstvr/tak-p2p/releases/latest/download/tak-android.apk) *(To be released on App Store soon)* • [Chrome PWA](https://dvrkstvr.github.io/tak-p2p/) |
+| **📱 iPhone & iPad** | Mobile Web / PWA & Native App | Safari PWA + Native iOS App | 🟡 **To be released on App Store soon** | [Play now via Safari PWA](https://dvrkstvr.github.io/tak-p2p/) • *(Native app to be released on App Store soon)* |
 
 ---
 
@@ -117,6 +117,7 @@ Tak P2P is engineered with a strict **Separation of Concerns**—the determinist
 
 #### 5. 🤖 Android App
 * **Method of Play:** Native Android Client (`TakApp.Avalonia.Android`) and Mobile Web / PWA.
+* **Distribution Status:** **Direct APK download available immediately** on GitHub Releases; official release coming to Google Play Store soon.
 * **Target Devices:** Android smartphones, foldable devices, and tablets running Android 6.0+ (API 23+).
 * **✅ What's Already Implemented:**
   * Dedicated native project head (`TakApp.Avalonia.Android`) using Avalonia UI for Android.
@@ -132,6 +133,7 @@ Tak P2P is engineered with a strict **Separation of Concerns**—the determinist
 
 #### 6. 📱 iPhone & iPad App
 * **Method of Play:** Native iOS/iPadOS Client (`TakApp.Avalonia.iOS`) and Mobile Safari PWA.
+* **Distribution Status:** **To be released on the Apple App Store soon**; play immediately with full-screen experience via Safari PWA ("Add to Home Screen").
 * **Target Devices:** iPad and iPhone running iOS / iPadOS 13.0+.
 * **✅ What's Already Implemented:**
   * Dedicated native project head (`TakApp.Avalonia.iOS`) using Avalonia UI for iOS.

@@ -96,9 +96,52 @@ jobs:
             ${{ matrix.artifact_name }}.${{ matrix.archive_ext }}.sha256
           if-no-files-found: error
 
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install Android Workload
+        run: dotnet workload install android
+
+      - name: Build and Publish Android APK
+        run: |
+          dotnet publish src/TakApp.Avalonia.Android/TakApp.Avalonia.Android.csproj \
+            -c Release \
+            -p:AndroidPackageFormat=apk \
+            -o publish-android
+
+      - name: Package APK & Checksum
+        shell: bash
+        run: |
+          find publish-android -name "*Signed.apk" -exec cp {} tak-android.apk \; || find publish-android -name "*.apk" -exec cp {} tak-android.apk \;
+          sha256sum tak-android.apk > tak-android.apk.sha256
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tak-android-apk
+          path: |
+            tak-android.apk
+            tak-android.apk.sha256
+          if-no-files-found: error
+
   publish:
     name: Publish GitHub Release
-    needs: build
+    needs: [build, build-android]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
