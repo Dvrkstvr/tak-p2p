@@ -8,7 +8,8 @@ This document tracks all project milestones, architectural additions, and commit
 
 | Commit | Timestamp (UTC+2) | Milestone / Scope | Key Deliverables | Tests Passing |
 | --- | --- | --- | --- | --- |
-| [`3c7ffa1`](https://github.com/Dvrkstvr/tak-p2p/commit/3c7ffa1) | 2026-09-13 18:15:00 | **PlayTak-Authentic Game Controls** | Complete implementation of PlayTak.com game controls: interactive reserves with click-to-select and rotate-to-wall, quick-wall right-click placement on empty squares, direct on-board stack movement with slide target markers, floating stack layer inspector on right-click, and keyboard hotkeys (`[F]`, `[W]`, `[C]`, `[Esc]`). | 114 |
+| [`d706c2a`](https://github.com/Dvrkstvr/tak-p2p/commit/d706c2a) | 2026-09-13 19:15:00 | **PlayTak Stepped Tower Movement & Tile Count Selection** | Authentic PlayTak.com multi-tile tower mechanics: origin clicking decrements/cycles carried count (`xN`, `-1 TILE` pill), stepping onto adjacent square drops 1 tile (`+1` badge), clicking same square stacks carried tiles (`+STACK`), clicking next square advances along the path (`STEP` marker), and automatic move dispatch once all carried tiles are placed. SVG inner element pointer-events isolation for seamless square selection. | 114 |
+| [`28d488c`](https://github.com/Dvrkstvr/tak-p2p/commit/28d488c) | 2026-09-13 18:15:00 | **PlayTak-Authentic Game Controls** | Complete implementation of PlayTak.com game controls: interactive reserves with click-to-select and rotate-to-wall, quick-wall right-click placement on empty squares, direct on-board stack movement with slide target markers, floating stack layer inspector on right-click, and keyboard hotkeys (`[F]`, `[W]`, `[C]`, `[Esc]`). | 114 |
 | [`62c1375`](https://github.com/Dvrkstvr/tak-p2p/commit/62c1375) | 2026-09-13 17:36:00 | **2.5D Pillar Capstones, Taller Walls & SVG Assets** | Pre-rendered 2.5D SVG piece symbol architecture, tall cylindrical pillar capstone with amber crown, 48px standing walls with top bevel, and SvgTileRenderer unit test suite with 114 passing tests. | 114 |
 | [`c5bc7c7`](https://github.com/Dvrkstvr/tak-p2p/commit/c5bc7c7) | 2026-09-13 17:20:00 | **UI Mockups Realization & 2.5D Board** | Monochromatic B&W redesign with amber #d4a017 accent per `UI-MOCKUPS.md`, 2.5D perspective board with 2.5D/2D toggle, staggered piece stacks with physical slab thickness, and mobile layout overhaul. | 107 |
 | [`325e984`](https://github.com/Dvrkstvr/tak-p2p/commit/325e984) | 2026-09-12 08:52:00 | **Docs Consolidation & AGENTS.md Update** | Comprehensive cleanup and synchronization of all 10 specification documents and audit reports; aligned `AGENTS.md` and rules with multi-assembly test metrics (88 Core + 19 Transport = 107 total tests) and Blazor WASM rebuild guidelines; added uniform cross-specification links across the documentation suite. | 107 |
@@ -38,7 +39,19 @@ This document tracks all project milestones, architectural additions, and commit
 
 ## Detailed Entry Logs
 
-### [3c7ffa1](https://github.com/Dvrkstvr/tak-p2p/commit/3c7ffa1) - PlayTak-Authentic Game Controls & Direct Board Interaction
+### [d706c2a](https://github.com/Dvrkstvr/tak-p2p/commit/d706c2a) - PlayTak Stepped Tower Movement & Tile Count Selection
+* **Timestamp**: `2026-09-13T19:15:00+02:00`
+* **Author**: Calvin Kohl
+* **Scope**: Researched and implemented authentic PlayTak.com multi-tile tower mechanics allowing players to click the origin tower to adjust carried tile count before moving, followed by stepped directional drops and in-place stacking until all carried stones are placed.
+* **Changes**:
+  * [Play.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Pages/Play.razor): Added reactive `SlideBuilderState` machine: origin click decrements `CarriedCount` (`-1 TILE`) cycling back to `MaxLift`; clicking an adjacent orthogonal square locks in direction and places 1 tile; clicking the same square stacks additional tiles (`Drops[last]++`); clicking the next square advances along the path (`Drops.Add(1)`); once `PiecesInHand == 0`, automatically dispatches `SlideMove`. Added real-time slide HUD status banner.
+  * [TakBoardView.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Board/TakBoardView.razor): Added `SlideCarriedCount` and `SlideMaxLift` origin indicator pill (`x{N}`) with `-1 TILE` prompt; purple drop badges `+{N}` along the path; green `+STACK` badge on current square; pulsing `STEP` badge on next legal square; added `id="sq-{coord}"` and `data-coord` attributes.
+  * [tak-theme.css](file:///e:/repos/tak-p2p/src/TakApp.Blazor/wwwroot/css/tak-theme.css): Added styles for `.slide-hud-banner`, `.slide-cur-target`, `.slide-next-target`, and pointer-events isolation for SVG pieces/texts/markers so clicks directly hit the square target.
+* **Test Suite**: 114 unit tests passing (100% pass rate: 95 in `TakEngine.Core.Tests`, 19 in `TakEngine.Transport.Tests`). Browser subagent verified on local dev server with screenshot artifacts.
+
+---
+
+### [28d488c](https://github.com/Dvrkstvr/tak-p2p/commit/28d488c) - PlayTak-Authentic Game Controls & Direct Board Interaction
 * **Timestamp**: `2026-09-13T18:15:00+02:00`
 * **Author**: Calvin Kohl
 * **Scope**: Researched and implemented the complete game control scheme from [PlayTak.com](https://playtak.com) in `TakApp.Blazor` and shared board components.

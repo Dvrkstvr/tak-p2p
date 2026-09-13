@@ -536,6 +536,17 @@ html, body {
   pointer-events: none;
 }
 
+.tak-board-svg g {
+  cursor: pointer;
+}
+
+.tak-board-svg use,
+.tak-board-svg text,
+.tak-board-svg circle,
+.tak-board-svg rect:not(.svg-sq) {
+  pointer-events: none;
+}
+
 /* PlayTak Slide Target Markers */
 .svg-slide-marker {
   fill: #8b5cf6;
@@ -1022,4 +1033,37 @@ input[type=text]:focus, input[type=password]:focus, textarea:focus, select:focus
 .controls-guide-desc {
   color: #d4d4d8;
   text-align: right;
+}
+
+/* PlayTak Tower Stepped Movement HUD & Markers */
+.slide-hud-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid #8b5cf6;
+  border-radius: 4px;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.82rem;
+  color: #ede9fe;
+  margin-bottom: 0.75rem;
+  width: 100%;
+  max-width: 520px;
+  text-align: center;
+}
+
+.slide-hud-banner strong {
+  color: #f59e0b;
+}
+
+.svg-sq.slide-cur-target {
+  stroke: #8b5cf6 !important;
+  stroke-width: 2.5px !important;
+  fill: rgba(139, 92, 246, 0.15) !important;
+}
+
+.svg-sq.slide-next-target {
+  stroke: #ec4899 !important;
+  stroke-width: 2.5px !important;
+  fill: rgba(236, 72, 153, 0.12) !important;
 }

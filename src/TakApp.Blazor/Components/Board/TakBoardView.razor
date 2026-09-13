@@ -111,8 +111,14 @@
                     bool isRoad = WinningRoad.Contains(coord);
                     bool isLastMove = LastMoveTarget.HasValue && LastMoveTarget.Value == coord;
                     bool isInspected = InspectingCoord.HasValue && InspectingCoord.Value == coord;
+                    bool isSlideOrigin = SlideOrigin.HasValue && SlideOrigin.Value == coord;
+                    bool hasDrops = SlideDroppedPieces.ContainsKey(coord);
+                    bool isCurStep = SlideCurrentStepCoord.HasValue && SlideCurrentStepCoord.Value == coord;
+                    bool isNextStep = SlideNextCoord.HasValue && SlideNextCoord.Value == coord;
 
-                    <g @onclick="() => HandleSquareClick(coord)"
+                    <g id="@($"sq-{coord.ToAlgebraic()}")"
+                       data-coord="@coord.ToAlgebraic()"
+                       @onclick="() => HandleSquareClick(coord)"
                        @oncontextmenu="() => HandleSquareRightClick(coord)"
                        @oncontextmenu:preventDefault="true">
                         <!-- Square Boundary and Hover Target -->
@@ -123,7 +129,7 @@
                               fill="#0a0a0a"
                               stroke="#ffffff"
                               stroke-width="1"
-                              class="svg-sq @(isSelected ? "selected" : "") @(isLegalPlacement ? "legal-target" : "") @(isLegalSlide ? "legal-slide-target" : "") @(isInspected ? "inspected-target" : "")" />
+                              class="svg-sq @(isSelected || isSlideOrigin ? "selected" : "") @(isLegalPlacement ? "legal-target" : "") @(isLegalSlide ? "legal-slide-target" : "") @(isCurStep ? "slide-cur-target" : "") @(isNextStep ? "slide-next-target" : "") @(isInspected ? "inspected-target" : "")" />
 
                         <!-- Winning Road Highlight in Amber -->
                         @if (isRoad)
@@ -154,8 +160,8 @@
                                     class="svg-legal-marker" />
                         }
 
-                        <!-- Legal Slide Target Marker (PlayTak directional slide target) -->
-                        @if (isLegalSlide)
+                        <!-- Legal Slide Target Marker (Initial direction selection) -->
+                        @if (isLegalSlide && !hasDrops && !isNextStep)
                         {
                             <circle cx="@F(sqX + SquareSize / 2.0)"
                                     cy="@F(sqY + SquareSize / 2.0)"
@@ -165,6 +171,20 @@
                                     cy="@F(sqY + SquareSize / 2.0)"
                                     r="@F(SquareSize * 0.22)"
                                     class="svg-slide-ring" />
+                        }
+
+                        <!-- Next Step Target Marker -->
+                        @if (isNextStep)
+                        {
+                            <circle cx="@F(sqX + SquareSize / 2.0)"
+                                    cy="@F(sqY + SquareSize / 2.0)"
+                                    r="@F(SquareSize * 0.16)"
+                                    class="svg-slide-marker" />
+                            <circle cx="@F(sqX + SquareSize / 2.0)"
+                                    cy="@F(sqY + SquareSize / 2.0)"
+                                    r="@F(SquareSize * 0.24)"
+                                    class="svg-slide-ring" />
+                            @((MarkupString)$"<text x='{F(sqX + SquareSize / 2.0)}' y='{F(sqY + SquareSize / 2.0 + 3)}' fill='#ffffff' font-family=\"'JetBrains Mono', monospace\" font-size='8' font-weight='800' text-anchor='middle'>STEP</text>")
                         }
 
                         <!-- Piece Stack -->
@@ -177,6 +197,62 @@
                                                CenterX="@(sqX + SquareSize / 2.0)"
                                                CenterY="@(sqY + SquareSize / 2.0)"
                                                Radius="@(SquareSize * 0.38)" />
+                            }
+                        }
+
+                        <!-- Slide Origin Carry Badge & Click-to-Decrease Hint -->
+                        @if (isSlideOrigin && SlideCarriedCount > 0)
+                        {
+                            <rect x="@F(sqX + SquareSize / 2.0 - 18)"
+                                  y="@F(sqY + 3)"
+                                  width="36"
+                                  height="16"
+                                  rx="3"
+                                  fill="#d4a017"
+                                  stroke="#ffffff"
+                                  stroke-width="0.75" />
+                            @((MarkupString)$"<text x='{F(sqX + SquareSize / 2.0)}' y='{F(sqY + 14)}' fill='#000000' font-family=\"'JetBrains Mono', monospace\" font-size='9.5' font-weight='800' text-anchor='middle'>x{SlideCarriedCount}</text>")
+
+                            @if (SlideDroppedPieces.Count == 0 && SlideMaxLift > 1)
+                            {
+                                <rect x="@F(sqX + SquareSize / 2.0 - 24)"
+                                      y="@F(sqY + SquareSize - 16)"
+                                      width="48"
+                                      height="13"
+                                      rx="2"
+                                      fill="rgba(0,0,0,0.85)"
+                                      stroke="#d4a017"
+                                      stroke-width="0.75" />
+                                @((MarkupString)$"<text x='{F(sqX + SquareSize / 2.0)}' y='{F(sqY + SquareSize - 7)}' fill='#d4a017' font-family=\"'JetBrains Mono', monospace\" font-size='8' font-weight='700' text-anchor='middle'>-1 TILE</text>")
+                            }
+                        }
+
+                        <!-- Dropped Piece Badge Along Slide Path -->
+                        @if (hasDrops)
+                        {
+                            int dropped = SlideDroppedPieces[coord];
+                            <rect x="@F(sqX + SquareSize / 2.0 - 14)"
+                                  y="@F(sqY + SquareSize / 2.0 - 10)"
+                                  width="28"
+                                  height="20"
+                                  rx="4"
+                                  fill="#8b5cf6"
+                                  stroke="#ffffff"
+                                  stroke-width="1.2"
+                                  filter="drop-shadow(0 2px 4px rgba(0,0,0,0.5))" />
+                            @((MarkupString)$"<text x='{F(sqX + SquareSize / 2.0)}' y='{F(sqY + SquareSize / 2.0 + 4)}' fill='#ffffff' font-family=\"'JetBrains Mono', monospace\" font-size='11' font-weight='800' text-anchor='middle'>+{dropped}</text>")
+
+                            @if (isCurStep && SlidePiecesInHand > 0)
+                            {
+                                <rect x="@F(sqX + SquareSize / 2.0 - 20)"
+                                      y="@F(sqY + SquareSize - 16)"
+                                      width="40"
+                                      height="13"
+                                      rx="2"
+                                      fill="rgba(139, 92, 246, 0.95)"
+                                      stroke="#ffffff"
+                                      stroke-width="0.75" />
+                                @((MarkupString)$"<text x='{F(sqX + SquareSize / 2.0)}' y='{F(sqY + SquareSize - 7)}' fill='#ffffff' font-family=\"'JetBrains Mono', monospace\" font-size='8' font-weight='800' text-anchor='middle'>+STACK</text>")
                             }
                         }
 
@@ -262,6 +338,15 @@
     [Parameter] public EventCallback<Coord> OnSquareClick { get; set; }
     [Parameter] public EventCallback<Coord> OnSquareRightClick { get; set; }
     [Parameter] public EventCallback OnDismissInspect { get; set; }
+
+    // PlayTak Stepped Tower Movement Parameters
+    [Parameter] public Coord? SlideOrigin { get; set; }
+    [Parameter] public int SlideCarriedCount { get; set; }
+    [Parameter] public int SlideMaxLift { get; set; }
+    [Parameter] public int SlidePiecesInHand { get; set; }
+    [Parameter] public Dictionary<Coord, int> SlideDroppedPieces { get; set; } = new();
+    [Parameter] public Coord? SlideCurrentStepCoord { get; set; }
+    [Parameter] public Coord? SlideNextCoord { get; set; }
 
     public int SizeInt => Board != null ? (int)Board.Size : 5;
     public double SquareSize => 80.0;
