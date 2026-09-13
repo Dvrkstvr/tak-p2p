@@ -1,17 +1,24 @@
 @inherits LayoutComponentBase
+@using TakApp.Blazor.Services
+@using TakEngine.Core.Cryptography
+@inject BrowserStorage Storage
 
 <div class="app-layout" style="display: flex; flex-direction: column; min-height: 100vh;">
     <!-- Top Nav Header -->
     <header class="app-header">
         <a href="" class="app-brand">
-            <div class="logo-icon">◈</div>
-            <span class="brand-text">TAK P2P</span>
-            <span class="brand-badge">WASM</span>
+            <span class="brand-text">TAK</span>
         </a>
 
-        <div style="display: flex; align-items: center; gap: 1rem;">
-            <a href="https://github.com/Dvrkstvr/tak-p2p" target="_blank" class="btn-tak btn-ghost btn-sm" style="text-decoration: none;">
-                ★ GitHub
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            @if (!string.IsNullOrEmpty(ShortNpub))
+            {
+                <span class="header-npub" title="@FullNpub">
+                    @ShortNpub
+                </span>
+            }
+            <a href="https://github.com/Dvrkstvr/tak-p2p" target="_blank" class="btn-link-action" style="text-decoration: none; font-size: 0.85rem;">
+                GitHub
             </a>
         </div>
     </header>
@@ -20,9 +27,28 @@
     <main style="flex: 1;">
         @Body
     </main>
-
-    <!-- Footer -->
-    <footer style="text-align: center; padding: 1.5rem; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--bg-card-border);">
-        <span>Tak P2P &bull; Zero Server Infrastructure &bull; Nostr Relay Transport &bull; Client-Side Deterministic Adjudication</span>
-    </footer>
 </div>
+
+@code {
+    private string ShortNpub { get; set; } = "";
+    private string FullNpub { get; set; } = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var (_, pubHex) = await Storage.GetOrCreateKeypairAsync();
+            try
+            {
+                FullNpub = Nip19.ToNpub(pubHex);
+                ShortNpub = FullNpub.Length > 18 ? $"{FullNpub[..10]}...{FullNpub[^6..]}" : FullNpub;
+            }
+            catch
+            {
+                FullNpub = pubHex;
+                ShortNpub = pubHex.Length > 12 ? $"{pubHex[..8]}...{pubHex[^4..]}" : pubHex;
+            }
+        }
+        catch { }
+    }
+}

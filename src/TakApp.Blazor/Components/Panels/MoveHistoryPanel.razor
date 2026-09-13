@@ -1,16 +1,13 @@
 @using TakEngine.Abstractions
 
-<div class="glass-panel panel-section">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-        <span class="panel-title">Move History (PTN)</span>
-        <span class="brand-badge">@(Moves.Count) moves</span>
-    </div>
+<div>
+    <div class="section-muted-header">MOVES</div>
 
-    <div class="move-log">
+    <div class="move-history-list">
         @if (Moves.Count == 0)
         {
-            <div style="color: var(--text-muted); font-size: 0.8rem; font-style: italic; padding: 0.5rem 0;">
-                No moves played yet.
+            <div style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">
+                No moves yet.
             </div>
         }
         else
@@ -21,10 +18,10 @@
                 string whiteMove = Moves[i];
                 string? blackMove = (i + 1 < Moves.Count) ? Moves[i + 1] : null;
 
-                <div class="move-row">
-                    <span class="move-num">@(turnNum).</span>
-                    <span class="move-white">@whiteMove</span>
-                    <span class="move-black">@(blackMove ?? "")</span>
+                <div class="move-history-row">
+                    <span class="move-turn-num">@turnNum</span>
+                    <span class="move-ptn-white">@whiteMove</span>
+                    <span class="move-ptn-black">@(blackMove ?? "")</span>
                 </div>
             }
         }

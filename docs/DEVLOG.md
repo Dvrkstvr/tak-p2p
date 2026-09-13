@@ -8,6 +8,7 @@ This document tracks all project milestones, architectural additions, and commit
 
 | Commit | Timestamp (UTC+2) | Milestone / Scope | Key Deliverables | Tests Passing |
 | --- | --- | --- | --- | --- |
+| [`c5bc7c7`](https://github.com/Dvrkstvr/tak-p2p/commit/c5bc7c7) | 2026-09-13 17:20:00 | **UI Mockups Realization & 2.5D Board** | Monochromatic B&W redesign with amber #d4a017 accent per `UI-MOCKUPS.md`, 2.5D perspective board with 2.5D/2D toggle, staggered piece stacks with physical slab thickness, and mobile layout overhaul. | 107 |
 | [`325e984`](https://github.com/Dvrkstvr/tak-p2p/commit/325e984) | 2026-09-12 08:52:00 | **Docs Consolidation & AGENTS.md Update** | Comprehensive cleanup and synchronization of all 10 specification documents and audit reports; aligned `AGENTS.md` and rules with multi-assembly test metrics (88 Core + 19 Transport = 107 total tests) and Blazor WASM rebuild guidelines; added uniform cross-specification links across the documentation suite. | 107 |
 | [`2d5eee2`](https://github.com/Dvrkstvr/tak-p2p/commit/2d5eee2) | 2026-09-12 08:10:00 | **Avalonia Native Mobile (Android & iPad/iOS)** | Scaffolded `TakApp.Avalonia.Android` (targeting `net10.0-android`, APK output, splash screen, permissions) and `TakApp.Avalonia.iOS` (targeting `net10.0-ios`, iPad & iPhone device family profiles), transitioned `TakApp.Avalonia` into shared cross-platform library and `TakApp.Avalonia.Desktop` into desktop executable; 107 passing unit tests. | 107 |
 | [`114436a`](https://github.com/Dvrkstvr/tak-p2p/commit/114436a) | 2026-09-12 08:09:18 | **Nostr Player Nicknames & Profiles** | Implemented Nostr `kind: 0` user profile publishing and metadata queries with in-memory caching, custom nickname support in `InviteCode` URIs/tokens, Profile modal in Blazor WASM, and nickname badges in game headers; 107 passing unit tests. | 107 |
@@ -34,6 +35,25 @@ This document tracks all project milestones, architectural additions, and commit
 ---
 
 ## Detailed Entry Logs
+
+### [c5bc7c7](https://github.com/Dvrkstvr/tak-p2p/commit/c5bc7c7) - UI Mockups Realization, 2.5D Perspective Board & Mobile Overhaul
+* **Timestamp**: `2026-09-13T17:20:00+02:00`
+* **Author**: Calvin Kohl
+* **Scope**: Complete redesign of the Tak P2P web client (`TakApp.Blazor`) based on UI mockups (`docs/UI-MOCKUPS.md`), implementing a 2.5D perspective board with staggered piece stacks, and repairing mobile responsiveness.
+* **Changes**:
+  * [tak-theme.css](file:///e:/repos/tak-p2p/src/TakApp.Blazor/wwwroot/css/tak-theme.css): Implemented monochromatic color palette (`#0a0a0a` background, `#ffffff` 1px lines, `#d4a017` amber flair, sharp `0px` border-radius), removed glassmorphism/shadows/gradients, added 2.5D perspective stage and board tilt classes (`.board-stage`, `.board-surface.perspective-25d`), and full mobile responsive rules.
+  * [TakBoardView.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Board/TakBoardView.razor): Rendered 1px white board grid on black background, amber square selections, and 2.5D perspective surface.
+  * [PieceStackSvg.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Board/PieceStackSvg.razor): Implemented 2.5D staggered cascading piece stacks with physical slab depth, white/black flats, standing walls, amber capstones, and stack height indicators.
+  * [Play.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Pages/Play.razor): Built 3-column desktop layout (`PLAYERS`, `STATUS`, center 2.5D board, piece selector tabs `Flat | Wall | Cap`, right `MOVES` panel) and dedicated mobile layout (compact status bar, full-width 2.5D board, piece selector, single-line inventory summary, and collapsible move history drawer).
+  * [Home.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Pages/Home.razor): Overhauled lobby matching `desktop-home.jpg` and `mobile-home.jpg` with large TAK hero, amber divider rule, board size toggles, AI difficulty toggles, action buttons, and feature architecture blocks.
+  * [GameStatusHeader.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Panels/GameStatusHeader.razor): Flat monochromatic status bar with `2.5D / 2D` perspective toggle, Resign, and Leave actions.
+  * [MoveHistoryPanel.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Panels/MoveHistoryPanel.razor): Monospace PTN move list with turn numbers and player moves.
+  * [PieceInventoryView.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Board/PieceInventoryView.razor): Monospace reserve indicators (`F 15 · W 1 · C 1`) and player dots.
+  * [StackSlideBar.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Board/StackSlideBar.razor): Sharp flat slide movement controls with directional arrows and drop distribution selector.
+  * [MainLayout.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Layout/MainLayout.razor): Minimalist top navigation bar displaying bold TAK and truncated user npub.
+* **Test Suite**: 107 unit tests passing (100% pass rate: 88 in `TakEngine.Core.Tests`, 19 in `TakEngine.Transport.Tests`).
+
+---
 
 ### [325e984](https://github.com/Dvrkstvr/tak-p2p/commit/325e984) - Documentation Consolidation & AGENTS.md Update
 * **Timestamp**: `2026-09-12T08:52:00+02:00`

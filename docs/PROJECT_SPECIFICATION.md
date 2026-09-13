@@ -372,6 +372,7 @@ Tak P2P utilizes a modular documentation suite to provide granular, authoritativ
 | Document | Focus & Scope |
 |:---|:---|
 | [System Overview](file:///e:/repos/tak-p2p/docs/system-overview.md) | High-level architecture, zero-server invariants, and component boundaries |
+| [UI Mockups & Visual Reference](file:///e:/repos/tak-p2p/docs/UI-MOCKUPS.md) | Minimal monochromatic B&W + amber redesign specifications and desktop/mobile mockups |
 | [MVP Milestone Guide (v1.0)](file:///e:/repos/tak-p2p/docs/v1-mvp.md) | Core deliverables, acceptance criteria, and M1.1–M1.9 status verification |
 | [Competitive & Tournaments (v2.0)](file:///e:/repos/tak-p2p/docs/v2-tournaments.md) | Co-signed receipts, serverless Swiss tournaments, Elo oracle, and anti-cheat |
 | [Wire Protocol & Nostr](file:///e:/repos/tak-p2p/docs/wire-protocol.md) | Nostr envelopes, NIP-01/NIP-44 schemas, and ephemeral matchmaking handshakes |

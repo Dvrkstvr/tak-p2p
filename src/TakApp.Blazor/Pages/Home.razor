@@ -6,161 +6,144 @@
 @inject NavigationManager Nav
 @inject BrowserStorage Storage
 
-<div style="max-width: 960px; margin: 1.5rem auto; padding: 0 1.5rem;">
+<div class="home-container">
     
-    <!-- Top Identity Bar -->
-    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--bg-card-border); border-radius: var(--radius-sm); padding: 0.65rem 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;">
-        <div style="display: flex; align-items: center; gap: 0.85rem; font-size: 0.85rem; flex-wrap: wrap;">
-            <div style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" @onclick="() => IsProfileModalOpen = true" title="Click to edit profile">
-                <div style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #06b6d4, #a855f7); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; color: #fff;">
-                    @(string.IsNullOrWhiteSpace(PlayerNickname) ? "◈" : (PlayerNickname.Length >= 2 ? PlayerNickname[..2].ToUpperInvariant() : PlayerNickname.ToUpperInvariant()))
-                </div>
-                <strong style="color: #f1f5f9; font-size: 0.95rem;">
-                    @(string.IsNullOrWhiteSpace(PlayerNickname) ? "Set Nickname" : PlayerNickname)
-                </strong>
-            </div>
-
-            <div style="display: flex; align-items: center; gap: 0.4rem; color: var(--text-secondary);">
-                <span style="color: #38bdf8; font-size: 0.85rem;">🔑</span>
-                <span style="font-family: var(--font-mono); color: #94a3b8; font-size: 0.8rem;" title="@FullNpub">
-                    @ShortNpub
-                </span>
-            </div>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <button class="btn-tak btn-ghost btn-sm" @onclick="() => IsProfileModalOpen = true">
-                👤 Profile
-            </button>
-            <button class="btn-tak btn-purple btn-sm" @onclick="() => IsLinkModalOpen = true">
-                🔗 Link Devices
-            </button>
-        </div>
-    </div>
-
-    <!-- Incoming Notifications -->
-    @if (!string.IsNullOrEmpty(LinkedSuccessMessage))
-    {
-        <div style="background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.4); border-radius: var(--radius-sm); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; color: #86efac;">
-            <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
-                <span>✓</span>
-                <span>@LinkedSuccessMessage</span>
-            </div>
-            <button class="btn-tak btn-ghost btn-sm" @onclick="() => LinkedSuccessMessage = null">✕</button>
-        </div>
-    }
-
+    <!-- Incoming Challenge Notification -->
     @if (PendingChallenge != null)
     {
-        <div class="glass-panel" style="border: 1px solid rgba(6, 182, 212, 0.45); padding: 1.25rem 1.5rem; margin-bottom: 2rem; background: rgba(6, 182, 212, 0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div style="border: 1px solid var(--accent-amber); padding: 1.25rem 1.5rem; margin-bottom: 2rem; background: #111111; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
             <div>
-                <div style="font-size: 0.8rem; text-transform: uppercase; color: #38bdf8; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.25rem;">
-                    ⚔️ Match Invitation Received
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--accent-amber); font-weight: 700; letter-spacing: 0.08em; margin-bottom: 0.25rem;">
+                    Match Invitation Received
                 </div>
-                <div style="font-size: 1.05rem; font-weight: 700; color: #f1f5f9; margin-bottom: 0.25rem;">
-                    @((int)PendingChallenge.BoardSize)x@((int)PendingChallenge.BoardSize) Tak Challenge
+                <div style="font-size: 1.05rem; font-weight: 700; color: #ffffff; margin-bottom: 0.25rem;">
+                    @((int)PendingChallenge.BoardSize)×@((int)PendingChallenge.BoardSize) Tak Challenge
                 </div>
                 <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                    From: <strong style="color: #f59e0b;">@(PendingChallenge.HostNickname ?? "Anonymous")</strong>
-                    <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); margin-left: 0.35rem;">
-                        (@(PendingChallenge.HostPubKey.Length > 16 ? $"{PendingChallenge.HostPubKey[..8]}...{PendingChallenge.HostPubKey[^4..]}" : PendingChallenge.HostPubKey))
-                    </span>
+                    From: <strong style="color: #ffffff;">@(PendingChallenge.HostNickname ?? "Anonymous")</strong>
                 </div>
             </div>
 
             <div style="display: flex; gap: 0.75rem;">
-                <button class="btn-tak btn-cyan" @onclick="AcceptPendingChallenge">
+                <button class="btn-tak btn-white" @onclick="AcceptPendingChallenge">
                     Accept & Play
                 </button>
-                <button class="btn-tak btn-ghost" @onclick="() => PendingChallenge = null">
+                <button class="btn-tak btn-outline" @onclick="() => PendingChallenge = null">
                     Decline
                 </button>
             </div>
         </div>
     }
 
-    <!-- Hero Banner -->
-    <div class="glass-panel" style="padding: 2.5rem; text-align: center; margin-bottom: 2rem; position: relative; overflow: hidden;">
-        <div style="display: inline-block; font-size: 2.5rem; margin-bottom: 0.5rem;">◈</div>
-        <h1 style="font-size: 2.5rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.75rem; background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 50%, #f59e0b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-            TAK P2P
-        </h1>
-        <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 620px; margin: 0 auto 1.5rem auto;">
-            A beautiful, decentralized, zero-server implementation of the abstract strategy game <strong>Tak</strong>. 
-            Play instantly in your browser with zero install.
-        </p>
+    @if (!string.IsNullOrEmpty(LinkedSuccessMessage))
+    {
+        <div style="border: 1px solid #ffffff; padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; color: #ffffff; font-size: 0.85rem;">
+            <span>✓ @LinkedSuccessMessage</span>
+            <button class="btn-link-action" @onclick="() => LinkedSuccessMessage = null">✕</button>
+        </div>
+    }
 
-        <!-- Quick Start Buttons -->
-        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1.5rem;">
-            <!-- Board Size Picker -->
-            <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.3); padding: 0.35rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--bg-card-border);">
-                <span style="font-size: 0.85rem; color: var(--text-muted);">Size:</span>
-                @foreach (var size in new[] { BoardSize.Four, BoardSize.Five, BoardSize.Six })
-                {
-                    <button class="btn-tak btn-sm @(SelectedSize == size ? "btn-primary" : "btn-ghost")"
-                            @onclick="() => SelectedSize = size">
-                        @((int)size)x@((int)size)
-                    </button>
-                }
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <h1 class="hero-title">TAK</h1>
+        <div class="hero-subtitle">peer-to-peer · zero servers · encrypted</div>
+        <div class="amber-line"></div>
+    </div>
+
+    <!-- Controls Row: Board Size & AI Difficulty -->
+    <div class="controls-row">
+        <!-- Board Size Picker -->
+        <div class="control-group">
+            <span class="control-label">Board size</span>
+            <div class="toggle-btn-group">
+                <button class="toggle-btn @(SelectedSize == BoardSize.Four ? "active" : "")"
+                        @onclick="() => SelectedSize = BoardSize.Four">
+                    4×4
+                </button>
+                <button class="toggle-btn @(SelectedSize == BoardSize.Five ? "active" : "")"
+                        @onclick="() => SelectedSize = BoardSize.Five">
+                    5×5
+                </button>
+                <button class="toggle-btn @(SelectedSize == BoardSize.Six ? "active" : "")"
+                        @onclick="() => SelectedSize = BoardSize.Six">
+                    6×6
+                </button>
             </div>
+        </div>
 
-            <!-- Bot Difficulty Picker -->
-            <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.3); padding: 0.35rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--bg-card-border);">
-                <span style="font-size: 0.85rem; color: var(--text-muted);">AI:</span>
-                @foreach (var diff in new[] { BotDifficulty.Easy, BotDifficulty.Medium, BotDifficulty.Hard })
-                {
-                    <button class="btn-tak btn-sm @(SelectedDifficulty == diff ? "btn-cyan" : "btn-ghost")"
-                            @onclick="() => SelectedDifficulty = diff">
-                        @diff
-                    </button>
-                }
+        <!-- AI Difficulty Picker -->
+        <div class="control-group">
+            <span class="control-label">AI difficulty</span>
+            <div class="toggle-btn-group">
+                <button class="toggle-btn @(SelectedDifficulty == BotDifficulty.Easy ? "active" : "")"
+                        @onclick="() => SelectedDifficulty = BotDifficulty.Easy">
+                    Easy
+                </button>
+                <button class="toggle-btn @(SelectedDifficulty == BotDifficulty.Medium ? "active" : "")"
+                        @onclick="() => SelectedDifficulty = BotDifficulty.Medium">
+                    Medium
+                </button>
+                <button class="toggle-btn @(SelectedDifficulty == BotDifficulty.Hard ? "active" : "")"
+                        @onclick="() => SelectedDifficulty = BotDifficulty.Hard">
+                    Hard
+                </button>
             </div>
-
-            <button class="btn-tak btn-cyan" @onclick="StartBotGame">
-                🤖 Practice vs AI
-            </button>
-
-            <button class="btn-tak btn-primary" @onclick="StartLocalGame">
-                ▶ Pass & Play
-            </button>
-
-            <button class="btn-tak btn-ghost" @onclick="OpenCreateInvite">
-                🔗 Direct Invite
-            </button>
-
-            <button class="btn-tak btn-ghost" @onclick="OpenJoinModal">
-                📥 Join Game
-            </button>
         </div>
     </div>
 
-    <!-- Feature Architecture Cards -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
-        
-        <div class="glass-panel panel-section">
-            <div style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #f59e0b;">⚡</div>
-            <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.35rem;">Zero Server Dependency</h3>
-            <p style="font-size: 0.85rem; color: var(--text-secondary);">
-                All game rules, carry limits, and DFS road detection run locally inside your browser via WebAssembly.
-            </p>
+    <!-- Actions Row -->
+    <div class="actions-row">
+        <button class="btn-tak btn-white" @onclick="StartBotGame">
+            vs AI
+        </button>
+        <button class="btn-tak btn-white" @onclick="StartLocalGame">
+            Local
+        </button>
+        <button class="btn-tak btn-outline" @onclick="OpenCreateInvite">
+            Invite
+        </button>
+        <button class="btn-tak btn-outline" @onclick="OpenJoinModal">
+            Join
+        </button>
+    </div>
+
+    <!-- Identity & Device Links -->
+    <div style="display: flex; justify-content: center; gap: 2rem; margin-bottom: 2.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+        <button class="btn-link-action" @onclick="() => IsProfileModalOpen = true">
+            Profile: <strong style="color: #ffffff;">@(string.IsNullOrWhiteSpace(PlayerNickname) ? "Anonymous" : PlayerNickname)</strong>
+        </button>
+        <button class="btn-link-action" @onclick="() => IsLinkModalOpen = true">
+            Link Devices
+        </button>
+        <span style="font-family: var(--font-mono); color: var(--text-muted); cursor: pointer;"
+              title="@FullNpub"
+              @onclick="() => IsProfileModalOpen = true">
+            @ShortNpub
+        </span>
+    </div>
+
+    <!-- Features Architecture Block -->
+    <div class="features-grid">
+        <div class="feature-block">
+            <div class="feature-title">LOCAL ENGINE</div>
+            <div class="feature-desc">
+                Deterministic rules, carry limits, and DFS road detection run locally inside your browser via WebAssembly.
+            </div>
         </div>
 
-        <div class="glass-panel panel-section">
-            <div style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #06b6d4;">🌐</div>
-            <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.35rem;">Nostr Relay Transport</h3>
-            <p style="font-size: 0.85rem; color: var(--text-secondary);">
-                Communicate peer-to-peer across public encrypted WebSocket relays without requiring an account or central authority.
-            </p>
+        <div class="feature-block">
+            <div class="feature-title">NOSTR RELAY</div>
+            <div class="feature-desc">
+                Peer-to-peer encrypted store-and-forward messaging across public Nostr WebSocket relays with zero centralized servers.
+            </div>
         </div>
 
-        <div class="glass-panel panel-section">
-            <div style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #a855f7;">📱</div>
-            <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.35rem;">Universal Multi-Device</h3>
-            <p style="font-size: 0.85rem; color: var(--text-secondary);">
-                Link your phone, tablet, and desktop using sovereign Nostr keys. Play asynchronous matches seamlessly across all your devices.
-            </p>
+        <div class="feature-block">
+            <div class="feature-title">MULTI-DEVICE</div>
+            <div class="feature-desc">
+                Universal identity allows pairing phones, tablets, and desktops using sovereign cryptographic keypairs.
+            </div>
         </div>
-
     </div>
 
 </div>
@@ -291,7 +274,7 @@
             HostNickname: PlayerNickname);
 
         GeneratedInviteCode = invite.ToCompactCode();
-        InviteModalTitle = $"Invite for {(int)SelectedSize}x{(int)SelectedSize} Match";
+        InviteModalTitle = $"Invite for {(int)SelectedSize}×{(int)SelectedSize} Match";
         IsInviteGenerateMode = true;
         IsInviteModalOpen = true;
     }

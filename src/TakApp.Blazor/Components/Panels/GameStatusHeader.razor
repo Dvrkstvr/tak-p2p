@@ -3,56 +3,45 @@
 
 @if (Board != null)
 {
-    <div class="glass-panel" style="padding: 0.85rem 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
-        
-        <!-- Status / Turn Info -->
-        <div style="display: flex; align-items: center; gap: 1rem;">
+    <div class="play-status-bar">
+        <!-- Turn Status Text -->
+        <div class="play-turn-text">
             @if (Board.Phase == GamePhase.Completed && Board.Result != null)
             {
                 var winner = Board.Result.Winner;
                 string winPlayerName = winner.HasValue ? (winner.Value == PlayerColor.White ? WhitePlayerName : BlackPlayerName) : "Nobody";
-                string winColorName = winner.HasValue ? winner.Value.ToString() : "Nobody";
-                string reasonName = Board.Result.Reason.ToString();
-
-                <div class="win-banner" style="padding: 0.4rem 1rem;">
-                    <strong style="color: #f59e0b; font-size: 1rem;">
-                        @(winner.HasValue ? $"🏆 {winPlayerName} ({winColorName}) Wins by {reasonName}!" : "🤝 Game Drawn!")
-                    </strong>
-                </div>
+                string reasonName = Board.Result.Reason.ToString().ToUpperInvariant();
+                <span style="color: var(--accent-amber);">
+                    @(winner.HasValue ? $"{winPlayerName.ToUpperInvariant()} WINS ({reasonName})" : "DRAW")
+                </span>
+            }
+            else if (Board.Phase == GamePhase.FirstTurnPlacement)
+            {
+                <span>OPENING: @(Board.ActivePlayer == PlayerColor.White ? "WHITE" : "BLACK") PLACES OPPONENT</span>
             }
             else
             {
-                var activeColor = Board.ActivePlayer;
-                string activePlayerName = activeColor == PlayerColor.White ? WhitePlayerName : BlackPlayerName;
-                string dotClass = activeColor == PlayerColor.White ? "badge-white" : "badge-black";
-
-                <div style="display: flex; align-items: center; gap: 0.6rem;">
-                    <span class="player-badge @dotClass" style="width: 18px; height: 18px;"></span>
-                    <strong style="font-size: 1.05rem;">
-                        Turn @(Board.TurnNumber): @activePlayerName's Move
-                    </strong>
-                </div>
-
-                @if (Board.Phase == GamePhase.FirstTurnPlacement)
-                {
-                    <span class="brand-badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3);">
-                        Opening: Place Opponent's Flat Stone
-                    </span>
-                }
+                <span>@(Board.ActivePlayer == PlayerColor.White ? "WHITE" : "BLACK") TO PLAY</span>
             }
         </div>
 
-        <!-- Action Buttons -->
-        <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <!-- Action Links: 2.5D Toggle, Resign, Leave -->
+        <div class="play-actions">
+            <button class="btn-perspective-toggle @(Is25D ? "active" : "")"
+                    @onclick="TogglePerspective"
+                    title="Toggle 2.5D / 2D Perspective View">
+                @(Is25D ? "2.5D" : "2D")
+            </button>
+
             @if (Board.Phase != GamePhase.Completed)
             {
-                <button class="btn-tak btn-danger btn-sm" @onclick="HandleResign">
-                    🏳 Resign
+                <button class="btn-link-action" @onclick="HandleResign">
+                    Resign
                 </button>
             }
 
-            <button class="btn-tak btn-ghost btn-sm" @onclick="HandleNewGame">
-                ↻ Reset / Lobby
+            <button class="btn-link-action" @onclick="HandleLeave">
+                Leave
             </button>
         </div>
     </div>
@@ -62,8 +51,18 @@
     [Parameter] public GameBoard? Board { get; set; }
     [Parameter] public string WhitePlayerName { get; set; } = "White";
     [Parameter] public string BlackPlayerName { get; set; } = "Black";
+    [Parameter] public bool Is25D { get; set; } = true;
     [Parameter] public EventCallback OnResignRequested { get; set; }
     [Parameter] public EventCallback OnNewGameRequested { get; set; }
+    [Parameter] public EventCallback OnTogglePerspective { get; set; }
+
+    private async Task TogglePerspective()
+    {
+        if (OnTogglePerspective.HasDelegate)
+        {
+            await OnTogglePerspective.InvokeAsync();
+        }
+    }
 
     private async Task HandleResign()
     {
@@ -73,7 +72,7 @@
         }
     }
 
-    private async Task HandleNewGame()
+    private async Task HandleLeave()
     {
         if (OnNewGameRequested.HasDelegate)
         {

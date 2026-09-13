@@ -7,18 +7,18 @@
     var origin = OriginCoord.Value;
     var stack = Board.GetStack(origin);
 
-    <div class="slide-control-bar">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 0.9rem; font-weight: 600; color: #38bdf8;">
-                Slide Stack from @origin.ToAlgebraic() (Height: @stack.Height, Carry Limit: @Board.CarryLimit)
+    <div class="slide-control-box">
+        <div class="slide-control-header">
+            <span>
+                Slide stack at @origin.ToAlgebraic() (Height: @stack.Height, Carry Limit: @Board.CarryLimit)
             </span>
             <button class="btn-tak btn-ghost btn-sm" @onclick="OnCancel">✕ Cancel</button>
         </div>
 
         <!-- Direction Picker -->
         <div style="display: flex; align-items: center; justify-content: space-between;">
-            <span style="font-size: 0.85rem; color: #94a3b8;">1. Choose Direction:</span>
-            <div class="dir-buttons">
+            <span style="font-size: 0.85rem; color: var(--text-secondary);">1. Direction:</span>
+            <div class="dir-picker">
                 @foreach (var dir in new[] { Direction.North, Direction.West, Direction.East, Direction.South })
                 {
                     bool hasMoves = AvailableSlideMoves.Any(m => m.Direction == dir);
@@ -31,9 +31,8 @@
                         _ => "?"
                     };
 
-                    <button class="btn-dir @(SelectedDirection == dir ? "selected" : "")"
+                    <button class="btn-dir-key @(SelectedDirection == dir ? "selected" : "")"
                             disabled="@(!hasMoves)"
-                            style="@(!hasMoves ? "opacity: 0.3; cursor: not-allowed;" : "")"
                             @onclick="() => SelectDirection(dir)">
                         @arrow
                     </button>
@@ -45,15 +44,15 @@
         @if (SelectedDirection.HasValue)
         {
             var matchingMoves = AvailableSlideMoves.Where(m => m.Direction == SelectedDirection.Value).ToList();
-            <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.5rem;">
-                <span style="font-size: 0.85rem; color: #94a3b8;">2. Choose Drops (Squares & Counts):</span>
+            <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                <span style="font-size: 0.85rem; color: var(--text-secondary);">2. Drops:</span>
                 <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                     @foreach (var move in matchingMoves)
                     {
                         string dropDesc = $"{move.LiftCount} piece{(move.LiftCount > 1 ? "s" : "")} → {string.Join("-", move.Drops)}";
                         bool isSelected = SelectedMove == move;
 
-                        <button class="btn-tak @(isSelected ? "btn-primary" : "btn-ghost") btn-sm"
+                        <button class="btn-tak @(isSelected ? "btn-white" : "btn-outline") btn-sm"
                                 @onclick="() => SelectMove(move)">
                             @dropDesc
                         </button>
@@ -63,8 +62,8 @@
 
             @if (SelectedMove != null)
             {
-                <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
-                    <button class="btn-tak btn-primary" @onclick="ConfirmSlide">
+                <div style="display: flex; justify-content: flex-end; margin-top: 0.25rem;">
+                    <button class="btn-tak btn-white btn-sm" @onclick="ConfirmSlide">
                         Confirm Move (@SelectedMove.ToPtn())
                     </button>
                 </div>

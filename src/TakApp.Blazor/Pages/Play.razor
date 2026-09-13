@@ -4,79 +4,180 @@
 @inject BrowserStorage Storage
 @implements IDisposable
 
-<div class="arena-container">
+<!-- DESKTOP ARENA LAYOUT (>= 1024px) -->
+<div class="arena-3col">
     
-    <!-- Left Column: White Inventory & Quick Match Info -->
-    <div class="side-panel">
-        <div class="glass-panel panel-section">
-            <span class="panel-title">Players</span>
+    <!-- Left Column: Players & Game Status -->
+    <div class="arena-col arena-col-left">
+        <div>
+            <div class="section-muted-header">PLAYERS</div>
+            
             <PieceInventoryView Board="@Session.Board"
                                 Color="PlayerColor.White"
                                 PlayerName="@Session.WhitePlayerName"
                                 SelectedPieceType="@SelectedPieceType"
                                 OnPieceSelected="HandlePieceSelected" />
 
-            <div style="height: 0.5rem;"></div>
-
             <PieceInventoryView Board="@Session.Board"
                                 Color="PlayerColor.Black"
                                 PlayerName="@Session.BlackPlayerName"
                                 SelectedPieceType="@SelectedPieceType"
                                 OnPieceSelected="HandlePieceSelected" />
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div style="border: 1px solid #7f1d1d; color: #f87171; padding: 0.6rem; font-size: 0.8rem; margin-top: 1rem;">
+                    @ErrorMessage
+                </div>
+            }
         </div>
 
-        @if (!string.IsNullOrEmpty(ErrorMessage))
-        {
-            <div style="background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.4); border-radius: var(--radius-sm); padding: 0.75rem; color: #fda4af; font-size: 0.85rem;">
-                ⚠️ @ErrorMessage
+        <div class="status-block">
+            <div class="section-muted-header">STATUS</div>
+            <div class="status-text">
+                @((int)Session.CurrentSize)×@((int)Session.CurrentSize) · Turn @(Session.Board?.TurnNumber ?? 1) · @GetModeDescription()
             </div>
-        }
-
-        <div class="glass-panel panel-section">
-            <span class="panel-title">Game Invariant Status</span>
-            <div style="font-size: 0.8rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 0.35rem;">
-                <div>Mode: <strong>@(Session.IsBotMatch ? $"🤖 AI Practice ({Session.BotDifficulty})" : (Session.IsLocalOnly ? "Pass & Play" : "Nostr Remote"))</strong></div>
-                @if (Session.IsBotThinking)
-                {
-                    <div style="color: var(--accent-gold); font-weight: 600;">⏳ AI is thinking...</div>
-                }
-                <div>Board: <strong>@((int)Session.CurrentSize)x@((int)Session.CurrentSize)</strong></div>
-                <div>Carry Limit: <strong>@((int)Session.CurrentSize)</strong></div>
-                <div>Hash: <span style="font-family: var(--font-mono); color: #38bdf8; font-size: 0.75rem;">@(Session.PrevStateHash?[..16] ?? "GENESIS")...</span></div>
+            @if (Session.IsBotThinking)
+            {
+                <div style="color: var(--accent-amber); font-size: 0.8rem; margin-bottom: 0.5rem; font-weight: 600;">
+                    AI is thinking...
+                </div>
+            }
+            <div class="status-sha">
+                SHA: #@(Session.PrevStateHash?.Length > 16 ? Session.PrevStateHash[..16] : (Session.PrevStateHash ?? "GENESIS"))...
             </div>
         </div>
     </div>
 
-    <!-- Center Column: Board & Action Controls -->
-    <div style="display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 580px;">
-        <div style="width: 100%; margin-bottom: 1rem;">
-            <GameStatusHeader Board="@Session.Board"
-                              WhitePlayerName="@Session.WhitePlayerName"
-                              BlackPlayerName="@Session.BlackPlayerName"
-                              OnResignRequested="HandleResign"
-                              OnNewGameRequested="HandleLeave" />
-        </div>
+    <!-- Center Column: Status Bar, 2.5D Board, Piece Selector -->
+    <div class="arena-col arena-col-center">
+        <!-- Status Bar -->
+        <GameStatusHeader Board="@Session.Board"
+                          WhitePlayerName="@Session.WhitePlayerName"
+                          BlackPlayerName="@Session.BlackPlayerName"
+                          Is25D="@Is25D"
+                          OnResignRequested="HandleResign"
+                          OnNewGameRequested="HandleLeave"
+                          OnTogglePerspective="TogglePerspective" />
 
-        <!-- SVG Board -->
+        <!-- 2.5D Board -->
         <TakBoardView Board="@Session.Board"
                       SelectedCoord="@SelectedCoord"
                       LastMoveTarget="@LastMoveTarget"
                       LegalTargets="@LegalPlacementTargets"
                       WinningRoad="@Session.WinningRoadCoords"
+                      Is25D="@Is25D"
                       OnSquareClick="HandleSquareClick" />
 
-        <!-- Stack Slide Bar (appears when a stack is selected) -->
+        <!-- Piece Selector (Flat | Wall | Cap) -->
+        <div class="piece-selector-row">
+            <button class="piece-selector-tab @(SelectedPieceType == PieceType.Flat ? "active" : "")"
+                    @onclick="() => HandlePieceSelected(PieceType.Flat)">
+                Flat
+            </button>
+            <button class="piece-selector-tab @(SelectedPieceType == PieceType.Standing ? "active" : "")"
+                    @onclick="() => HandlePieceSelected(PieceType.Standing)">
+                Wall
+            </button>
+            @if (Session.Board?.Size != BoardSize.Four)
+            {
+                <button class="piece-selector-tab @(SelectedPieceType == PieceType.Capstone ? "active" : "")"
+                        @onclick="() => HandlePieceSelected(PieceType.Capstone)">
+                    Cap
+                </button>
+            }
+        </div>
+
+        <!-- Stack Slide Bar (Active when an owned stack is clicked) -->
         <StackSlideBar OriginCoord="@SlideOriginCoord"
                        Board="@Session.Board"
                        OnSlideConfirmed="HandleSlideConfirmed"
                        OnCancelRequested="HandleSlideCancelled" />
     </div>
 
-    <!-- Right Column: Move History -->
-    <div class="side-panel">
+    <!-- Right Column: Move History (PTN) -->
+    <div class="arena-col arena-col-right">
         <MoveHistoryPanel Moves="@Session.MoveHistoryPtn" />
     </div>
 
+</div>
+
+<!-- MOBILE PLAY VIEW (< 1024px) -->
+<div class="mobile-play-wrapper">
+    <!-- Status Bar -->
+    <GameStatusHeader Board="@Session.Board"
+                      WhitePlayerName="@Session.WhitePlayerName"
+                      BlackPlayerName="@Session.BlackPlayerName"
+                      Is25D="@Is25D"
+                      OnResignRequested="HandleResign"
+                      OnNewGameRequested="HandleLeave"
+                      OnTogglePerspective="TogglePerspective" />
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div style="border: 1px solid #7f1d1d; color: #f87171; padding: 0.5rem; font-size: 0.8rem; margin-bottom: 0.75rem; width: 100%; max-width: 480px;">
+            @ErrorMessage
+        </div>
+    }
+
+    <!-- 2.5D Board -->
+    <TakBoardView Board="@Session.Board"
+                  SelectedCoord="@SelectedCoord"
+                  LastMoveTarget="@LastMoveTarget"
+                  LegalTargets="@LegalPlacementTargets"
+                  WinningRoad="@Session.WinningRoadCoords"
+                  Is25D="@Is25D"
+                  OnSquareClick="HandleSquareClick" />
+
+    <!-- Piece Selector (Flat | Wall | Cap) -->
+    <div class="piece-selector-row">
+        <button class="piece-selector-tab @(SelectedPieceType == PieceType.Flat ? "active" : "")"
+                @onclick="() => HandlePieceSelected(PieceType.Flat)">
+            Flat
+        </button>
+        <button class="piece-selector-tab @(SelectedPieceType == PieceType.Standing ? "active" : "")"
+                @onclick="() => HandlePieceSelected(PieceType.Standing)">
+            Wall
+        </button>
+        @if (Session.Board?.Size != BoardSize.Four)
+        {
+            <button class="piece-selector-tab @(SelectedPieceType == PieceType.Capstone ? "active" : "")"
+                    @onclick="() => HandlePieceSelected(PieceType.Capstone)">
+                Cap
+            </button>
+        }
+    </div>
+
+    <!-- Mobile Single-Line Inventory -->
+    @if (Session.Board != null)
+    {
+        var wRes = Session.Board.WhiteReserves;
+        var bRes = Session.Board.BlackReserves;
+        <div class="mobile-inventory-line">
+            <span><span class="player-dot-white"></span> White F:@wRes.Stones W:@wRes.Stones C:@wRes.Capstones</span>
+            <span><span class="player-dot-black"></span> Black F:@bRes.Stones W:@bRes.Stones C:@bRes.Capstones</span>
+        </div>
+    }
+
+    <!-- Stack Slide Bar -->
+    <StackSlideBar OriginCoord="@SlideOriginCoord"
+                   Board="@Session.Board"
+                   OnSlideConfirmed="HandleSlideConfirmed"
+                   OnCancelRequested="HandleSlideCancelled" />
+
+    <!-- Collapsible Move History -->
+    <div class="mobile-moves-toggle">
+        <button class="mobile-moves-btn" @onclick="() => IsMobileMovesExpanded = !IsMobileMovesExpanded">
+            <span>MOVES @(IsMobileMovesExpanded ? "▲" : "▼")</span>
+            <span style="color: var(--text-muted); font-size: 0.75rem;">(@Session.MoveHistoryPtn.Count moves)</span>
+        </button>
+        @if (IsMobileMovesExpanded)
+        {
+            <div class="mobile-moves-content">
+                <MoveHistoryPanel Moves="@Session.MoveHistoryPtn" />
+            </div>
+        }
+    </div>
 </div>
 
 @code {
@@ -86,6 +187,8 @@
     private PieceType? SelectedPieceType { get; set; } = PieceType.Flat;
     private HashSet<Coord> LegalPlacementTargets { get; set; } = new();
     private string? ErrorMessage { get; set; }
+    private bool Is25D { get; set; } = true;
+    private bool IsMobileMovesExpanded { get; set; } = false;
 
     protected override void OnInitialized()
     {
@@ -96,6 +199,18 @@
 
         Session.OnStateChanged += HandleSessionChanged;
         RefreshLegalTargets();
+    }
+
+    private void TogglePerspective()
+    {
+        Is25D = !Is25D;
+    }
+
+    private string GetModeDescription()
+    {
+        if (Session.IsBotMatch) return $"AI {Session.BotDifficulty}";
+        if (Session.IsLocalOnly) return "Local Pass & Play";
+        return "Nostr Remote";
     }
 
     private void HandleSessionChanged()
@@ -167,7 +282,6 @@
         }
         else
         {
-            // Last step destination
             (int dx, int dy) = move.Direction switch
             {
                 Direction.North => (0, 1),
