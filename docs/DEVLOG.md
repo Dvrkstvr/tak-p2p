@@ -8,8 +8,9 @@ This document tracks all project milestones, architectural additions, and commit
 
 | Commit | Timestamp (UTC+2) | Milestone / Scope | Key Deliverables | Tests Passing |
 | --- | --- | --- | --- | --- |
-| [`9f288d6`](https://github.com/Dvrkstvr/tak-p2p/commit/9f288d6) | 2026-09-13 19:35:00 | **Dynamic Tower Movement & In-Transit Display** | Real-time piece stack rendering during tower movement: origin square immediately reflects tiles left behind (`leaveCount`); floating carried hand stack renders with vertical elevation, gold lift aura, and subtle floating keyframe animation; destination squares immediately render dropped tiles upon stepping/stacking. 100% verified via browser subagent. | 114 |
-| [`d706c2a`](https://github.com/Dvrkstvr/tak-p2p/commit/d706c2a) | 2026-09-13 19:15:00 | **PlayTak Stepped Tower Movement & Tile Count Selection** | Authentic PlayTak.com multi-tile tower mechanics: origin clicking decrements/cycles carried count (`xN`, `-1 TILE` pill), stepping onto adjacent square drops 1 tile (`+1` badge), clicking same square stacks carried tiles (`+STACK`), clicking next square advances along the path (`STEP` marker), and automatic move dispatch once all carried tiles are placed. SVG inner element pointer-events isolation for seamless square selection. | 114 |
+| [`419b752`](https://github.com/Dvrkstvr/tak-p2p/commit/419b752) | 2026-09-13 20:00:00 | **Cancel Tower Movement on Out-of-Range Clicks** | Clicking outside legal move range or on board background cleanly cancels active tower movement and unselects the tower without erroneously placing a tile or consuming a turn; added SVG event stopPropagation and background click cancellation. 100% verified via browser subagent. | 114 |
+| [`6d59baa`](https://github.com/Dvrkstvr/tak-p2p/commit/6d59baa) | 2026-09-13 19:35:00 | **Dynamic Tower Movement & In-Transit Display** | Real-time piece stack rendering during tower movement: origin square immediately reflects tiles left behind (`leaveCount`); floating carried hand stack renders with vertical elevation, gold lift aura, and subtle floating keyframe animation; destination squares immediately render dropped tiles upon stepping/stacking. 100% verified via browser subagent. | 114 |
+| [`51b03fe`](https://github.com/Dvrkstvr/tak-p2p/commit/51b03fe) | 2026-09-13 19:15:00 | **PlayTak Stepped Tower Movement & Tile Count Selection** | Authentic PlayTak.com multi-tile tower mechanics: origin clicking decrements/cycles carried count (`xN`, `-1 TILE` pill), stepping onto adjacent square drops 1 tile (`+1` badge), clicking same square stacks carried tiles (`+STACK`), clicking next square advances along the path (`STEP` marker), and automatic move dispatch once all carried tiles are placed. SVG inner element pointer-events isolation for seamless square selection. | 114 |
 | [`28d488c`](https://github.com/Dvrkstvr/tak-p2p/commit/28d488c) | 2026-09-13 18:15:00 | **PlayTak-Authentic Game Controls** | Complete implementation of PlayTak.com game controls: interactive reserves with click-to-select and rotate-to-wall, quick-wall right-click placement on empty squares, direct on-board stack movement with slide target markers, floating stack layer inspector on right-click, and keyboard hotkeys (`[F]`, `[W]`, `[C]`, `[Esc]`). | 114 |
 | [`62c1375`](https://github.com/Dvrkstvr/tak-p2p/commit/62c1375) | 2026-09-13 17:36:00 | **2.5D Pillar Capstones, Taller Walls & SVG Assets** | Pre-rendered 2.5D SVG piece symbol architecture, tall cylindrical pillar capstone with amber crown, 48px standing walls with top bevel, and SvgTileRenderer unit test suite with 114 passing tests. | 114 |
 | [`c5bc7c7`](https://github.com/Dvrkstvr/tak-p2p/commit/c5bc7c7) | 2026-09-13 17:20:00 | **UI Mockups Realization & 2.5D Board** | Monochromatic B&W redesign with amber #d4a017 accent per `UI-MOCKUPS.md`, 2.5D perspective board with 2.5D/2D toggle, staggered piece stacks with physical slab thickness, and mobile layout overhaul. | 107 |
@@ -40,7 +41,18 @@ This document tracks all project milestones, architectural additions, and commit
 
 ## Detailed Entry Logs
 
-### [9f288d6](https://github.com/Dvrkstvr/tak-p2p/commit/9f288d6) - Dynamic Tower Movement & In-Transit Piece Display
+### [419b752](https://github.com/Dvrkstvr/tak-p2p/commit/419b752) - Cancel Tower Movement on Out-of-Range Clicks
+* **Timestamp**: `2026-09-13T20:00:00+02:00`
+* **Author**: Calvin Kohl
+* **Scope**: Fixed fallthrough behavior in Blazor UI where clicking outside legal move range while a tower was selected inadvertently placed a piece at the clicked square instead of cancelling the movement.
+* **Changes**:
+  * [Play.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Pages/Play.razor): Added explicit `return;` on `SelectedCoord = null; RefreshLegalTargets();` when clicking outside legal move targets in `SlideBuilder` Case A and Case B, completely preventing fallthrough to placement logic. Added `HandleCancelSelection()` wired to `OnBackgroundClick`.
+  * [TakBoardView.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Board/TakBoardView.razor): Added `@onclick:stopPropagation="true"` to `<g id="sq-...">` to prevent square clicks from bubbling to the background. Added `@onclick="HandleBackgroundClick"` to outer board base `<rect>` and exposed `OnBackgroundClick` event callback.
+* **Test Suite**: 114 unit tests passing (100% pass rate: 95 in `TakEngine.Core.Tests`, 19 in `TakEngine.Transport.Tests`). Verified via automated browser subagent with screenshot and video artifacts showing tower selection, outside click on empty square without tile placement, and margin clicks.
+
+---
+
+### [6d59baa](https://github.com/Dvrkstvr/tak-p2p/commit/6d59baa) - Dynamic Tower Movement & In-Transit Piece Display
 * **Timestamp**: `2026-09-13T19:35:00+02:00`
 * **Author**: Calvin Kohl
 * **Scope**: Implemented dynamic live board rendering during tower movement. Origin squares immediately show pieces left behind, lifted pieces render floating with elevation and golden aura above the current hand square, and destination squares display placed pieces in real time as drops occur.
@@ -53,7 +65,7 @@ This document tracks all project milestones, architectural additions, and commit
 
 ---
 
-### [d706c2a](https://github.com/Dvrkstvr/tak-p2p/commit/d706c2a) - PlayTak Stepped Tower Movement & Tile Count Selection
+### [51b03fe](https://github.com/Dvrkstvr/tak-p2p/commit/51b03fe) - PlayTak Stepped Tower Movement & Tile Count Selection
 * **Timestamp**: `2026-09-13T19:15:00+02:00`
 * **Author**: Calvin Kohl
 * **Scope**: Researched and implemented authentic PlayTak.com multi-tile tower mechanics allowing players to click the origin tower to adjust carried tile count before moving, followed by stepped directional drops and in-place stacking until all carried stones are placed.

@@ -113,7 +113,8 @@
                       SlideDrops="@SlideDrops"
                       OnSquareClick="HandleSquareClick"
                       OnSquareRightClick="HandleSquareRightClick"
-                      OnDismissInspect="HandleDismissInspect" />
+                      OnDismissInspect="HandleDismissInspect"
+                      OnBackgroundClick="HandleCancelSelection" />
 
         <!-- Piece Selector (Flat | Wall | Cap) with PlayTak hotkeys -->
         <div class="piece-selector-row">
@@ -203,7 +204,8 @@
                   SlideDrops="@SlideDrops"
                   OnSquareClick="HandleSquareClick"
                   OnSquareRightClick="HandleSquareRightClick"
-                  OnDismissInspect="HandleDismissInspect" />
+                  OnDismissInspect="HandleDismissInspect"
+                  OnBackgroundClick="HandleCancelSelection" />
 
     <!-- Piece Selector (Flat | Wall | Cap) -->
     <div class="piece-selector-row">
@@ -576,9 +578,11 @@
                     return;
                 }
 
-                // Clicked unrelated square: cancel slide
+                // Clicked outside move range: cancel movement completely without placing a tile
                 SlideBuilder = null;
+                SelectedCoord = null;
                 RefreshLegalTargets();
+                return;
             }
             // Case B: Direction is chosen
             else
@@ -618,8 +622,9 @@
                     return;
                 }
 
-                // Clicked origin or elsewhere: cancel slide
+                // Clicked origin or elsewhere outside move range: cancel slide completely
                 SlideBuilder = null;
+                SelectedCoord = null;
                 RefreshLegalTargets();
                 return;
             }
@@ -716,6 +721,14 @@
     private void HandleDismissInspect()
     {
         InspectingCoord = null;
+    }
+
+    private void HandleCancelSelection()
+    {
+        SlideBuilder = null;
+        SelectedCoord = null;
+        InspectingCoord = null;
+        RefreshLegalTargets();
     }
 
     private void ExecuteSlide(SlideMove move)

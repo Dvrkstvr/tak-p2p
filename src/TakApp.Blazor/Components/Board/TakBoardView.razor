@@ -68,7 +68,8 @@
             <rect x="0" y="0"
                   width="@F(TotalBoardDimension)"
                   height="@F(TotalBoardDimension)"
-                  fill="#0a0a0a" />
+                  fill="#0a0a0a"
+                  @onclick="HandleBackgroundClick" />
 
             <!-- Board Playing Field Outer Border -->
             <rect x="@F(BorderPadding)"
@@ -119,6 +120,7 @@
                     <g id="@($"sq-{coord.ToAlgebraic()}")"
                        data-coord="@coord.ToAlgebraic()"
                        @onclick="() => HandleSquareClick(coord)"
+                       @onclick:stopPropagation="true"
                        @oncontextmenu="() => HandleSquareRightClick(coord)"
                        @oncontextmenu:preventDefault="true">
                         <!-- Square Boundary and Hover Target -->
@@ -360,6 +362,7 @@
     [Parameter] public IReadOnlyList<Piece>? SlideOriginalPieces { get; set; }
     [Parameter] public IReadOnlyList<int>? SlideDrops { get; set; }
     [Parameter] public Direction? SlideDirection { get; set; }
+    [Parameter] public EventCallback OnBackgroundClick { get; set; }
 
     public int SizeInt => Board != null ? (int)Board.Size : 5;
     public double SquareSize => 80.0;
@@ -390,6 +393,14 @@
         if (OnDismissInspect.HasDelegate)
         {
             await OnDismissInspect.InvokeAsync();
+        }
+    }
+
+    private async Task HandleBackgroundClick()
+    {
+        if (OnBackgroundClick.HasDelegate)
+        {
+            await OnBackgroundClick.InvokeAsync();
         }
     }
 
