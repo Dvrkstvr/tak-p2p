@@ -75,6 +75,7 @@
 @code {
     [Parameter] public Coord? OriginCoord { get; set; }
     [Parameter] public GameBoard? Board { get; set; }
+    [Parameter] public Direction? ActiveDirection { get; set; }
     [Parameter] public EventCallback<SlideMove> OnSlideConfirmed { get; set; }
     [Parameter] public EventCallback OnCancelRequested { get; set; }
 
@@ -93,8 +94,12 @@
 
     protected override void OnParametersSet()
     {
-        // Auto-select direction if only one available
-        if (OriginCoord.HasValue && SelectedDirection == null && AvailableSlideMoves.Any())
+        if (ActiveDirection.HasValue && AvailableSlideMoves.Any(m => m.Direction == ActiveDirection.Value))
+        {
+            SelectedDirection = ActiveDirection.Value;
+            SelectedMove = AvailableSlideMoves.FirstOrDefault(m => m.Direction == SelectedDirection);
+        }
+        else if (OriginCoord.HasValue && SelectedDirection == null && AvailableSlideMoves.Any())
         {
             SelectedDirection = AvailableSlideMoves.First().Direction;
             SelectedMove = AvailableSlideMoves.FirstOrDefault(m => m.Direction == SelectedDirection);

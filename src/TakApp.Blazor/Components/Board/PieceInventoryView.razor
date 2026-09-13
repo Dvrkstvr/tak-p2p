@@ -7,16 +7,53 @@
     bool isTurn = Board.ActivePlayer == Color && Board.Phase != GamePhase.Completed;
     string colorName = Color.ToString();
     string displayName = string.IsNullOrWhiteSpace(PlayerName) ? colorName : PlayerName;
+    bool hasCapstones = Board.Size != BoardSize.Four;
 
-    <div class="player-card-flat">
+    <div class="player-card-flat @(isTurn ? "active-player-card" : "")">
         <div class="player-name-row">
             <span class="@(Color == PlayerColor.White ? "player-dot-white" : "player-dot-black")"></span>
             <span style="@(isTurn ? "color: #ffffff; font-weight: 700;" : "color: var(--text-secondary);")">
                 @displayName
             </span>
+            @if (isTurn)
+            {
+                <span class="active-turn-badge">ACTIVE</span>
+            }
         </div>
-        <div class="player-counts-mono">
-            F @reserves.Stones · W @reserves.Stones · C @reserves.Capstones
+
+        <div class="player-reserves-interactive">
+            <!-- Flat Stone Chip -->
+            <button class="reserve-chip @(isTurn && SelectedPieceType == PieceType.Flat ? "selected" : "")"
+                    title="Flat Stone [F] - Click again or right-click to rotate to Wall"
+                    @onclick="() => HandleFlatClick(isTurn)"
+                    @oncontextmenu="() => HandleFlatRightClick(isTurn)"
+                    @oncontextmenu:preventDefault>
+                <span class="reserve-chip-icon tak-icon-flat @(Color == PlayerColor.White ? "tak-icon-white" : "tak-icon-black")"></span>
+                <span class="reserve-chip-label">Flat</span>
+                <span class="reserve-chip-count">@reserves.Stones</span>
+            </button>
+
+            <!-- Standing Wall Chip -->
+            <button class="reserve-chip @(isTurn && SelectedPieceType == PieceType.Standing ? "selected" : "")"
+                    title="Standing Wall [W]"
+                    @onclick="() => SelectPiece(PieceType.Standing, isTurn)">
+                <span class="reserve-chip-icon tak-icon-wall @(Color == PlayerColor.White ? "tak-icon-white" : "tak-icon-black")"></span>
+                <span class="reserve-chip-label">Wall</span>
+                <span class="reserve-chip-count">@reserves.Stones</span>
+            </button>
+
+            <!-- Capstone Chip -->
+            @if (hasCapstones)
+            {
+                <button class="reserve-chip @(isTurn && SelectedPieceType == PieceType.Capstone ? "selected" : "")"
+                        title="Capstone [C]"
+                        disabled="@(reserves.Capstones <= 0)"
+                        @onclick="() => SelectPiece(PieceType.Capstone, isTurn)">
+                    <span class="reserve-chip-icon tak-icon-cap @(Color == PlayerColor.White ? "tak-icon-white" : "tak-icon-black")"></span>
+                    <span class="reserve-chip-label">Cap</span>
+                    <span class="reserve-chip-count">@reserves.Capstones</span>
+                </button>
+            }
         </div>
     </div>
 }
@@ -27,4 +64,34 @@
     [Parameter] public string? PlayerName { get; set; }
     [Parameter] public PieceType? SelectedPieceType { get; set; }
     [Parameter] public EventCallback<PieceType> OnPieceSelected { get; set; }
+
+    private async Task HandleFlatClick(bool isTurn)
+    {
+        if (!isTurn) return;
+        // PlayTak behavior: Left-click Flat selects Flat. Left-click again rotates it to Wall.
+        if (SelectedPieceType == PieceType.Flat)
+        {
+            await SelectPiece(PieceType.Standing, isTurn);
+        }
+        else
+        {
+            await SelectPiece(PieceType.Flat, isTurn);
+        }
+    }
+
+    private async Task HandleFlatRightClick(bool isTurn)
+    {
+        if (!isTurn) return;
+        // PlayTak behavior: Right-click rotates it to Wall.
+        await SelectPiece(PieceType.Standing, isTurn);
+    }
+
+    private async Task SelectPiece(PieceType type, bool isTurn)
+    {
+        if (!isTurn) return;
+        if (OnPieceSelected.HasDelegate)
+        {
+            await OnPieceSelected.InvokeAsync(type);
+        }
+    }
 }

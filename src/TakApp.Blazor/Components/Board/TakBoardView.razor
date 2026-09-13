@@ -106,11 +106,15 @@
                     double sqX = BorderPadding + x * SquareSize;
                     double sqY = BorderPadding + (SizeInt - 1 - y) * SquareSize;
                     bool isSelected = SelectedCoord.HasValue && SelectedCoord.Value == coord;
-                    bool isLegal = LegalTargets.Contains(coord);
+                    bool isLegalPlacement = LegalTargets.Contains(coord);
+                    bool isLegalSlide = LegalSlideTargets.Contains(coord);
                     bool isRoad = WinningRoad.Contains(coord);
                     bool isLastMove = LastMoveTarget.HasValue && LastMoveTarget.Value == coord;
+                    bool isInspected = InspectingCoord.HasValue && InspectingCoord.Value == coord;
 
-                    <g @onclick="() => HandleSquareClick(coord)">
+                    <g @onclick="() => HandleSquareClick(coord)"
+                       @oncontextmenu="() => HandleSquareRightClick(coord)"
+                       @oncontextmenu:preventDefault="true">
                         <!-- Square Boundary and Hover Target -->
                         <rect x="@F(sqX)"
                               y="@F(sqY)"
@@ -119,7 +123,7 @@
                               fill="#0a0a0a"
                               stroke="#ffffff"
                               stroke-width="1"
-                              class="svg-sq @(isSelected ? "selected" : "") @(isLegal ? "legal-target" : "")" />
+                              class="svg-sq @(isSelected ? "selected" : "") @(isLegalPlacement ? "legal-target" : "") @(isLegalSlide ? "legal-slide-target" : "") @(isInspected ? "inspected-target" : "")" />
 
                         <!-- Winning Road Highlight in Amber -->
                         @if (isRoad)
@@ -142,12 +146,25 @@
                         }
 
                         <!-- Legal Placement Dot (if empty) -->
-                        @if (isLegal && (Board == null || Board.GetStack(coord).IsEmpty))
+                        @if (isLegalPlacement && (Board == null || Board.GetStack(coord).IsEmpty))
                         {
                             <circle cx="@F(sqX + SquareSize / 2.0)"
                                     cy="@F(sqY + SquareSize / 2.0)"
                                     r="@F(SquareSize * 0.08)"
                                     class="svg-legal-marker" />
+                        }
+
+                        <!-- Legal Slide Target Marker (PlayTak directional slide target) -->
+                        @if (isLegalSlide)
+                        {
+                            <circle cx="@F(sqX + SquareSize / 2.0)"
+                                    cy="@F(sqY + SquareSize / 2.0)"
+                                    r="@F(SquareSize * 0.14)"
+                                    class="svg-slide-marker" />
+                            <circle cx="@F(sqX + SquareSize / 2.0)"
+                                    cy="@F(sqY + SquareSize / 2.0)"
+                                    r="@F(SquareSize * 0.22)"
+                                    class="svg-slide-ring" />
                         }
 
                         <!-- Piece Stack -->
@@ -162,6 +179,70 @@
                                                Radius="@(SquareSize * 0.38)" />
                             }
                         }
+
+                        <!-- Stack Inspector Halo if inspected -->
+                        @if (isInspected)
+                        {
+                            <rect x="@F(sqX + 1)"
+                                  y="@F(sqY + 1)"
+                                  width="@F(SquareSize - 2)"
+                                  height="@F(SquareSize - 2)"
+                                  fill="rgba(59, 130, 246, 0.2)"
+                                  stroke="#3b82f6"
+                                  stroke-width="2" />
+                        }
+                    </g>
+                }
+            }
+
+            <!-- Floating Stack Inspector Overlay on Board if active -->
+            @if (InspectingCoord.HasValue && Board != null)
+            {
+                var insCoord = InspectingCoord.Value;
+                var insStack = Board.GetStack(insCoord);
+                if (!insStack.IsEmpty)
+                {
+                    double overlayX = Math.Min(TotalBoardDimension - 170.0, Math.Max(BorderPadding, BorderPadding + insCoord.X * SquareSize));
+                    double overlayY = Math.Max(BorderPadding, BorderPadding + (SizeInt - 1 - insCoord.Y) * SquareSize - (insStack.Height * 22.0 + 35.0));
+
+                    <g class="svg-inspector-group" @onclick="HandleDismissInspect" @oncontextmenu="HandleDismissInspect" @oncontextmenu:preventDefault="true">
+                        <rect x="@F(overlayX)"
+                              y="@F(overlayY)"
+                              width="160"
+                              height="@F(insStack.Height * 22.0 + 32.0)"
+                              rx="6"
+                              fill="rgba(10, 10, 12, 0.95)"
+                              stroke="#d4a017"
+                              stroke-width="1.5"
+                              filter="drop-shadow(0 4px 12px rgba(0,0,0,0.8))" />
+
+                        @((MarkupString)$"<text x='{F(overlayX + 8)}' y='{F(overlayY + 16)}' fill='#d4a017' font-family=\"'JetBrains Mono', monospace\" font-size='11' font-weight='700'>{insCoord.ToAlgebraic().ToUpperInvariant()} (H:{insStack.Height}) ✕</text>")
+
+                        @for (int idx = insStack.Height - 1; idx >= 0; idx--)
+                        {
+                            var p = insStack.Pieces[idx];
+                            int layerNum = idx + 1;
+                            double itemY = overlayY + 32.0 + (insStack.Height - 1 - idx) * 22.0;
+                            string pColor = p.Color == PlayerColor.White ? "White" : "Black";
+                            string pType = p.Type switch
+                            {
+                                PieceType.Flat => "Flat",
+                                PieceType.Standing => "Wall",
+                                PieceType.Capstone => "Cap",
+                                _ => ""
+                            };
+                            string dotColor = p.Color == PlayerColor.White ? "#ffffff" : "#64748b";
+                            string star = idx == insStack.Height - 1 ? "★" : "";
+
+                            <circle cx="@F(overlayX + 16)"
+                                    cy="@F(itemY - 4)"
+                                    r="4.5"
+                                    fill="@dotColor"
+                                    stroke="@(p.Color == PlayerColor.White ? "#94a3b8" : "#ffffff")"
+                                    stroke-width="0.75" />
+
+                            @((MarkupString)$"<text x='{F(overlayX + 28)}' y='{F(itemY)}' fill='#f8fafc' font-family=\"'JetBrains Mono', monospace\" font-size='10.5'>{layerNum}: {pColor} {pType} {star}</text>")
+                        }
                     </g>
                 }
             }
@@ -174,9 +255,13 @@
     [Parameter] public Coord? SelectedCoord { get; set; }
     [Parameter] public Coord? LastMoveTarget { get; set; }
     [Parameter] public HashSet<Coord> LegalTargets { get; set; } = new();
+    [Parameter] public HashSet<Coord> LegalSlideTargets { get; set; } = new();
+    [Parameter] public Coord? InspectingCoord { get; set; }
     [Parameter] public HashSet<Coord> WinningRoad { get; set; } = new();
     [Parameter] public bool Is25D { get; set; } = true;
     [Parameter] public EventCallback<Coord> OnSquareClick { get; set; }
+    [Parameter] public EventCallback<Coord> OnSquareRightClick { get; set; }
+    [Parameter] public EventCallback OnDismissInspect { get; set; }
 
     public int SizeInt => Board != null ? (int)Board.Size : 5;
     public double SquareSize => 80.0;
@@ -191,6 +276,22 @@
         if (OnSquareClick.HasDelegate)
         {
             await OnSquareClick.InvokeAsync(coord);
+        }
+    }
+
+    private async Task HandleSquareRightClick(Coord coord)
+    {
+        if (OnSquareRightClick.HasDelegate)
+        {
+            await OnSquareRightClick.InvokeAsync(coord);
+        }
+    }
+
+    private async Task HandleDismissInspect()
+    {
+        if (OnDismissInspect.HasDelegate)
+        {
+            await OnDismissInspect.InvokeAsync();
         }
     }
 }

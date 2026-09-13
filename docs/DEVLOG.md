@@ -8,6 +8,7 @@ This document tracks all project milestones, architectural additions, and commit
 
 | Commit | Timestamp (UTC+2) | Milestone / Scope | Key Deliverables | Tests Passing |
 | --- | --- | --- | --- | --- |
+| [`3c7ffa1`](https://github.com/Dvrkstvr/tak-p2p/commit/3c7ffa1) | 2026-09-13 18:15:00 | **PlayTak-Authentic Game Controls** | Complete implementation of PlayTak.com game controls: interactive reserves with click-to-select and rotate-to-wall, quick-wall right-click placement on empty squares, direct on-board stack movement with slide target markers, floating stack layer inspector on right-click, and keyboard hotkeys (`[F]`, `[W]`, `[C]`, `[Esc]`). | 114 |
 | [`62c1375`](https://github.com/Dvrkstvr/tak-p2p/commit/62c1375) | 2026-09-13 17:36:00 | **2.5D Pillar Capstones, Taller Walls & SVG Assets** | Pre-rendered 2.5D SVG piece symbol architecture, tall cylindrical pillar capstone with amber crown, 48px standing walls with top bevel, and SvgTileRenderer unit test suite with 114 passing tests. | 114 |
 | [`c5bc7c7`](https://github.com/Dvrkstvr/tak-p2p/commit/c5bc7c7) | 2026-09-13 17:20:00 | **UI Mockups Realization & 2.5D Board** | Monochromatic B&W redesign with amber #d4a017 accent per `UI-MOCKUPS.md`, 2.5D perspective board with 2.5D/2D toggle, staggered piece stacks with physical slab thickness, and mobile layout overhaul. | 107 |
 | [`325e984`](https://github.com/Dvrkstvr/tak-p2p/commit/325e984) | 2026-09-12 08:52:00 | **Docs Consolidation & AGENTS.md Update** | Comprehensive cleanup and synchronization of all 10 specification documents and audit reports; aligned `AGENTS.md` and rules with multi-assembly test metrics (88 Core + 19 Transport = 107 total tests) and Blazor WASM rebuild guidelines; added uniform cross-specification links across the documentation suite. | 107 |
@@ -36,6 +37,20 @@ This document tracks all project milestones, architectural additions, and commit
 ---
 
 ## Detailed Entry Logs
+
+### [3c7ffa1](https://github.com/Dvrkstvr/tak-p2p/commit/3c7ffa1) - PlayTak-Authentic Game Controls & Direct Board Interaction
+* **Timestamp**: `2026-09-13T18:15:00+02:00`
+* **Author**: Calvin Kohl
+* **Scope**: Researched and implemented the complete game control scheme from [PlayTak.com](https://playtak.com) in `TakApp.Blazor` and shared board components.
+* **Changes**:
+  * [PieceInventoryView.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Board/PieceInventoryView.razor): Replaced static text with interactive reserve chips (Flat, Wall, Capstone); implemented PlayTak rotate-to-wall mechanic (left-click Flat selects Flat; left-click again or right-click rotates to Standing Wall).
+  * [TakBoardView.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Board/TakBoardView.razor): Added `@oncontextmenu:preventDefault` and right-click event handling; implemented PlayTak-style purple directional slide target dots/rings on destination squares; added floating glassmorphic Stack Layer Inspector overlay rendering all stack layers with controlling piece markers (`★`).
+  * [Play.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Pages/Play.razor): Implemented direct on-board stack movement (clicking an owned stack highlights targets; clicking an adjacent destination immediately executes the slide); implemented quick-wall placement on empty squares via right-click; integrated keyboard shortcuts (`[F]` Flat, `[W]` Wall, `[C]` Cap, `[Esc]` Cancel, `[?]` Controls); added PlayTak Controls Guide modal.
+  * [StackSlideBar.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Board/StackSlideBar.razor): Added `ActiveDirection` parameter to synchronize seamlessly with on-board destination clicks.
+  * [tak-theme.css](file:///e:/repos/tak-p2p/src/TakApp.Blazor/wwwroot/css/tak-theme.css): Added styles for interactive reserve chips, active turn badges, directional slide target markers, stack layer inspector card, hotkey badges, and controls cheatsheet modal.
+* **Test Suite**: 114 unit tests passing (100% pass rate: 95 in `TakEngine.Core.Tests`, 19 in `TakEngine.Transport.Tests`).
+
+---
 
 ### [62c1375](https://github.com/Dvrkstvr/tak-p2p/commit/62c1375) - 2.5D Pillar Capstones, Taller Standing Walls & Pre-Rendered SVG Asset Architecture
 * **Timestamp**: `2026-09-13T17:36:00+02:00`

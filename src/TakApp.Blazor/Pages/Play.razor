@@ -1,8 +1,13 @@
 @page "/play"
+@using TakEngine.Abstractions
+@using TakEngine.Core.Board
+@using TakEngine.Core.Rules
 @inject WebGameSessionManager Session
 @inject NavigationManager Nav
 @inject BrowserStorage Storage
 @implements IDisposable
+
+<div class="game-play-container" @onkeydown="HandleKeyDown" tabindex="0" @ref="ContainerRef">
 
 <!-- DESKTOP ARENA LAYOUT (>= 1024px) -->
 <div class="arena-3col">
@@ -46,6 +51,10 @@
             <div class="status-sha">
                 SHA: #@(Session.PrevStateHash?.Length > 16 ? Session.PrevStateHash[..16] : (Session.PrevStateHash ?? "GENESIS"))...
             </div>
+
+            <button class="btn-tak btn-outline btn-sm" style="width: 100%; margin-top: 0.8rem;" @onclick="() => ShowControlsModal = true">
+                ⌨ Controls Guide
+            </button>
         </div>
     </div>
 
@@ -65,25 +74,29 @@
                       SelectedCoord="@SelectedCoord"
                       LastMoveTarget="@LastMoveTarget"
                       LegalTargets="@LegalPlacementTargets"
+                      LegalSlideTargets="@LegalSlideTargets"
+                      InspectingCoord="@InspectingCoord"
                       WinningRoad="@Session.WinningRoadCoords"
                       Is25D="@Is25D"
-                      OnSquareClick="HandleSquareClick" />
+                      OnSquareClick="HandleSquareClick"
+                      OnSquareRightClick="HandleSquareRightClick"
+                      OnDismissInspect="HandleDismissInspect" />
 
-        <!-- Piece Selector (Flat | Wall | Cap) -->
+        <!-- Piece Selector (Flat | Wall | Cap) with PlayTak hotkeys -->
         <div class="piece-selector-row">
             <button class="piece-selector-tab @(SelectedPieceType == PieceType.Flat ? "active" : "")"
                     @onclick="() => HandlePieceSelected(PieceType.Flat)">
-                Flat
+                Flat <span class="kbd-hint">F</span>
             </button>
             <button class="piece-selector-tab @(SelectedPieceType == PieceType.Standing ? "active" : "")"
                     @onclick="() => HandlePieceSelected(PieceType.Standing)">
-                Wall
+                Wall <span class="kbd-hint">W</span>
             </button>
             @if (Session.Board?.Size != BoardSize.Four)
             {
                 <button class="piece-selector-tab @(SelectedPieceType == PieceType.Capstone ? "active" : "")"
                         @onclick="() => HandlePieceSelected(PieceType.Capstone)">
-                    Cap
+                    Cap <span class="kbd-hint">C</span>
                 </button>
             }
         </div>
@@ -91,6 +104,7 @@
         <!-- Stack Slide Bar (Active when an owned stack is clicked) -->
         <StackSlideBar OriginCoord="@SlideOriginCoord"
                        Board="@Session.Board"
+                       ActiveDirection="@ActiveSlideDirection"
                        OnSlideConfirmed="HandleSlideConfirmed"
                        OnCancelRequested="HandleSlideCancelled" />
     </div>
@@ -125,25 +139,29 @@
                   SelectedCoord="@SelectedCoord"
                   LastMoveTarget="@LastMoveTarget"
                   LegalTargets="@LegalPlacementTargets"
+                  LegalSlideTargets="@LegalSlideTargets"
+                  InspectingCoord="@InspectingCoord"
                   WinningRoad="@Session.WinningRoadCoords"
                   Is25D="@Is25D"
-                  OnSquareClick="HandleSquareClick" />
+                  OnSquareClick="HandleSquareClick"
+                  OnSquareRightClick="HandleSquareRightClick"
+                  OnDismissInspect="HandleDismissInspect" />
 
     <!-- Piece Selector (Flat | Wall | Cap) -->
     <div class="piece-selector-row">
         <button class="piece-selector-tab @(SelectedPieceType == PieceType.Flat ? "active" : "")"
                 @onclick="() => HandlePieceSelected(PieceType.Flat)">
-            Flat
+            Flat <span class="kbd-hint">F</span>
         </button>
         <button class="piece-selector-tab @(SelectedPieceType == PieceType.Standing ? "active" : "")"
                 @onclick="() => HandlePieceSelected(PieceType.Standing)">
-            Wall
+            Wall <span class="kbd-hint">W</span>
         </button>
         @if (Session.Board?.Size != BoardSize.Four)
         {
             <button class="piece-selector-tab @(SelectedPieceType == PieceType.Capstone ? "active" : "")"
                     @onclick="() => HandlePieceSelected(PieceType.Capstone)">
-                Cap
+                Cap <span class="kbd-hint">C</span>
             </button>
         }
     </div>
@@ -162,6 +180,7 @@
     <!-- Stack Slide Bar -->
     <StackSlideBar OriginCoord="@SlideOriginCoord"
                    Board="@Session.Board"
+                   ActiveDirection="@ActiveSlideDirection"
                    OnSlideConfirmed="HandleSlideConfirmed"
                    OnCancelRequested="HandleSlideCancelled" />
 
@@ -180,15 +199,66 @@
     </div>
 </div>
 
+<!-- PlayTak Controls Help Modal -->
+@if (ShowControlsModal)
+{
+    <div class="modal-backdrop-custom" @onclick="() => ShowControlsModal = false">
+        <div class="modal-card-custom" @onclick:stopPropagation="true">
+            <div class="modal-header-custom">
+                <h3 style="margin: 0; font-size: 1.1rem; color: #ffffff;">PlayTak Controls Guide</h3>
+                <button class="btn-tak btn-ghost btn-sm" @onclick="() => ShowControlsModal = false">✕</button>
+            </div>
+            <div class="controls-guide-body">
+                <div class="controls-guide-row">
+                    <span class="controls-guide-key">Left Click (Empty)</span>
+                    <span class="controls-guide-desc">Place active piece (Flat, Wall, or Capstone)</span>
+                </div>
+                <div class="controls-guide-row">
+                    <span class="controls-guide-key">Right Click (Empty)</span>
+                    <span class="controls-guide-desc">Quick-place Standing Stone (Wall)</span>
+                </div>
+                <div class="controls-guide-row">
+                    <span class="controls-guide-key">Left Click (Stack)</span>
+                    <span class="controls-guide-desc">Pick up stack to slide; click adjacent target to move</span>
+                </div>
+                <div class="controls-guide-row">
+                    <span class="controls-guide-key">Right Click (Stack)</span>
+                    <span class="controls-guide-desc">Inspect all layers of the stack from top to bottom</span>
+                </div>
+                <div class="controls-guide-row">
+                    <span class="controls-guide-key">Reserve Pieces</span>
+                    <span class="controls-guide-desc">Click Flat to select; click again or right-click to rotate to Wall</span>
+                </div>
+                <div class="controls-guide-row">
+                    <span class="controls-guide-key">[F] / [W] / [C]</span>
+                    <span class="controls-guide-desc">Hotkeys: Select Flat, Wall, or Capstone</span>
+                </div>
+                <div class="controls-guide-row">
+                    <span class="controls-guide-key">[Esc]</span>
+                    <span class="controls-guide-desc">Cancel piece selection or stack movement</span>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+</div>
+
 @code {
+    private ElementReference ContainerRef;
     private Coord? SelectedCoord { get; set; }
     private Coord? SlideOriginCoord { get; set; }
     private Coord? LastMoveTarget { get; set; }
+    private Coord? InspectingCoord { get; set; }
+    private Direction? ActiveSlideDirection { get; set; }
     private PieceType? SelectedPieceType { get; set; } = PieceType.Flat;
     private HashSet<Coord> LegalPlacementTargets { get; set; } = new();
+    private HashSet<Coord> LegalSlideTargets { get; set; } = new();
+    private List<SlideMove> CurrentLegalSlideMoves { get; set; } = new();
     private string? ErrorMessage { get; set; }
     private bool Is25D { get; set; } = true;
     private bool IsMobileMovesExpanded { get; set; } = false;
+    private bool ShowControlsModal { get; set; } = false;
 
     protected override void OnInitialized()
     {
@@ -199,6 +269,50 @@
 
         Session.OnStateChanged += HandleSessionChanged;
         RefreshLegalTargets();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await ContainerRef.FocusAsync();
+            }
+            catch { }
+        }
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key.Equals("f", StringComparison.OrdinalIgnoreCase))
+        {
+            HandlePieceSelected(PieceType.Flat);
+        }
+        else if (e.Key.Equals("w", StringComparison.OrdinalIgnoreCase))
+        {
+            HandlePieceSelected(PieceType.Standing);
+        }
+        else if (e.Key.Equals("c", StringComparison.OrdinalIgnoreCase))
+        {
+            if (Session.Board?.Size != BoardSize.Four)
+            {
+                HandlePieceSelected(PieceType.Capstone);
+            }
+        }
+        else if (e.Key == "Escape")
+        {
+            SlideOriginCoord = null;
+            SelectedCoord = null;
+            InspectingCoord = null;
+            ActiveSlideDirection = null;
+            ShowControlsModal = false;
+            RefreshLegalTargets();
+        }
+        else if (e.Key == "?" || e.Key.Equals("h", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowControlsModal = !ShowControlsModal;
+        }
     }
 
     private void TogglePerspective()
@@ -223,20 +337,68 @@
     {
         SelectedPieceType = type;
         SlideOriginCoord = null;
+        ActiveSlideDirection = null;
+        InspectingCoord = null;
         RefreshLegalTargets();
     }
 
     private void HandleSquareClick(Coord coord)
     {
         ErrorMessage = null;
+        if (InspectingCoord.HasValue)
+        {
+            InspectingCoord = null;
+        }
+
         if (Session.Board == null || Session.IsBotThinking) return;
 
-        var stack = Session.Board.GetStack(coord);
+        // If currently in slide mode
+        if (SlideOriginCoord.HasValue)
+        {
+            var origin = SlideOriginCoord.Value;
 
-        // Case A: Square is empty -> place piece
-        if (stack.IsEmpty)
+            // Clicking origin again cancels slide
+            if (coord == origin)
+            {
+                SlideOriginCoord = null;
+                SelectedCoord = null;
+                ActiveSlideDirection = null;
+                RefreshLegalTargets();
+                return;
+            }
+
+            // If clicked square is a legal slide destination
+            if (LegalSlideTargets.Contains(coord))
+            {
+                TryExecuteSlideToTarget(coord);
+                return;
+            }
+
+            // Clicking another owned stack switches slide origin
+            var clickedStack = Session.Board.GetStack(coord);
+            if (!clickedStack.IsEmpty && Session.Board.Phase == GamePhase.Playing && clickedStack.Owner == Session.Board.ActivePlayer)
+            {
+                SlideOriginCoord = coord;
+                SelectedCoord = coord;
+                ActiveSlideDirection = null;
+                RefreshLegalTargets();
+                return;
+            }
+
+            // Clicked an unrelated square: cancel slide and if empty, proceed to placement
+            SlideOriginCoord = null;
+            SelectedCoord = null;
+            ActiveSlideDirection = null;
+            RefreshLegalTargets();
+        }
+
+        var targetStack = Session.Board.GetStack(coord);
+
+        // Case A: Square is empty -> place active piece
+        if (targetStack.IsEmpty)
         {
             SlideOriginCoord = null;
+            ActiveSlideDirection = null;
             SelectedCoord = coord;
 
             PieceType pieceToPlace = SelectedPieceType ?? PieceType.Flat;
@@ -256,20 +418,106 @@
         // Case B: Square is occupied
         else
         {
-            // If owned by active player and not first turn placement, open slide bar
-            if (Session.Board.Phase == GamePhase.Playing && stack.Owner == Session.Board.ActivePlayer)
+            if (Session.Board.Phase == GamePhase.Playing && targetStack.Owner == Session.Board.ActivePlayer)
             {
                 SelectedCoord = coord;
                 SlideOriginCoord = coord;
+                ActiveSlideDirection = null;
             }
             else
             {
                 SlideOriginCoord = null;
                 SelectedCoord = coord;
+                InspectingCoord = coord;
             }
         }
 
         RefreshLegalTargets();
+    }
+
+    private void TryExecuteSlideToTarget(Coord targetCoord)
+    {
+        if (!SlideOriginCoord.HasValue || Session.Board == null) return;
+        var origin = SlideOriginCoord.Value;
+
+        int dx = targetCoord.X - origin.X;
+        int dy = targetCoord.Y - origin.Y;
+
+        Direction? dir = null;
+        if (dx == 0 && dy > 0) dir = Direction.North;
+        else if (dx == 0 && dy < 0) dir = Direction.South;
+        else if (dx > 0 && dy == 0) dir = Direction.East;
+        else if (dx < 0 && dy == 0) dir = Direction.West;
+
+        if (!dir.HasValue) return;
+
+        ActiveSlideDirection = dir;
+        int stepDist = Math.Max(Math.Abs(dx), Math.Abs(dy));
+        var matchingMoves = CurrentLegalSlideMoves.Where(m => m.Direction == dir.Value && m.Drops.Count == stepDist).ToList();
+
+        if (matchingMoves.Count == 1)
+        {
+            HandleSlideConfirmed(matchingMoves[0]);
+        }
+        else if (matchingMoves.Count > 1)
+        {
+            // Pick maximum lift move for direct click
+            var maxLiftMove = matchingMoves.OrderByDescending(m => m.LiftCount).First();
+            HandleSlideConfirmed(maxLiftMove);
+        }
+    }
+
+    private void HandleSquareRightClick(Coord coord)
+    {
+        ErrorMessage = null;
+        if (Session.Board == null || Session.IsBotThinking) return;
+
+        // If in slide mode, right-click cancels it
+        if (SlideOriginCoord.HasValue)
+        {
+            SlideOriginCoord = null;
+            SelectedCoord = null;
+            ActiveSlideDirection = null;
+            RefreshLegalTargets();
+            return;
+        }
+
+        // If inspecting, right click dismisses it
+        if (InspectingCoord.HasValue)
+        {
+            InspectingCoord = null;
+            RefreshLegalTargets();
+            return;
+        }
+
+        var stack = Session.Board.GetStack(coord);
+        if (stack.IsEmpty)
+        {
+            // PlayTak Quick-Wall Placement:
+            var move = new PlaceMove(coord, PieceType.Standing);
+            var result = Session.ExecuteMove(move);
+            if (!result.IsSuccess)
+            {
+                ErrorMessage = result.ErrorMessage;
+            }
+            else
+            {
+                LastMoveTarget = coord;
+                SelectedCoord = null;
+            }
+        }
+        else
+        {
+            // PlayTak Stack Inspection:
+            InspectingCoord = coord;
+        }
+
+        RefreshLegalTargets();
+    }
+
+    private void HandleDismissInspect()
+    {
+        InspectingCoord = null;
     }
 
     private void HandleSlideConfirmed(SlideMove move)
@@ -293,6 +541,7 @@
             LastMoveTarget = new Coord(move.Origin.X + dx * move.Drops.Count, move.Origin.Y + dy * move.Drops.Count);
             SlideOriginCoord = null;
             SelectedCoord = null;
+            ActiveSlideDirection = null;
         }
 
         RefreshLegalTargets();
@@ -302,6 +551,7 @@
     {
         SlideOriginCoord = null;
         SelectedCoord = null;
+        ActiveSlideDirection = null;
         RefreshLegalTargets();
     }
 
@@ -321,17 +571,45 @@
     private void RefreshLegalTargets()
     {
         LegalPlacementTargets.Clear();
+        LegalSlideTargets.Clear();
+        CurrentLegalSlideMoves.Clear();
+
         if (Session.Board == null || Session.Board.Phase == GamePhase.Completed) return;
 
-        int size = (int)Session.Board.Size;
-        for (int x = 0; x < size; x++)
+        if (SlideOriginCoord.HasValue)
         {
-            for (int y = 0; y < size; y++)
+            var moves = MoveValidator.GetLegalMovesForSquare(Session.Board, SlideOriginCoord.Value);
+            CurrentLegalSlideMoves = moves.OfType<SlideMove>().ToList();
+
+            foreach (var sm in CurrentLegalSlideMoves)
             {
-                var c = new Coord(x, y);
-                if (Session.Board.GetStack(c).IsEmpty)
+                (int dx, int dy) = sm.Direction switch
                 {
-                    LegalPlacementTargets.Add(c);
+                    Direction.North => (0, 1),
+                    Direction.South => (0, -1),
+                    Direction.East => (1, 0),
+                    Direction.West => (-1, 0),
+                    _ => (0, 0)
+                };
+
+                for (int k = 1; k <= sm.Drops.Count; k++)
+                {
+                    LegalSlideTargets.Add(new Coord(sm.Origin.X + dx * k, sm.Origin.Y + dy * k));
+                }
+            }
+        }
+        else
+        {
+            int size = (int)Session.Board.Size;
+            for (int x = 0; x < size; x++)
+            {
+                for (int y = 0; y < size; y++)
+                {
+                    var c = new Coord(x, y);
+                    if (Session.Board.GetStack(c).IsEmpty)
+                    {
+                        LegalPlacementTargets.Add(c);
+                    }
                 }
             }
         }

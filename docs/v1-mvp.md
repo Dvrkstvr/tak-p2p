@@ -187,6 +187,7 @@ public interface ITakGameSession
 | **M1.12** | Multi-Platform Native Heads | Scaffolding dedicated Avalonia heads for Android (APK) and iOS/iPadOS with shared MVVM core. | **COMPLETED** |
 | **M1.13** | UI Mockups Realization & 2.5D Board | Monochromatic B&W with amber accent, 2.5D perspective board, staggered towers, and mobile layout overhaul. | **COMPLETED** |
 | **M1.14** | 2.5D Pillar Capstone & SVG Assets | Pre-rendered SVG piece symbols, commanding pillar capstone, 48px walls, and automated tile visual test suite. | **COMPLETED** |
+| **M1.15** | PlayTak-Authentic Game Controls | Interactive reserves with click/right-click rotate-to-wall, quick-wall right-click placement, direct on-board slide targets, floating stack layer inspector, and hotkeys ([F], [W], [C], [Esc]). | **COMPLETED** |
 
 ---
 

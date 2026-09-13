@@ -536,6 +536,35 @@ html, body {
   pointer-events: none;
 }
 
+/* PlayTak Slide Target Markers */
+.svg-slide-marker {
+  fill: #8b5cf6;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.svg-slide-ring {
+  stroke: #a78bfa;
+  stroke-width: 1.5px;
+  fill: none;
+  stroke-dasharray: 4, 3;
+  pointer-events: none;
+}
+
+.svg-sq.legal-slide-target {
+  stroke: #8b5cf6 !important;
+  stroke-width: 2px !important;
+}
+
+.svg-sq.inspected-target {
+  stroke: #3b82f6 !important;
+  stroke-width: 2px !important;
+}
+
+.svg-inspector-group {
+  cursor: pointer;
+}
+
 /* Piece Selector Row */
 .piece-selector-row {
   display: flex;
@@ -821,3 +850,176 @@ input[type=text]:focus, input[type=password]:focus, textarea:focus, select:focus
   transform: none !important;
 }
 
+/* PlayTak Game Controls & Interactive Reserves */
+.game-play-container {
+  outline: none;
+  width: 100%;
+}
+
+.active-player-card {
+  border-color: rgba(212, 160, 23, 0.4) !important;
+  box-shadow: 0 0 12px rgba(212, 160, 23, 0.12);
+}
+
+.active-turn-badge {
+  margin-left: auto;
+  font-size: 0.65rem;
+  background: var(--accent-amber);
+  color: #000;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 2px;
+  letter-spacing: 0.05em;
+}
+
+.player-reserves-interactive {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: 0.65rem;
+}
+
+.reserve-chip {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.5rem;
+  background: #141414;
+  border: 1px solid #27272a;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #f4f4f5;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.reserve-chip:hover:not(:disabled) {
+  border-color: #52525b;
+  background: #1c1c1f;
+}
+
+.reserve-chip.selected {
+  border-color: var(--accent-amber) !important;
+  background: rgba(212, 160, 23, 0.12) !important;
+  box-shadow: 0 0 8px rgba(212, 160, 23, 0.25);
+}
+
+.reserve-chip:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.reserve-chip-icon {
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.tak-icon-flat {
+  width: 13px;
+  height: 13px;
+  border-radius: 1px;
+}
+
+.tak-icon-wall {
+  width: 5px;
+  height: 16px;
+  border-radius: 1px;
+}
+
+.tak-icon-cap {
+  width: 11px;
+  height: 15px;
+  border-radius: 5px 5px 1px 1px;
+}
+
+.tak-icon-white {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+}
+
+.tak-icon-black {
+  background: #27272a;
+  border: 1px solid #71717a;
+}
+
+.reserve-chip-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin: 0 3px;
+}
+
+.reserve-chip-count {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: #a1a1aa;
+  font-weight: 700;
+}
+
+.kbd-hint {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  background: #27272a;
+  color: #a1a1aa;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 4px;
+  border: 1px solid #3f3f46;
+}
+
+/* PlayTak Controls Modal */
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(3px);
+}
+
+.modal-card-custom {
+  background: #111113;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 480px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.85);
+}
+
+.modal-header-custom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #27272a;
+}
+
+.controls-guide-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.controls-guide-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  border-bottom: 1px solid #1f1f23;
+  padding-bottom: 0.5rem;
+}
+
+.controls-guide-key {
+  font-family: var(--font-mono);
+  color: #f59e0b;
+  font-weight: 600;
+  min-width: 155px;
+}
+
+.controls-guide-desc {
+  color: #d4d4d8;
+  text-align: right;
+}
