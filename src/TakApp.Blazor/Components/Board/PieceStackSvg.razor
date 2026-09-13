@@ -1,3 +1,4 @@
+@using System.Globalization
 @using TakEngine.Abstractions
 @using TakEngine.Core.Board
 
@@ -6,125 +7,31 @@
     var pieces = Stack.Pieces;
     int count = pieces.Count;
 
-    // Piece dimensions for flat stones
-    const double pieceW = 28.0;
-    const double pieceH = 32.0;
-    const double halfW = pieceW / 2.0;
-    const double halfH = pieceH / 2.0;
-
-    // Stagger step per layer in 2.5D perspective (fanning up and right)
     const double stepX = 4.0;
-    const double stepY = -5.0;
+    const double stepY = -5.5;
 
-    // Center entire stack in the square
     double baseOffsetX = -((count - 1) * stepX) / 2.0;
     double baseOffsetY = -((count - 1) * stepY) / 2.0;
 
-    <!-- Render all pieces from bottom (i=0) to top (i=count-1) -->
-    @for (int i = 0; i < count; i++)
+    for (int i = 0; i < count; i++)
     {
         var piece = pieces[i];
         bool isTop = (i == count - 1);
         double layerX = CenterX + baseOffsetX + i * stepX;
         double layerY = CenterY + baseOffsetY + i * stepY;
 
-        bool isWhite = piece.Color == PlayerColor.White;
-        string topFill = isWhite ? "#ffffff" : "#333333";
-        string topStroke = isWhite ? "#ffffff" : "#ffffff";
-        string edgeFill = isWhite ? "#b0b0b0" : "#1a1a1a";
+        string symbolId = GetSymbolId(piece, isTop);
 
-        if (piece.Type == PieceType.Flat || (!isTop && piece.Type != PieceType.Flat))
-        {
-            <!-- 2.5D Extrusion base edge for tactile depth -->
-            <rect x="@(layerX - halfW)"
-                  y="@(layerY - halfH + 3)"
-                  width="@pieceW"
-                  height="@pieceH"
-                  fill="@edgeFill" />
-
-            <!-- Flat Stone Top Face -->
-            <rect x="@(layerX - halfW)"
-                  y="@(layerY - halfH)"
-                  width="@pieceW"
-                  height="@pieceH"
-                  fill="@topFill"
-                  stroke="@topStroke"
-                  stroke-width="1" />
-        }
-        else if (piece.Type == PieceType.Standing)
-        {
-            // Standing wall: tall, narrow upright rectangle
-            const double wallW = 12.0;
-            const double wallH = 38.0;
-            const double halfWW = wallW / 2.0;
-            const double halfWH = wallH / 2.0;
-
-            <!-- 2.5D bottom ground contact / thickness -->
-            <rect x="@(layerX - halfWW + 2)"
-                  y="@(layerY - halfWH + 3)"
-                  width="@wallW"
-                  height="@wallH"
-                  fill="@edgeFill" />
-
-            <!-- Standing Wall Body -->
-            <rect x="@(layerX - halfWW)"
-                  y="@(layerY - halfWH)"
-                  width="@wallW"
-                  height="@wallH"
-                  fill="@topFill"
-                  stroke="@topStroke"
-                  stroke-width="1" />
-
-            <!-- Vertical center spine for 3D ridge definition -->
-            <line x1="@layerX"
-                  y1="@(layerY - halfWH + 2)"
-                  x2="@layerX"
-                  y2="@(layerY + halfWH - 2)"
-                  stroke="@(isWhite ? "#b0b0b0" : "#666666")"
-                  stroke-width="1" />
-        }
-        else if (piece.Type == PieceType.Capstone)
-        {
-            // Capstone: Cylindrical stone with amber #d4a017 crown
-            const double capRadius = 14.0;
-
-            <!-- 2.5D base shadow / edge -->
-            <circle cx="@(layerX + 1.5)"
-                    cy="@(layerY + 2.5)"
-                    r="@capRadius"
-                    fill="rgba(0,0,0,0.6)" />
-
-            <!-- Capstone Outer Circle with Amber Accent -->
-            <circle cx="@layerX"
-                    cy="@layerY"
-                    r="@capRadius"
-                    fill="@(isWhite ? "#262626" : "#1a1a1a")"
-                    stroke="#d4a017"
-                    stroke-width="2.5" />
-
-            <!-- Inner Crown Ring -->
-            <circle cx="@layerX"
-                    cy="@layerY"
-                    r="@(capRadius * 0.55)"
-                    fill="none"
-                    stroke="#d4a017"
-                    stroke-width="1.2"
-                    opacity="0.8" />
-
-            <!-- Crown Center Pip -->
-            <circle cx="@layerX"
-                    cy="@layerY"
-                    r="2.5"
-                    fill="#d4a017" />
-        }
+        <use href="#@symbolId"
+             x="@F(layerX - 32.0)"
+             y="@F(layerY - 32.0)" />
     }
 
-    <!-- Subtle count indicator if stack is 4 or taller for instantaneous read -->
     @if (count >= 4)
     {
         double topX = CenterX + baseOffsetX + (count - 1) * stepX;
         double topY = CenterY + baseOffsetY + (count - 1) * stepY;
-        @((MarkupString)$"<text x='{topX + halfW + 3}' y='{topY - halfH + 8}' fill='#d4a017' font-family=\"'JetBrains Mono', monospace\" font-size='9' font-weight='700'>{count}</text>")
+        @((MarkupString)$"<text x='{F(topX + 18.0)}' y='{F(topY - 8.0)}' fill='#d4a017' font-family=\"'JetBrains Mono', monospace\" font-size='9' font-weight='700'>{count}</text>")
     }
 }
 
@@ -133,4 +40,20 @@
     [Parameter] public double CenterX { get; set; }
     [Parameter] public double CenterY { get; set; }
     [Parameter] public double Radius { get; set; } = 28;
+
+    private static string F(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);
+
+    private static string GetSymbolId(Piece piece, bool isTop)
+    {
+        bool isWhite = piece.Color == PlayerColor.White;
+        if (piece.Type == PieceType.Flat || (!isTop && piece.Type != PieceType.Flat))
+        {
+            return isWhite ? "tak-flat-white" : "tak-flat-black";
+        }
+        if (piece.Type == PieceType.Standing)
+        {
+            return isWhite ? "tak-wall-white" : "tak-wall-black";
+        }
+        return isWhite ? "tak-cap-white" : "tak-cap-black";
+    }
 }

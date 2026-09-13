@@ -479,32 +479,20 @@ html, body {
   color: var(--accent-amber);
 }
 
-/* 2.5D Board Stage & Surface */
+/* Board Stage & Surface */
 .board-stage {
-  perspective: 950px;
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
   max-width: 540px;
   margin: 0 auto;
-  overflow: visible;
   user-select: none;
 }
 
 .board-surface {
   width: 100%;
   max-width: 480px;
-  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-  transform-origin: 50% 50%;
-}
-
-.board-surface.perspective-25d {
-  transform: rotateX(24deg);
-}
-
-.board-surface.perspective-2d {
-  transform: rotateX(0deg);
 }
 
 .tak-board-svg {

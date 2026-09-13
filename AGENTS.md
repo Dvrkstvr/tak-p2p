@@ -31,7 +31,7 @@ Whenever you complete a milestone, architectural feature, or significant refacto
   ```powershell
   dotnet test TakGame.sln
   ```
-* Ensure that **100% of unit tests pass** across all test suites (`TakEngine.Core.Tests`: 88 tests, `TakEngine.Transport.Tests`: 19 tests, totaling **107 unit tests**) before logging or committing.
+* Ensure that **100% of unit tests pass** across all test suites (`TakEngine.Core.Tests`: 95 tests, `TakEngine.Transport.Tests`: 19 tests, totaling **114 unit tests**) before logging or committing.
 * *Note:* `dotnet test` executes each test project in parallel and prints per-assembly summaries; do not mistake a single assembly's count for the solution total.
 
 ### Step 2: Update `docs/DEVLOG.md`
@@ -74,7 +74,7 @@ Whenever you complete a milestone, architectural feature, or significant refacto
 4. **PTN & Direction Encoding:** When serializing JSON for transport, always use `TransportEnvelope.SerializerOptions` (`JavaScriptEncoder.UnsafeRelaxedJsonEscaping`) so characters like `+`, `>`, and `<` are not escaped to unicode entities.
 5. **Offline-First Storage:** Use `SqliteGameStorage` on desktop/mobile and `BrowserStorage` on Blazor WASM. Both caches must be able to restore the board to any turn index $K$ in $O(1)$ time via `TpsSerializer`.
 6. **Blazor Dev-Server Clean Rebuild:** If incremental builds of `TakApp.Blazor` cause 404 errors for `dotnet.<hash>.js` in development, perform a clean build (`Remove-Item -Recurse -Force src/TakApp.Blazor/bin, src/TakApp.Blazor/obj; dotnet build src/TakApp.Blazor/TakApp.Blazor.csproj`).
-7. **Solution-Wide Multi-Assembly Tests:** The test suite spans multiple test projects (`TakEngine.Core.Tests` + `TakEngine.Transport.Tests`). Always verify both projects pass completely (107 tests).
+7. **Solution-Wide Multi-Assembly Tests:** The test suite spans multiple test projects (`TakEngine.Core.Tests` + `TakEngine.Transport.Tests`). Always verify both projects pass completely (114 tests).
 
 ---
 

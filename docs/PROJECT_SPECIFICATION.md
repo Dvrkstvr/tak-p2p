@@ -89,7 +89,7 @@ TakGame.sln / TakGame.slnx
 │       └── Input/                    # Conversational stepped typed input & PTN command parser
 │
 └── tests/
-    ├── TakEngine.Core.Tests/         # 88 tests: Rule engine, DFS, PTN, Crypto, SQLite, Bot, Spectator
+    ├── TakEngine.Core.Tests/         # 95 tests: Rule engine, DFS, PTN, Crypto, SQLite, Bot, Spectator, SvgTiles
     └── TakEngine.Transport.Tests/    # 19 tests: Relay serialization, Latency benchmark, Invites, Profiles
 ```
 

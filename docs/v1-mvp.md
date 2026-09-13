@@ -186,6 +186,7 @@ public interface ITakGameSession
 | **M1.11** | Nostr Profiles & Invite UX | NIP-19 npub/nsec Bech32, 1-click playable web links, SVG QR codes, and profile metadata. | **COMPLETED** |
 | **M1.12** | Multi-Platform Native Heads | Scaffolding dedicated Avalonia heads for Android (APK) and iOS/iPadOS with shared MVVM core. | **COMPLETED** |
 | **M1.13** | UI Mockups Realization & 2.5D Board | Monochromatic B&W with amber accent, 2.5D perspective board, staggered towers, and mobile layout overhaul. | **COMPLETED** |
+| **M1.14** | 2.5D Pillar Capstone & SVG Assets | Pre-rendered SVG piece symbols, commanding pillar capstone, 48px walls, and automated tile visual test suite. | **COMPLETED** |
 
 ---
 

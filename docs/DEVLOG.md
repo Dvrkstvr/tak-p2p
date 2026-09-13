@@ -8,6 +8,7 @@ This document tracks all project milestones, architectural additions, and commit
 
 | Commit | Timestamp (UTC+2) | Milestone / Scope | Key Deliverables | Tests Passing |
 | --- | --- | --- | --- | --- |
+| [`62c1375`](https://github.com/Dvrkstvr/tak-p2p/commit/62c1375) | 2026-09-13 17:36:00 | **2.5D Pillar Capstones, Taller Walls & SVG Assets** | Pre-rendered 2.5D SVG piece symbol architecture, tall cylindrical pillar capstone with amber crown, 48px standing walls with top bevel, and SvgTileRenderer unit test suite with 114 passing tests. | 114 |
 | [`c5bc7c7`](https://github.com/Dvrkstvr/tak-p2p/commit/c5bc7c7) | 2026-09-13 17:20:00 | **UI Mockups Realization & 2.5D Board** | Monochromatic B&W redesign with amber #d4a017 accent per `UI-MOCKUPS.md`, 2.5D perspective board with 2.5D/2D toggle, staggered piece stacks with physical slab thickness, and mobile layout overhaul. | 107 |
 | [`325e984`](https://github.com/Dvrkstvr/tak-p2p/commit/325e984) | 2026-09-12 08:52:00 | **Docs Consolidation & AGENTS.md Update** | Comprehensive cleanup and synchronization of all 10 specification documents and audit reports; aligned `AGENTS.md` and rules with multi-assembly test metrics (88 Core + 19 Transport = 107 total tests) and Blazor WASM rebuild guidelines; added uniform cross-specification links across the documentation suite. | 107 |
 | [`2d5eee2`](https://github.com/Dvrkstvr/tak-p2p/commit/2d5eee2) | 2026-09-12 08:10:00 | **Avalonia Native Mobile (Android & iPad/iOS)** | Scaffolded `TakApp.Avalonia.Android` (targeting `net10.0-android`, APK output, splash screen, permissions) and `TakApp.Avalonia.iOS` (targeting `net10.0-ios`, iPad & iPhone device family profiles), transitioned `TakApp.Avalonia` into shared cross-platform library and `TakApp.Avalonia.Desktop` into desktop executable; 107 passing unit tests. | 107 |
@@ -35,6 +36,22 @@ This document tracks all project milestones, architectural additions, and commit
 ---
 
 ## Detailed Entry Logs
+
+### [62c1375](https://github.com/Dvrkstvr/tak-p2p/commit/62c1375) - 2.5D Pillar Capstones, Taller Standing Walls & Pre-Rendered SVG Asset Architecture
+* **Timestamp**: `2026-09-13T17:36:00+02:00`
+* **Author**: Calvin Kohl
+* **Scope**: Elevated Capstones with commanding 2.5D visual height, increased Standing Wall height to 48px, established pre-rendered SVG piece symbols eliminating client-side decimal comma bugs, and created automated unit tests for visual rendering.
+* **Changes**:
+  * [flat_white.svg](file:///e:/repos/tak-p2p/src/TakApp.Blazor/wwwroot/assets/pieces/flat_white.svg), [flat_black.svg](file:///e:/repos/tak-p2p/src/TakApp.Blazor/wwwroot/assets/pieces/flat_black.svg): Pre-rendered 2.5D flat stone slabs.
+  * [wall_white.svg](file:///e:/repos/tak-p2p/src/TakApp.Blazor/wwwroot/assets/pieces/wall_white.svg), [wall_black.svg](file:///e:/repos/tak-p2p/src/TakApp.Blazor/wwwroot/assets/pieces/wall_black.svg): Pre-rendered 48px tall standing wall prisms with 2.5D top bevel facets and vertical spine.
+  * [cap_white.svg](file:///e:/repos/tak-p2p/src/TakApp.Blazor/wwwroot/assets/pieces/cap_white.svg), [cap_black.svg](file:///e:/repos/tak-p2p/src/TakApp.Blazor/wwwroot/assets/pieces/cap_black.svg): Pre-rendered 2.5D tall cylindrical pillar capstones with ornate amber `#d4a017` crown rim and diamond finials.
+  * [TakBoardView.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Board/TakBoardView.razor): Embedded clean pre-compiled `<defs>` symbol library, removed rotateX distortion, and formatted all board attributes with `CultureInfo.InvariantCulture`.
+  * [PieceStackSvg.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Board/PieceStackSvg.razor): Rewritten to render piece layers via SVG `<use href="#tak-...">` with pure integer/invariant coordinate offsets, eliminating runtime polygon string formatting issues.
+  * [SvgTileRenderer.cs](file:///e:/repos/tak-p2p/src/TakEngine.Core/Rendering/SvgTileRenderer.cs): Invariant SVG piece and stack renderer in `TakEngine.Core`.
+  * [SvgTileRendererTests.cs](file:///e:/repos/tak-p2p/tests/TakEngine.Core.Tests/Rendering/SvgTileRendererTests.cs): Added 7 unit tests verifying zero comma decimals in float attributes across European cultures (`de-DE`, `fr-FR`), piece dimensions, stack layer visibility, and height badges.
+* **Test Suite**: 114 unit tests passing (100% pass rate: 95 in `TakEngine.Core.Tests`, 19 in `TakEngine.Transport.Tests`).
+
+---
 
 ### [c5bc7c7](https://github.com/Dvrkstvr/tak-p2p/commit/c5bc7c7) - UI Mockups Realization, 2.5D Perspective Board & Mobile Overhaul
 * **Timestamp**: `2026-09-13T17:20:00+02:00`
