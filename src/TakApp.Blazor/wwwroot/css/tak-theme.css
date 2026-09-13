@@ -547,6 +547,22 @@ html, body {
   pointer-events: none;
 }
 
+/* Floating Carried Hand Stack (In Transit) */
+.carried-hand-stack {
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 10px rgba(212, 160, 23, 0.85));
+  animation: float-carried 2.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes float-carried {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
 /* PlayTak Slide Target Markers */
 .svg-slide-marker {
   fill: #8b5cf6;

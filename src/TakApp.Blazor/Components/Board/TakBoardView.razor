@@ -187,17 +187,27 @@
                             @((MarkupString)$"<text x='{F(sqX + SquareSize / 2.0)}' y='{F(sqY + SquareSize / 2.0 + 3)}' fill='#ffffff' font-family=\"'JetBrains Mono', monospace\" font-size='8' font-weight='800' text-anchor='middle'>STEP</text>")
                         }
 
-                        <!-- Piece Stack -->
-                        @if (Board != null)
+                        <!-- Dynamic Piece Stack & Floating Carried Hand -->
+                        @{
+                            var groundStack = GetVisualGroundStack(coord);
+                            var carriedStack = GetCarriedHandStack(coord);
+                        }
+                        @if (groundStack != null && !groundStack.IsEmpty)
                         {
-                            var stack = Board.GetStack(coord);
-                            if (!stack.IsEmpty)
-                            {
-                                <PieceStackSvg Stack="stack"
-                                               CenterX="@(sqX + SquareSize / 2.0)"
-                                               CenterY="@(sqY + SquareSize / 2.0)"
-                                               Radius="@(SquareSize * 0.38)" />
-                            }
+                            <PieceStackSvg Stack="groundStack"
+                                           CenterX="@(sqX + SquareSize / 2.0)"
+                                           CenterY="@(sqY + SquareSize / 2.0)"
+                                           Radius="@(SquareSize * 0.38)" />
+                        }
+                        @if (carriedStack != null && !carriedStack.IsEmpty)
+                        {
+                            double elevationY = -((groundStack?.Height ?? 0) * 5.5) - 14.0;
+                            <PieceStackSvg Stack="carriedStack"
+                                           CenterX="@(sqX + SquareSize / 2.0)"
+                                           CenterY="@(sqY + SquareSize / 2.0)"
+                                           OffsetY="@elevationY"
+                                           IsCarriedHand="true"
+                                           Radius="@(SquareSize * 0.38)" />
                         }
 
                         <!-- Slide Origin Carry Badge & Click-to-Decrease Hint -->
@@ -232,15 +242,15 @@
                         {
                             int dropped = SlideDroppedPieces[coord];
                             <rect x="@F(sqX + SquareSize / 2.0 - 14)"
-                                  y="@F(sqY + SquareSize / 2.0 - 10)"
+                                  y="@F(sqY + 3)"
                                   width="28"
-                                  height="20"
-                                  rx="4"
+                                  height="16"
+                                  rx="3"
                                   fill="#8b5cf6"
                                   stroke="#ffffff"
-                                  stroke-width="1.2"
+                                  stroke-width="0.75"
                                   filter="drop-shadow(0 2px 4px rgba(0,0,0,0.5))" />
-                            @((MarkupString)$"<text x='{F(sqX + SquareSize / 2.0)}' y='{F(sqY + SquareSize / 2.0 + 4)}' fill='#ffffff' font-family=\"'JetBrains Mono', monospace\" font-size='11' font-weight='800' text-anchor='middle'>+{dropped}</text>")
+                            @((MarkupString)$"<text x='{F(sqX + SquareSize / 2.0)}' y='{F(sqY + 14)}' fill='#ffffff' font-family=\"'JetBrains Mono', monospace\" font-size='9.5' font-weight='800' text-anchor='middle'>+{dropped}</text>")
 
                             @if (isCurStep && SlidePiecesInHand > 0)
                             {
@@ -347,6 +357,9 @@
     [Parameter] public Dictionary<Coord, int> SlideDroppedPieces { get; set; } = new();
     [Parameter] public Coord? SlideCurrentStepCoord { get; set; }
     [Parameter] public Coord? SlideNextCoord { get; set; }
+    [Parameter] public IReadOnlyList<Piece>? SlideOriginalPieces { get; set; }
+    [Parameter] public IReadOnlyList<int>? SlideDrops { get; set; }
+    [Parameter] public Direction? SlideDirection { get; set; }
 
     public int SizeInt => Board != null ? (int)Board.Size : 5;
     public double SquareSize => 80.0;
@@ -378,5 +391,106 @@
         {
             await OnDismissInspect.InvokeAsync();
         }
+    }
+
+    private static PieceStack CreateStack(IEnumerable<Piece> pieces)
+    {
+        var stack = new PieceStack();
+        foreach (var p in pieces)
+        {
+            stack.Push(p);
+        }
+        return stack;
+    }
+
+    private Coord? GetCoordAlongSlide(Coord origin, int step)
+    {
+        if (!SlideDirection.HasValue) return null;
+        var (dx, dy) = SlideDirection.Value switch
+        {
+            Direction.North => (0, 1),
+            Direction.South => (0, -1),
+            Direction.East => (1, 0),
+            Direction.West => (-1, 0),
+            _ => (0, 0)
+        };
+        return new Coord(origin.X + dx * step, origin.Y + dy * step);
+    }
+
+    private PieceStack? GetVisualGroundStack(Coord coord)
+    {
+        if (Board == null) return null;
+
+        if (!SlideOrigin.HasValue || SlideOriginalPieces == null || SlideOriginalPieces.Count == 0)
+        {
+            var stdStack = Board.GetStack(coord);
+            return stdStack.IsEmpty ? null : stdStack;
+        }
+
+        var origin = SlideOrigin.Value;
+        int totalOriginCount = SlideOriginalPieces.Count;
+        int carriedCount = Math.Clamp(SlideCarriedCount, 0, totalOriginCount);
+        int leaveCount = Math.Max(0, totalOriginCount - carriedCount);
+
+        // 1. Origin square: shows pieces left behind on the ground
+        if (coord == origin)
+        {
+            if (leaveCount == 0) return null;
+            return CreateStack(SlideOriginalPieces.Take(leaveCount));
+        }
+
+        // 2. Destination square along slide path
+        if (SlideDrops != null && SlideDrops.Count > 0 && SlideDroppedPieces.ContainsKey(coord))
+        {
+            var carriedPieces = SlideOriginalPieces.Skip(leaveCount).ToList();
+            int pieceIdx = 0;
+
+            for (int step = 1; step <= SlideDrops.Count; step++)
+            {
+                var stepCoord = GetCoordAlongSlide(origin, step);
+                int dropCount = SlideDrops[step - 1];
+                int safeDropCount = Math.Min(dropCount, carriedPieces.Count - pieceIdx);
+                var droppedForStep = safeDropCount > 0 ? carriedPieces.GetRange(pieceIdx, safeDropCount) : new List<Piece>();
+                pieceIdx += safeDropCount;
+
+                if (stepCoord.HasValue && stepCoord.Value == coord)
+                {
+                    var targetOrigPieces = Board.GetStack(coord).Pieces.ToList();
+                    if (targetOrigPieces.Count > 0 && targetOrigPieces[^1].Type == PieceType.Standing && droppedForStep.Count > 0 && droppedForStep[^1].Type == PieceType.Capstone)
+                    {
+                        targetOrigPieces[^1] = new Piece(targetOrigPieces[^1].Color, PieceType.Flat);
+                    }
+                    var combined = targetOrigPieces.Concat(droppedForStep);
+                    return CreateStack(combined);
+                }
+            }
+        }
+
+        // 3. Other squares
+        var otherStack = Board.GetStack(coord);
+        return otherStack.IsEmpty ? null : otherStack;
+    }
+
+    private PieceStack? GetCarriedHandStack(Coord coord)
+    {
+        if (Board == null || !SlideOrigin.HasValue || SlideOriginalPieces == null || SlidePiecesInHand <= 0)
+        {
+            return null;
+        }
+
+        var origin = SlideOrigin.Value;
+        var handCoord = SlideCurrentStepCoord ?? origin;
+        if (coord != handCoord) return null;
+
+        int totalOriginCount = SlideOriginalPieces.Count;
+        int carriedCount = Math.Clamp(SlideCarriedCount, 0, totalOriginCount);
+        int leaveCount = Math.Max(0, totalOriginCount - carriedCount);
+        var carriedPieces = SlideOriginalPieces.Skip(leaveCount).ToList();
+
+        int droppedCount = SlideDrops?.Sum() ?? 0;
+        var inHand = carriedPieces.Skip(droppedCount).Take(SlidePiecesInHand).ToList();
+        if (inHand.Count == 0) return null;
+
+        return CreateStack(inHand);
     }
 }

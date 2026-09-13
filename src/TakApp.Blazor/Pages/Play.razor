@@ -108,6 +108,9 @@
                       SlideDroppedPieces="@SlideDroppedPieces"
                       SlideCurrentStepCoord="@SlideCurrentStepCoord"
                       SlideNextCoord="@SlideNextCoord"
+                      SlideDirection="@ActiveSlideDirection"
+                      SlideOriginalPieces="@SlideOriginalPieces"
+                      SlideDrops="@SlideDrops"
                       OnSquareClick="HandleSquareClick"
                       OnSquareRightClick="HandleSquareRightClick"
                       OnDismissInspect="HandleDismissInspect" />
@@ -195,6 +198,9 @@
                   SlideDroppedPieces="@SlideDroppedPieces"
                   SlideCurrentStepCoord="@SlideCurrentStepCoord"
                   SlideNextCoord="@SlideNextCoord"
+                  SlideDirection="@ActiveSlideDirection"
+                  SlideOriginalPieces="@SlideOriginalPieces"
+                  SlideDrops="@SlideDrops"
                   OnSquareClick="HandleSquareClick"
                   OnSquareRightClick="HandleSquareRightClick"
                   OnDismissInspect="HandleDismissInspect" />
@@ -308,6 +314,7 @@
         public int CarriedCount { get; set; }
         public Direction? Direction { get; set; }
         public List<int> Drops { get; set; } = new();
+        public List<Piece> OriginalPieces { get; set; } = new();
 
         public int PiecesInHand => CarriedCount - Drops.Sum();
         public int CurrentStepIndex => Drops.Count; // 1-indexed
@@ -346,6 +353,8 @@
     private int SlideMaxLift => SlideBuilder?.MaxLift ?? 0;
     private int SlidePiecesInHand => SlideBuilder?.PiecesInHand ?? 0;
     private Direction? ActiveSlideDirection => SlideBuilder?.Direction;
+    private IReadOnlyList<Piece>? SlideOriginalPieces => SlideBuilder?.OriginalPieces;
+    private IReadOnlyList<int>? SlideDrops => SlideBuilder?.Drops;
 
     private Dictionary<Coord, int> SlideDroppedPieces
     {
@@ -481,7 +490,8 @@
         {
             Origin = coord,
             MaxLift = maxLift,
-            CarriedCount = maxLift
+            CarriedCount = maxLift,
+            OriginalPieces = stack.Pieces.ToList()
         };
         SelectedCoord = coord;
         RefreshLegalTargets();

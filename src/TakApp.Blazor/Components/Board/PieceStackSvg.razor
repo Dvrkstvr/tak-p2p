@@ -13,32 +13,37 @@
     double baseOffsetX = -((count - 1) * stepX) / 2.0;
     double baseOffsetY = -((count - 1) * stepY) / 2.0;
 
-    for (int i = 0; i < count; i++)
-    {
-        var piece = pieces[i];
-        bool isTop = (i == count - 1);
-        double layerX = CenterX + baseOffsetX + i * stepX;
-        double layerY = CenterY + baseOffsetY + i * stepY;
+    <g class="@(IsCarriedHand ? "carried-hand-stack" : "")">
+        @for (int i = 0; i < count; i++)
+        {
+            var piece = pieces[i];
+            bool isTop = (i == count - 1);
+            double layerX = CenterX + OffsetX + baseOffsetX + i * stepX;
+            double layerY = CenterY + OffsetY + baseOffsetY + i * stepY;
 
-        string symbolId = GetSymbolId(piece, isTop);
+            string symbolId = GetSymbolId(piece, isTop);
 
-        <use href="#@symbolId"
-             x="@F(layerX - 32.0)"
-             y="@F(layerY - 32.0)" />
-    }
+            <use href="#@symbolId"
+                 x="@F(layerX - 32.0)"
+                 y="@F(layerY - 32.0)" />
+        }
 
-    @if (count >= 4)
-    {
-        double topX = CenterX + baseOffsetX + (count - 1) * stepX;
-        double topY = CenterY + baseOffsetY + (count - 1) * stepY;
-        @((MarkupString)$"<text x='{F(topX + 18.0)}' y='{F(topY - 8.0)}' fill='#d4a017' font-family=\"'JetBrains Mono', monospace\" font-size='9' font-weight='700'>{count}</text>")
-    }
+        @if (count >= 4)
+        {
+            double topX = CenterX + OffsetX + baseOffsetX + (count - 1) * stepX;
+            double topY = CenterY + OffsetY + baseOffsetY + (count - 1) * stepY;
+            @((MarkupString)$"<text x='{F(topX + 18.0)}' y='{F(topY - 8.0)}' fill='#d4a017' font-family=\"'JetBrains Mono', monospace\" font-size='9' font-weight='700'>{count}</text>")
+        }
+    </g>
 }
 
 @code {
     [Parameter] public PieceStack? Stack { get; set; }
     [Parameter] public double CenterX { get; set; }
     [Parameter] public double CenterY { get; set; }
+    [Parameter] public double OffsetX { get; set; } = 0;
+    [Parameter] public double OffsetY { get; set; } = 0;
+    [Parameter] public bool IsCarriedHand { get; set; } = false;
     [Parameter] public double Radius { get; set; } = 28;
 
     private static string F(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);

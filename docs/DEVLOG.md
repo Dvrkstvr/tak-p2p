@@ -8,6 +8,7 @@ This document tracks all project milestones, architectural additions, and commit
 
 | Commit | Timestamp (UTC+2) | Milestone / Scope | Key Deliverables | Tests Passing |
 | --- | --- | --- | --- | --- |
+| [`9f288d6`](https://github.com/Dvrkstvr/tak-p2p/commit/9f288d6) | 2026-09-13 19:35:00 | **Dynamic Tower Movement & In-Transit Display** | Real-time piece stack rendering during tower movement: origin square immediately reflects tiles left behind (`leaveCount`); floating carried hand stack renders with vertical elevation, gold lift aura, and subtle floating keyframe animation; destination squares immediately render dropped tiles upon stepping/stacking. 100% verified via browser subagent. | 114 |
 | [`d706c2a`](https://github.com/Dvrkstvr/tak-p2p/commit/d706c2a) | 2026-09-13 19:15:00 | **PlayTak Stepped Tower Movement & Tile Count Selection** | Authentic PlayTak.com multi-tile tower mechanics: origin clicking decrements/cycles carried count (`xN`, `-1 TILE` pill), stepping onto adjacent square drops 1 tile (`+1` badge), clicking same square stacks carried tiles (`+STACK`), clicking next square advances along the path (`STEP` marker), and automatic move dispatch once all carried tiles are placed. SVG inner element pointer-events isolation for seamless square selection. | 114 |
 | [`28d488c`](https://github.com/Dvrkstvr/tak-p2p/commit/28d488c) | 2026-09-13 18:15:00 | **PlayTak-Authentic Game Controls** | Complete implementation of PlayTak.com game controls: interactive reserves with click-to-select and rotate-to-wall, quick-wall right-click placement on empty squares, direct on-board stack movement with slide target markers, floating stack layer inspector on right-click, and keyboard hotkeys (`[F]`, `[W]`, `[C]`, `[Esc]`). | 114 |
 | [`62c1375`](https://github.com/Dvrkstvr/tak-p2p/commit/62c1375) | 2026-09-13 17:36:00 | **2.5D Pillar Capstones, Taller Walls & SVG Assets** | Pre-rendered 2.5D SVG piece symbol architecture, tall cylindrical pillar capstone with amber crown, 48px standing walls with top bevel, and SvgTileRenderer unit test suite with 114 passing tests. | 114 |
@@ -38,6 +39,19 @@ This document tracks all project milestones, architectural additions, and commit
 ---
 
 ## Detailed Entry Logs
+
+### [9f288d6](https://github.com/Dvrkstvr/tak-p2p/commit/9f288d6) - Dynamic Tower Movement & In-Transit Piece Display
+* **Timestamp**: `2026-09-13T19:35:00+02:00`
+* **Author**: Calvin Kohl
+* **Scope**: Implemented dynamic live board rendering during tower movement. Origin squares immediately show pieces left behind, lifted pieces render floating with elevation and golden aura above the current hand square, and destination squares display placed pieces in real time as drops occur.
+* **Changes**:
+  * [PieceStackSvg.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Board/PieceStackSvg.razor): Added `OffsetX`, `OffsetY`, and `IsCarriedHand` parameters; wrapped layers in `<g class="carried-hand-stack">`.
+  * [TakBoardView.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Components/Board/TakBoardView.razor): Added `GetVisualGroundStack` and `GetCarriedHandStack` calculating exact dynamic piece distributions during slides; rendered separate ground stack and floating carried hand stack with vertical elevation (`-((groundHeight * 5.5) + 14)px`). Moved `+{dropped}` badge to top of square for clear piece visibility.
+  * [Play.razor](file:///e:/repos/tak-p2p/src/TakApp.Blazor/Pages/Play.razor): Added `OriginalPieces` snapshot to `SlideBuilderState`; wired `SlideDirection`, `SlideOriginalPieces`, and `SlideDrops` to desktop and mobile `TakBoardView` instances.
+  * [tak-theme.css](file:///e:/repos/tak-p2p/src/TakApp.Blazor/wwwroot/css/tak-theme.css): Added `.carried-hand-stack` styles with golden amber glow, dark shadow, and `@keyframes float-carried` subtle hovering animation.
+* **Test Suite**: 114 unit tests passing (100% pass rate: 95 in `TakEngine.Core.Tests`, 19 in `TakEngine.Transport.Tests`). Full browser subagent verification with screenshots.
+
+---
 
 ### [d706c2a](https://github.com/Dvrkstvr/tak-p2p/commit/d706c2a) - PlayTak Stepped Tower Movement & Tile Count Selection
 * **Timestamp**: `2026-09-13T19:15:00+02:00`
