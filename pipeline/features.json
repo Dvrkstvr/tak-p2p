@@ -1,0 +1,245 @@
+{
+  "_note": "Adopt audit 2026-09-30. Evidence run: `dotnet test TakGame.sln` -> Transport 19/19, Core 95/95 (114 total, 0 failed). `dotnet build` of Blazor, Cli, Avalonia.Desktop -> 0 errors. `gh run list` for CI. passes=true means the named tests/CI run exercise that behaviour; nothing here was driven in a real UI or over a real relay. Milestone labels: M0 = proposed core-promise path (to be confirmed at scope); existing = built before adoption; M1/Later = proposed.",
+  "features": [
+    {
+      "id": "F-001",
+      "milestone": "existing",
+      "behaviour": "Tak rules engine: 4x4/5x5/6x6 setup, reserves, first-turn swap, placement, slides with carry limit, wall flattening by capstone",
+      "acceptance": ["BoardTests + MovementTests pass"],
+      "passes": true,
+      "evidence": "dotnet test TakGame.sln 2026-09-30: TakEngine.Core.Tests 95/95 passed (BoardTests.cs, MovementTests.cs present in tests/TakEngine.Core.Tests)."
+    },
+    {
+      "id": "F-002",
+      "milestone": "existing",
+      "behaviour": "Road (DFS) win detection incl. capstone, walls blocking, zigzag",
+      "acceptance": ["RoadFinderTests pass"],
+      "passes": true,
+      "evidence": "dotnet test 2026-09-30, Core 95/95 incl. RoadFinderTests.cs. Flat-count and draw endings not separately evidenced."
+    },
+    {
+      "id": "F-003",
+      "milestone": "existing",
+      "behaviour": "PTN and TPS parse/serialize round trip",
+      "acceptance": ["PtnTests + TpsTests pass"],
+      "passes": true,
+      "evidence": "dotnet test 2026-09-30 (PtnTests.cs, TpsTests.cs). Interop with real PlayTak PTN files not tested."
+    },
+    {
+      "id": "F-004",
+      "milestone": "existing",
+      "behaviour": "SHA-256 state-hash chain and Ed25519 sign/verify of moves",
+      "acceptance": ["CryptoTests pass"],
+      "passes": true,
+      "evidence": "dotnet test 2026-09-30 (CryptoTests.cs). Ed25519 is not the Nostr key type (secp256k1), see F-014."
+    },
+    {
+      "id": "F-005",
+      "milestone": "existing",
+      "behaviour": "Local game session (pass and play) with resign, road win event, first-turn swap",
+      "acceptance": ["TakGameSessionTests local cases pass"],
+      "passes": true,
+      "evidence": "dotnet test 2026-09-30, TakGameSessionTests.cs (local cases). Session-level only: the Blazor UI does NOT use TakGameSession (it uses GameBoard directly in WebGameSessionManager.cs)."
+    },
+    {
+      "id": "F-006",
+      "milestone": "existing",
+      "behaviour": "Remote-session move exchange in one process: signature, prev-hash, turn-owner checks; protocol violation detected",
+      "acceptance": ["RemoteP2P_SynchronizesMovesAndHashChain and RemoteP2P_DetectsProtocolViolations pass"],
+      "passes": true,
+      "evidence": "dotnet test 2026-09-30, TakGameSessionTests.cs lines 161-261. In-process only, no transport between the two sessions."
+    },
+    {
+      "id": "F-007",
+      "milestone": "existing",
+      "behaviour": "SQLite persistence of games/moves with O(1) restore to any turn (replay scrub)",
+      "acceptance": ["SqliteStorageTests pass"],
+      "passes": true,
+      "evidence": "dotnet test 2026-09-30 (SqliteStorageTests.cs). Only the CLI is seen using SqliteGameStorage; Blazor's BrowserStorage persists keys only (per docs/AUDIT.md, not re-verified)."
+    },
+    {
+      "id": "F-008",
+      "milestone": "existing",
+      "behaviour": "Stale (Day 3) and auto-draw (Day 7) rules with NTP time, engine level",
+      "acceptance": ["StaleSystemTests + NtpTimeTests pass"],
+      "passes": true,
+      "evidence": "dotnet test 2026-09-30. Logic only: StaleMatchMonitor has no caller in any frontend (grep of src), so no user sees it. See F-020."
+    },
+    {
+      "id": "F-009",
+      "milestone": "existing",
+      "behaviour": "Offline minimax AI bot with difficulty tiers (engine)",
+      "acceptance": ["TakBotTests pass"],
+      "passes": true,
+      "evidence": "dotnet test 2026-09-30 (TakBotTests.cs). Playing strength and fun not evaluated."
+    },
+    {
+      "id": "F-010",
+      "milestone": "existing",
+      "behaviour": "Invite code encode/decode (tak:// URI, web URL, TAK1_ token) and NIP-19 npub/nsec Bech32",
+      "acceptance": ["InviteCodeTests + Nip19Tests pass"],
+      "passes": true,
+      "evidence": "dotnet test 2026-09-30, Transport 19/19 and Core 95/95."
+    },
+    {
+      "id": "F-011",
+      "milestone": "existing",
+      "behaviour": "Quick Play broadcast/challenge message construction and deterministic colour resolution (message level)",
+      "acceptance": ["MatchmakingHandshakeTests pass"],
+      "passes": true,
+      "evidence": "dotnet test 2026-09-30. Builds and parses messages only; nothing publishes or subscribes for them (QuickPlayMatchmaker is used only by CLI Program.cs, which then 'simulates')."
+    },
+    {
+      "id": "F-012",
+      "milestone": "existing",
+      "behaviour": "NIP-01 message parse/serialize, event id computation, kind-0 profile parse/cache",
+      "acceptance": ["NostrMessageTests + NostrProfileTests pass"],
+      "passes": true,
+      "evidence": "dotnet test 2026-09-30, Transport 19/19."
+    },
+    {
+      "id": "F-013",
+      "milestone": "Later",
+      "behaviour": "Spectator session verifies signature, hash chain and legality of a move stream; delayed broadcast queue (engine only)",
+      "acceptance": ["SpectatorTests pass"],
+      "passes": true,
+      "evidence": "dotnet test 2026-09-30 (SpectatorTests.cs). No frontend or transport consumes it."
+    },
+    {
+      "id": "F-014",
+      "milestone": "M0",
+      "behaviour": "Events published to a real relay are accepted: valid Nostr event signature (BIP-340 Schnorr on secp256k1) and Nostr-compatible identity keys",
+      "acceptance": ["Publish one signed event to a real relay and read back an OK true message", "Same event fetched by a second client"],
+      "passes": false,
+      "evidence": "Seen in code: NostrEvent.Sig is never assigned anywhere in src (only the property declaration matches); identity keys are Ed25519 (CryptoSigner.cs), not secp256k1. Relays following NIP-01 should reject such events (inferred, unverified against a live relay)."
+    },
+    {
+      "id": "F-015",
+      "milestone": "M0",
+      "behaviour": "Move payload is encrypted by the sender and decrypted by the OTHER peer (both sides derive the same shared secret)",
+      "acceptance": ["Test where Alice encrypts with (alicePriv, bobPub) and Bob decrypts with (bobPriv, alicePub)"],
+      "passes": false,
+      "evidence": "Seen in code: Nip44Encryption.DeriveSharedSecret = SHA256(privateKey || peerPublicKey) (Nip44Encryption.cs:81-93), which is not ECDH; the two peers derive different secrets. TransportBenchmarkTests decrypts with DeriveSharedSecret(senderPriv, recipientPub), the sender's own keys on both sides, so the passing round trip never exercises a second peer. Also ChaCha20-Poly1305 with HKDF, which differs from the NIP-44 v2 spec as I know it (unverified against current spec text)."
+    },
+    {
+      "id": "F-016",
+      "milestone": "M0",
+      "behaviour": "A move made in client A is sent over relays and applied and verified in client B (and back), through NostrTransportClient into TakGameSession.ProcessRemoteMove",
+      "acceptance": ["Two processes/devices, real relay, 10 alternating moves, both show same state hash", "Illegal/tampered payload injected by a test peer is dropped and flagged"],
+      "passes": false,
+      "evidence": "Seen in code: SendMoveEnvelopeAsync, SubscribeIncomingMovesAsync and OnMoveEnvelopeReceived have zero call sites outside NostrTransportClient.cs; ConnectAllAsync is called only from ProfileModal.razor (kind-0 profile). TakGameSession.OnRemoteEnvelopeReady/ProcessRemoteMove are used only by tests. No test touches a relay or a fake relay."
+    },
+    {
+      "id": "F-017",
+      "milestone": "M0",
+      "behaviour": "Direct invite: host creates link/QR, guest opens it and both land in the same live game",
+      "acceptance": ["Host on device 1 generates invite, guest on device 2 opens it, first move by white appears on both"],
+      "passes": false,
+      "evidence": "Seen in code: Blazor HandleJoinCode calls Session.StartLocalMatch (Home.razor ~L289-294); CLI JoinInviteCodeAsync parses the code then calls PlayLocalMatchAsync (Program.cs). Invite generation works (F-010); joining never connects."
+    },
+    {
+      "id": "F-018",
+      "milestone": "M1",
+      "behaviour": "Quick Play pool: two strangers searching the same board size are paired over relays",
+      "acceptance": ["Two clients start Quick Play 5x5 within 60 s and get the same game id and opposite colours"],
+      "passes": false,
+      "evidence": "Seen in code: CLI PlayQuickPlayAsync builds a proposal and broadcast event, prints 'Starting match simulation', then plays a local match (Program.cs ~L335-352). Nothing publishes the kind 20001 event or listens for it."
+    },
+    {
+      "id": "F-019",
+      "milestone": "M1",
+      "behaviour": "Resume an in-progress game after closing the app or browser tab",
+      "acceptance": ["Make 3 moves, close and reopen, board and history restored"],
+      "passes": false,
+      "evidence": "docs/AUDIT.md (2026-09-12) says Blazor game state is not persisted; not re-verified. SQLite storage exists (F-007) and is used by the CLI (seen in code)."
+    },
+    {
+      "id": "F-020",
+      "milestone": "M1",
+      "behaviour": "Stale-game warning and Day 7 auto-draw visible to the user in a frontend",
+      "acceptance": ["Game older than 3 days shows a warning on open; older than 7 days ends as a draw"],
+      "passes": false,
+      "evidence": "Engine logic tested (F-008) but StaleMatchMonitor has no caller in any frontend."
+    },
+    {
+      "id": "F-021",
+      "milestone": "existing",
+      "behaviour": "Blazor web client: play locally (pass and play) and vs AI in the browser with full rules",
+      "acceptance": ["Open the GitHub Pages site, play a 5x5 game vs AI to a win", "Illegal moves are not offered by the UI"],
+      "passes": false,
+      "evidence": "Blazor builds (0 errors) and Pages deploy CI is green (gh run 36642739073), but no test drives the UI and the auditor did not run the site. Blazor has its own board/road logic (WebGameSessionManager.cs) separate from TakGameSession. DEVLOG's 'verified via browser subagent' has no stored log or screenshot."
+    },
+    {
+      "id": "F-022",
+      "milestone": "existing",
+      "behaviour": "PlayTak-style controls in Blazor: click reserve, rotate to wall, right-click quick wall, stepped tower movement with count selection, cancel on out-of-range click (M1.15 to M1.15.3)",
+      "acceptance": ["By hand: move a 3-stack 1-1-1 and 2-1 on 5x5, cancel mid-move, place a wall via right click"],
+      "passes": false,
+      "evidence": "Four commits in about 2 h touching the same 3 files (Play.razor, TakBoardView.razor, tak-theme.css); zero automated UI tests; no run log. Owed to the user or verifier: hand-play."
+    },
+    {
+      "id": "F-023",
+      "milestone": "existing",
+      "behaviour": "Piece SVG rendering is culture-invariant (no comma decimals)",
+      "acceptance": ["SvgTileRendererTests pass for de-DE, fr-FR, en-US"],
+      "passes": true,
+      "evidence": "dotnet test 2026-09-30, Core 95/95 (Rendering/SvgTileRendererTests.cs)."
+    },
+    {
+      "id": "F-024",
+      "milestone": "existing",
+      "behaviour": "CLI (Spectre.Console) local game and vs AI with typed commands",
+      "acceptance": ["Run TakApp.Cli, play a 4x4 game to a road win, result saved to SQLite"],
+      "passes": false,
+      "evidence": "Builds (0 errors). Not driven by the auditor; no tests cover Program.cs or the renderer."
+    },
+    {
+      "id": "F-025",
+      "milestone": "existing",
+      "behaviour": "Avalonia desktop GUI: play a local game and a 'remote' game",
+      "acceptance": ["Launch the desktop app on Windows and play a local game"],
+      "passes": false,
+      "evidence": "Builds (0 errors). Not run. MainViewModel 'remote' mode generates two random keypairs in-process (MainViewModel.cs L21-25), so it is a simulated peer, not a network game. No Avalonia headless tests."
+    },
+    {
+      "id": "F-026",
+      "milestone": "existing",
+      "behaviour": "Android APK and iOS app run on a device",
+      "acceptance": ["Install the release APK on a phone and play a local game"],
+      "passes": false,
+      "evidence": "docs/AUDIT.md says never tested on device; iOS needs macOS/Xcode. The Android/iOS projects were not built by the auditor (workloads not checked)."
+    },
+    {
+      "id": "F-027",
+      "milestone": "existing",
+      "behaviour": "GitHub Pages deploy of the Blazor client on push to main",
+      "acceptance": ["Workflow run succeeds"],
+      "passes": true,
+      "evidence": "gh run list 2026-09-30: 'Deploy Blazor WebAssembly to GitHub Pages' success, run 36642739073 (2026-09-29) and earlier runs. Says nothing about the site working in a browser (F-021)."
+    },
+    {
+      "id": "F-028",
+      "milestone": "existing",
+      "behaviour": "Release workflow publishes Windows/Linux Desktop and CLI archives with checksums",
+      "acceptance": ["Workflow run succeeds and a release exists"],
+      "passes": true,
+      "evidence": "gh run list: 'Build & Publish Release' success (run 34677878321, workflow_dispatch); gh release list shows v0.1.0 Latest. Archives were not downloaded or launched."
+    },
+    {
+      "id": "F-029",
+      "milestone": "M1",
+      "behaviour": "CI runs the unit tests on every push/PR",
+      "acceptance": ["A workflow with `dotnet test TakGame.sln` fails the build on a red test"],
+      "passes": false,
+      "evidence": "Seen in code: neither .github/workflows/deploy-gh-pages.yml nor release.yml has a test step. docs/AUDIT.md flagged this as Critical on 2026-09-12; still open."
+    },
+    {
+      "id": "F-030",
+      "milestone": "Later",
+      "behaviour": "PWA installable/offline, sound, animations, undo, match history, settings page, drag and drop",
+      "acceptance": ["defined at scope"],
+      "passes": false,
+      "evidence": "README claims PWA/drag-and-drop; docs/AUDIT.md says not implemented; src/TakApp.Blazor/wwwroot has no manifest or service worker (contains assets, css, icon-192.png, index.html)."
+    }
+  ]
+}

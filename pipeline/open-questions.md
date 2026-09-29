@@ -1,0 +1,74 @@
+# Open questions
+
+<!-- One entry per question. Tags: blocking | assumable | deferred (see gates.md).
+     Status: open | answered → D-### | assumed → D-### | dropped (why). Never delete entries. -->
+
+## Q-001 · blocking · stage 1 · answered → D-001
+Is the core promise "two people on different devices play a verified game over Nostr relays with no server" still THE goal of v1?
+The docs say yes; the code path to it does not exist (risks.md R-001). If the real goal is now "a good single-device Tak app with AI",
+almost everything in the plan changes (no transport spike, UI-first approach).
+- A) Yes, multiplayer over relays is the v1 promise — M0 becomes the relay path; UI polish frozen until it works (recommended: it is what the README, brief and architecture are built around)
+- B) No, ship a polished local/AI Tak first, multiplayer later — promise in brief.md must be rewritten and README claims corrected now
+(inferred core promise in brief.md; needs a user sign-off either way)
+
+## Q-002 · assumable · stage 1 · assumed → D-002
+What does "MVP is done" mean as checks a person can do by hand? Auditor proposal in brief.md: two clients (browser plus one other head) complete a 5x5 game
+over a real relay, both show the same result/hash; kill and reopen resumes.
+- default if assumable: use the brief.md list. Cheap to change before scope sign-off.
+
+## Q-003 · assumable · stage 1 · answered → D-012 (user chose deep)
+Track and approach. Recommended: track `standard`, approach `spec-first` (secondary: prototype-first spike for relay round trip). See audit.md section 9.
+- default: as recommended; reversible by re-tracking at the next milestone boundary (raise, never silently lower).
+
+## Q-004 · blocking · stage 2 · answered → D-011
+Identity and signatures: must a player's identity be a real Nostr key (secp256k1, works with other Nostr clients/relays and npub display), or may the app use its own
+Ed25519 identity and wrap events some other way? Today identities are Ed25519 (CryptoSigner) while events need BIP-340 Schnorr and NIP-44 needs secp256k1 ECDH
+(risks.md R-002, R-003). Choosing wrong means rewriting keys, storage, invite format and moves signatures (data loss for stored games).
+- A) One secp256k1 key for everything (Nostr identity, event signing, NIP-44, move signatures) — simplest, interoperable (recommended)
+- B) Keep Ed25519 for moves, add secp256k1 for the Nostr layer — two keys per user, more code, better only if there is a reason for Ed25519 (none found in docs)
+- C) Drop Nostr compatibility, run own relay protocol — contradicts "public relays, zero servers"
+
+## Q-005 · deferred · stage 4 · open
+Polish list that README/AUDIT mention: sound, animations, undo/takeback, board flip, match history, settings page, drag and drop, PWA/offline. Which are in v1, which later?
+Not needed before M0. Re-check at scope.
+
+## Q-006 · deferred · stage 4 · open
+Platform priority for v1: web only, web + desktop + CLI, or all six heads (incl. Android APK, iOS/iPad, macOS)? Android/iOS have never run on a device, iOS needs a Mac and Apple signing.
+Not blocking M0 (which uses the cheapest head plus the web head), but changes scope and README claims. Default proposed at scope: web + desktop + CLI, mobile relabelled "experimental".
+
+## Q-007 · assumable · stage 2 · assumed → D-004
+May the project take a dependency on a maintained Nostr/secp256k1 library (signing, NIP-44) instead of the hand-rolled code in TakEngine.Transport?
+- default: yes, decided after the spike compares options (hand-rolled crypto that already passed its own tests but is wrong is the evidence). Reversible; costs a day at most.
+
+## Q-008 · assumable · stage 1 · answered → D-013
+Which legacy rituals to retire (audit.md section 4)? Proposal: stop updating DEVLOG timeline/detail entries, stop mirroring milestone tables in README/v1-mvp/PROJECT_SPECIFICATION, stop quoting
+test counts; STATUS.md + features.json own status. Keep wire-protocol.md, database-schema.md, system-overview.md.
+- default: stop performing the ritual from now on but do not delete or rewrite existing docs during adoption; ask again before deleting anything. Fully reversible.
+
+## Q-009 · assumable · stage 4 · assumed → D-006
+Freeze new UI features (more PlayTak controls, visuals) and new frontends until M0 passes?
+- default: yes. Reversible at any time by the user.
+
+## Q-010 · assumable · stage 3 · assumed → D-007
+Transport specifics: relay set (three public defaults, user-configurable), event kind for moves (legacy kind 4 as coded vs NIP-17/gift wrap), ephemeral kind 20001 for Quick Play.
+- default: let the spike (R-004) pick the kind that real relays accept; keep the three default relays; keep `TransportEnvelope` shape from docs/wire-protocol.md.
+
+## Q-011 · assumable · stage 6 · assumed → D-008
+Should the Blazor client be moved onto `TakGameSession`/`GameBoard` (deleting `WebGameSessionManager`'s duplicate board and road logic) so browser games get the same verified path?
+- default: yes, as part of the milestone that brings multiplayer to Blazor (not before M0 if the CLI/headless path proves the transport first).
+
+## Q-012 · assumable · stage 6 · assumed → D-009
+Context files: AGENTS.md is not loaded by Claude Code; there is no CLAUDE.md. Create a short CLAUDE.md (<= 120 lines) and move rationale to docs/decisions, as a separate branch
+after adoption (adopt.md step 5)?
+- default: yes, later, separate branch; nothing changed now.
+
+## Q-013 · assumable · stage 9 · assumed → D-010
+Should Pages deploy and release workflows be gated on `dotnet test` (and a PR check added) so main cannot auto-deploy a red build?
+- default: yes, first small task of stage 7; touches only .github/workflows.
+
+## Q-014 · deferred · stage 9 · open
+Licence: README badge says MIT, no LICENSE file. Which licence? Public repo, so decide before wider sharing.
+
+## Q-015 · deferred · stage 4 · open
+v2 scope (tournaments, spectators/broadcast, co-signed receipts, ELO): keep the documents, or archive them? Spectator engine (F-013) exists and is tested but unused.
+Parked until M0 and v1 are done.
