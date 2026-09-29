@@ -52,12 +52,15 @@ Tak P2P is engineered with a strict **Separation of Concerns**—the determinist
 
 | Device / Platform | Method of Play | Technology | Implementation Status | Quick Launch / Access |
 | :--- | :--- | :--- | :--- | :--- |
-| **🌐 Web Browser** | Zero-Install Web Client (PWA) | Blazor WebAssembly (.NET 10) | 🟢 **Implemented** | [Launch Web Client](https://dvrkstvr.github.io/tak-p2p/) |
-| **🪟 Windows PC** | Native Desktop App & Terminal CLI | Avalonia UI + Spectre.Console | 🟢 **Implemented** | [GitHub Releases](https://github.com/Dvrkstvr/tak-p2p/releases) (`tak-desktop-windows-x64.zip`) |
-| **🐧 Linux** | Native Desktop App & Terminal CLI | Avalonia UI (X11/Wayland) + CLI | 🟢 **Implemented** | [GitHub Releases](https://github.com/Dvrkstvr/tak-p2p/releases) (`tak-desktop-linux-x64.tar.gz`) |
-| **💻 MacBook / macOS** | Native Desktop App & Terminal CLI | Avalonia Desktop + Terminal CLI | 🟢 **Implemented / Compiles** | Cross-platform .NET 10 Desktop |
-| **🤖 Android** | Mobile Web / PWA & Native App | Web PWA + Native APK (`TakApp.Avalonia.Android`) | 🟢 **Implemented** | [Download APK](https://github.com/Dvrkstvr/tak-p2p/releases/latest/download/tak-android.apk) *(To be released on App Store soon)* • [Chrome PWA](https://dvrkstvr.github.io/tak-p2p/) |
-| **📱 iPhone & iPad** | Mobile Web / PWA & Native App | Safari PWA + Native iOS App | 🟡 **To be released on App Store soon** | [Play now via Safari PWA](https://dvrkstvr.github.io/tak-p2p/) • *(Native app to be released on App Store soon)* |
+| **🌐 Web Browser** | Zero-Install Web Client | Blazor WebAssembly (.NET 10) | 🟡 **Deployed, not verified** (site deploys; in-browser play not yet verified; no PWA/offline) | [Launch Web Client](https://dvrkstvr.github.io/tak-p2p/) |
+| **🪟 Windows PC** | Native Desktop App & Terminal CLI | Avalonia UI + Spectre.Console | 🟡 **Released, not verified** (archives published; desktop and CLI not yet verified running) | [GitHub Releases](https://github.com/Dvrkstvr/tak-p2p/releases) (`tak-desktop-windows-x64.zip`) |
+| **🐧 Linux** | Native Desktop App & Terminal CLI | Avalonia UI (X11/Wayland) + CLI | 🟡 **Released, not verified** (archives published; desktop and CLI not yet verified running) | [GitHub Releases](https://github.com/Dvrkstvr/tak-p2p/releases) (`tak-desktop-linux-x64.tar.gz`) |
+| **💻 MacBook / macOS** | Native Desktop App & Terminal CLI | Avalonia Desktop + Terminal CLI | 🔴 **Not released** (no macOS build published; never run on macOS) | Build from source, or use the [Web Client](https://dvrkstvr.github.io/tak-p2p/) |
+| **🤖 Android** | Mobile Browser & Native App | Blazor WASM in browser + Native APK (`TakApp.Avalonia.Android`) | 🟡 **APK published, not verified** (never run on a device) | [Download APK](https://github.com/Dvrkstvr/tak-p2p/releases/latest/download/tak-android.apk) • [Web Client](https://dvrkstvr.github.io/tak-p2p/) |
+| **📱 iPhone & iPad** | Mobile Browser & Native App | Blazor WASM in Safari + Native iOS App | 🔴 **Native app not built** (never built or run on a device) | [Web Client in Safari](https://dvrkstvr.github.io/tak-p2p/) |
+
+> Status mirrors [pipeline/features.json](pipeline/features.json): 🟢 verified with evidence · 🟡 built or published, not yet verified · 🔴 not available. No platform is 🟢 yet.
+> **Online play between two devices over Nostr relays does not work on any platform yet** (F-014 to F-017): joining an invite currently starts a local game.
 
 ---
 
