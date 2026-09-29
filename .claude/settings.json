@@ -1,0 +1,14 @@
+{
+  "enabledPlugins": {
+    "pipeline@calkoh": true,
+    "superpowers@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "calkoh": {
+      "source": {
+        "source": "github",
+        "repo": "Dvrkstvr/claude-pipeline"
+      }
+    }
+  }
+}
