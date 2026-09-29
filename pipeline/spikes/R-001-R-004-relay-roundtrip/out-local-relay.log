@@ -1,0 +1,89 @@
+23:26:28.260 local relay listening ws://127.0.0.1:7777
+23:26:29.866 c1 REQ game [{"kinds":[9999],"authors":["3fe1ca1b2483f96a9556126c31885791ac2bdc3d47993b136036816574fd3c13"],"#p":["1abd6689e443106637a2752c2b0ea652504cba4088fb4287ff9ad8c313cb4a55"],"#g":["spike-eda497ff4554"],"since":1790724329,"limit":500}] -> 0 stored events + EOSE
+23:26:29.866 c2 REQ game [{"kinds":[9999],"authors":["1abd6689e443106637a2752c2b0ea652504cba4088fb4287ff9ad8c313cb4a55"],"#p":["3fe1ca1b2483f96a9556126c31885791ac2bdc3d47993b136036816574fd3c13"],"#g":["spike-eda497ff4554"],"since":1790724329,"limit":500}] -> 0 stored events + EOSE
+23:26:30.189 c2 EVENT k9999 76e2f48b stored=true total=1
+23:26:30.528 c1 EVENT k9999 81d9d572 stored=true total=2
+23:26:30.857 c2 EVENT k9999 85f519a6 stored=true total=3
+23:26:31.168 c1 EVENT k9999 8d8dafb1 stored=true total=4
+23:26:31.241 c1 closed
+23:26:31.478 c2 EVENT k9999 d86fe062 stored=true total=5
+23:26:37.533 c3 REQ game [{"kinds":[9999],"authors":["3fe1ca1b2483f96a9556126c31885791ac2bdc3d47993b136036816574fd3c13"],"#p":["1abd6689e443106637a2752c2b0ea652504cba4088fb4287ff9ad8c313cb4a55"],"#g":["spike-eda497ff4554"],"since":1790724360,"limit":500}] -> 3 stored events + EOSE
+23:26:37.878 c3 EVENT k9999 54bdaab2 stored=true total=6
+23:26:38.191 c2 EVENT k9999 c195b17b stored=true total=7
+23:26:38.502 c3 EVENT k9999 c6027371 stored=true total=8
+23:26:38.813 c2 EVENT k9999 e5797b3d stored=true total=9
+23:26:39.123 c3 EVENT k9999 cff9a7f1 stored=true total=10
+23:26:39.432 c2 EVENT k9999 c8eafb94 stored=true total=11
+23:26:39.744 c3 EVENT k9999 b545e45b stored=true total=12
+23:26:39.747 c3 closed
+23:26:39.747 c2 closed
+23:26:40.018 c4 REQ game [{"kinds":[9999],"authors":["3fe1ca1b2483f96a9556126c31885791ac2bdc3d47993b136036816574fd3c13"],"#p":["1abd6689e443106637a2752c2b0ea652504cba4088fb4287ff9ad8c313cb4a55"],"#g":["spike-eda497ff4554"],"since":1790724329,"limit":500}] -> 6 stored events + EOSE
+23:26:40.362 c4 EVENT k9999 c716e76b stored=true total=13
+23:26:40.550 c4 closed
+23:26:58.085 c5 REQ game [{"kinds":[9999],"authors":["b72dab790c835cefc29ba4bd8f1d4258c5471e5f81c5960853c1bb0ff919e0ea"],"#p":["f08cdae52e52a5048f240fbb8ddc6b62446c201c48620f663fee1c8e2e100875"],"#g":["spike-41873b5c0586"],"since":1790724357,"limit":500},{"kinds":[9999],"authors":["f08cdae52e52a5048f240fbb8ddc6b62446c201c48620f663fee1c8e2e100875"],"#p":["b72dab790c835cefc29ba4bd8f1d4258c5471e5f81c5960853c1bb0ff919e0ea"],"#g":["spike-41873b5c0586"],"since":1790724357,"limit":500}] -> 0 stored events + EOSE
+23:26:58.087 c6 REQ game [{"kinds":[9999],"authors":["f08cdae52e52a5048f240fbb8ddc6b62446c201c48620f663fee1c8e2e100875"],"#p":["b72dab790c835cefc29ba4bd8f1d4258c5471e5f81c5960853c1bb0ff919e0ea"],"#g":["spike-41873b5c0586"],"since":1790724357,"limit":500},{"kinds":[9999],"authors":["b72dab790c835cefc29ba4bd8f1d4258c5471e5f81c5960853c1bb0ff919e0ea"],"#p":["f08cdae52e52a5048f240fbb8ddc6b62446c201c48620f663fee1c8e2e100875"],"#g":["spike-41873b5c0586"],"since":1790724357,"limit":500}] -> 0 stored events + EOSE
+23:26:58.387 c5 EVENT k9999 3ba084a8 stored=true total=14
+23:26:58.723 c6 EVENT k9999 1424ef52 stored=true total=15
+23:26:59.037 c5 EVENT k9999 bb65b1fd stored=true total=16
+23:26:59.348 c6 EVENT k9999 446daa1b stored=true total=17
+23:26:59.403 c6 closed
+23:26:59.660 c5 EVENT k9999 e51fdc7a stored=true total=18
+23:27:05.675 c7 REQ game [{"kinds":[9999],"authors":["f08cdae52e52a5048f240fbb8ddc6b62446c201c48620f663fee1c8e2e100875"],"#p":["b72dab790c835cefc29ba4bd8f1d4258c5471e5f81c5960853c1bb0ff919e0ea"],"#g":["spike-41873b5c0586"],"since":1790724389,"limit":500},{"kinds":[9999],"authors":["b72dab790c835cefc29ba4bd8f1d4258c5471e5f81c5960853c1bb0ff919e0ea"],"#p":["f08cdae52e52a5048f240fbb8ddc6b62446c201c48620f663fee1c8e2e100875"],"#g":["spike-41873b5c0586"],"since":1790724389,"limit":500}] -> 5 stored events + EOSE
+23:27:06.022 c7 EVENT k9999 346a3e18 stored=true total=19
+23:27:06.335 c5 EVENT k9999 f748cba9 stored=true total=20
+23:27:06.645 c7 EVENT k9999 46ddea4f stored=true total=21
+23:27:06.956 c5 EVENT k9999 07d4fe05 stored=true total=22
+23:27:07.265 c7 EVENT k9999 2a817b81 stored=true total=23
+23:27:07.575 c5 EVENT k9999 44c0a370 stored=true total=24
+23:27:07.887 c7 EVENT k9999 9ccce721 stored=true total=25
+23:27:07.890 c7 closed
+23:27:07.890 c5 closed
+23:27:08.154 c8 REQ game [{"kinds":[9999],"authors":["f08cdae52e52a5048f240fbb8ddc6b62446c201c48620f663fee1c8e2e100875"],"#p":["b72dab790c835cefc29ba4bd8f1d4258c5471e5f81c5960853c1bb0ff919e0ea"],"#g":["spike-41873b5c0586"],"since":1790724357,"limit":500},{"kinds":[9999],"authors":["b72dab790c835cefc29ba4bd8f1d4258c5471e5f81c5960853c1bb0ff919e0ea"],"#p":["f08cdae52e52a5048f240fbb8ddc6b62446c201c48620f663fee1c8e2e100875"],"#g":["spike-41873b5c0586"],"since":1790724357,"limit":500}] -> 12 stored events + EOSE
+23:27:08.505 c8 EVENT k9999 3ab4a0d3 stored=true total=26
+23:27:08.691 c8 closed
+23:27:21.407 c10 REQ live [{"kinds":[4],"#p":["56ffc7ce4558dabbc15ac7022bd337a1ab9e5ef38d0144b7b6737ba42d188f39"],"since":1790724436},{"kinds":[1059],"#p":["56ffc7ce4558dabbc15ac7022bd337a1ab9e5ef38d0144b7b6737ba42d188f39"],"since":1790465241},{"kinds":[20001],"#t":["tak_quickplay_tak-spike-c30a6b4e"],"since":1790724436}] -> 0 stored events + EOSE
+23:27:21.733 c9 EVENT k4 f67494d3 stored=true total=27
+23:27:21.753 c9 EVENT k1059 802811ee stored=true total=28
+23:27:21.760 c9 EVENT k20001 8ef2b95f stored=false total=28
+23:27:24.765 c11 REQ h-k4p [{"kinds":[4],"#p":["56ffc7ce4558dabbc15ac7022bd337a1ab9e5ef38d0144b7b6737ba42d188f39"]}] -> 1 stored events + EOSE
+23:27:24.765 c11 REQ h-k4g [{"kinds":[4],"#g":["tak-spike-c30a6b4e"]}] -> 1 stored events + EOSE
+23:27:24.766 c11 REQ h-k4a [{"kinds":[4],"authors":["1564c47c78a6d648eb53809c6c31790a5aa7e40aa376c55f6c792f3e43b50b3b"]}] -> 1 stored events + EOSE
+23:27:24.766 c11 REQ h-wrap [{"kinds":[1059],"#p":["56ffc7ce4558dabbc15ac7022bd337a1ab9e5ef38d0144b7b6737ba42d188f39"]}] -> 1 stored events + EOSE
+23:27:24.766 c11 REQ h-eph [{"kinds":[20001],"#t":["tak_quickplay_tak-spike-c30a6b4e"]}] -> 0 stored events + EOSE
+23:27:24.769 c11 closed
+23:27:24.769 c10 closed
+23:27:24.769 c9 closed
+23:27:24.904 c13 REQ k9999 [{"kinds":[9999],"#p":["5877766a545662c0b75e519bc567ae6ff5384245e097bb7deef5a2c1df88cb4e"],"since":1790724439}] -> 0 stored events + EOSE
+23:27:24.918 c12 EVENT k9999 8c15e689 stored=true total=29
+23:27:27.421 c14 REQ h0.4459287486738901 [{"kinds":[9999],"#p":["5877766a545662c0b75e519bc567ae6ff5384245e097bb7deef5a2c1df88cb4e"]}] -> 1 stored events + EOSE
+23:27:27.421 c14 REQ h0.4813902469290934 [{"kinds":[9999],"#g":["tak-78e5cdb5"]}] -> 1 stored events + EOSE
+23:27:27.421 c14 REQ h0.7957822990945391 [{"kinds":[9999],"authors":["dd1a22c876a89d950cb4cfa0108d098a24878c5b21e9564cb5a1a02c4a44b6e5"]}] -> 1 stored events + EOSE
+23:27:27.422 c13 REQ k30078 [{"kinds":[30078],"#p":["5877766a545662c0b75e519bc567ae6ff5384245e097bb7deef5a2c1df88cb4e"],"since":1790724442}] -> 0 stored events + EOSE
+23:27:27.423 c14 closed
+23:27:27.434 c12 EVENT k30078 d8d0a7e5 stored=true total=30
+23:27:29.948 c15 REQ h0.23326069638033253 [{"kinds":[30078],"#p":["5877766a545662c0b75e519bc567ae6ff5384245e097bb7deef5a2c1df88cb4e"]}] -> 1 stored events + EOSE
+23:27:29.948 c15 REQ h0.9641358884391491 [{"kinds":[30078],"#g":["tak-78e5cdb5"]}] -> 1 stored events + EOSE
+23:27:29.948 c15 REQ h0.325920893826255 [{"kinds":[30078],"authors":["dd1a22c876a89d950cb4cfa0108d098a24878c5b21e9564cb5a1a02c4a44b6e5"]}] -> 1 stored events + EOSE
+23:27:29.951 c12 closed
+23:27:29.951 c15 closed
+23:27:29.951 c13 closed
+23:47:49.227 c16 REQ game [{"kinds":[9999],"authors":["27b7963d722a9eb8600f4b17da93dd4418769f8fd7a28a9dbc83d618f3e0c53e"],"#p":["fd5661a25a1bc017672af05c34448d8827d3b6c1a67a4c8c7d65a41aec885f31"],"#g":["spike-e8696a37460f"],"since":1790725609,"limit":500},{"kinds":[9999],"authors":["fd5661a25a1bc017672af05c34448d8827d3b6c1a67a4c8c7d65a41aec885f31"],"#p":["27b7963d722a9eb8600f4b17da93dd4418769f8fd7a28a9dbc83d618f3e0c53e"],"#g":["spike-e8696a37460f"],"since":1790725609,"limit":500}] -> 0 stored events + EOSE
+23:47:49.227 c17 REQ game [{"kinds":[9999],"authors":["fd5661a25a1bc017672af05c34448d8827d3b6c1a67a4c8c7d65a41aec885f31"],"#p":["27b7963d722a9eb8600f4b17da93dd4418769f8fd7a28a9dbc83d618f3e0c53e"],"#g":["spike-e8696a37460f"],"since":1790725609,"limit":500},{"kinds":[9999],"authors":["27b7963d722a9eb8600f4b17da93dd4418769f8fd7a28a9dbc83d618f3e0c53e"],"#p":["fd5661a25a1bc017672af05c34448d8827d3b6c1a67a4c8c7d65a41aec885f31"],"#g":["spike-e8696a37460f"],"since":1790725609,"limit":500}] -> 0 stored events + EOSE
+23:47:49.525 c17 EVENT k9999 0a099d4a stored=true total=31
+23:47:49.862 c16 EVENT k9999 d679a915 stored=true total=32
+23:47:50.176 c17 EVENT k9999 cac5fd86 stored=true total=33
+23:47:50.485 c16 EVENT k9999 2e6c1cc7 stored=true total=34
+23:47:50.558 c16 closed
+23:47:50.795 c17 EVENT k9999 5eed89fd stored=true total=35
+23:47:56.815 c18 REQ game [{"kinds":[9999],"authors":["27b7963d722a9eb8600f4b17da93dd4418769f8fd7a28a9dbc83d618f3e0c53e"],"#p":["fd5661a25a1bc017672af05c34448d8827d3b6c1a67a4c8c7d65a41aec885f31"],"#g":["spike-e8696a37460f"],"since":1790725640,"limit":500},{"kinds":[9999],"authors":["fd5661a25a1bc017672af05c34448d8827d3b6c1a67a4c8c7d65a41aec885f31"],"#p":["27b7963d722a9eb8600f4b17da93dd4418769f8fd7a28a9dbc83d618f3e0c53e"],"#g":["spike-e8696a37460f"],"since":1790725640,"limit":500}] -> 5 stored events + EOSE
+23:47:57.151 c18 EVENT k9999 5450cdb4 stored=true total=36
+23:47:57.463 c17 EVENT k9999 3d5dde19 stored=true total=37
+23:47:57.775 c18 EVENT k9999 820a859c stored=true total=38
+23:47:58.084 c17 EVENT k9999 5b8f5536 stored=true total=39
+23:47:58.397 c18 EVENT k9999 cefe22bf stored=true total=40
+23:47:58.706 c17 EVENT k9999 ea9bc976 stored=true total=41
+23:47:59.017 c18 EVENT k9999 bf6d3261 stored=true total=42
+23:47:59.020 c18 closed
+23:47:59.020 c17 closed
+23:47:59.330 c19 REQ game [{"kinds":[9999],"authors":["27b7963d722a9eb8600f4b17da93dd4418769f8fd7a28a9dbc83d618f3e0c53e"],"#p":["fd5661a25a1bc017672af05c34448d8827d3b6c1a67a4c8c7d65a41aec885f31"],"#g":["spike-e8696a37460f"],"since":1790725609,"limit":500},{"kinds":[9999],"authors":["fd5661a25a1bc017672af05c34448d8827d3b6c1a67a4c8c7d65a41aec885f31"],"#p":["27b7963d722a9eb8600f4b17da93dd4418769f8fd7a28a9dbc83d618f3e0c53e"],"#g":["spike-e8696a37460f"],"since":1790725609,"limit":500}] -> 12 stored events + EOSE
+23:47:59.869 c19 closed

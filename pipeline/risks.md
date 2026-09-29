@@ -1,6 +1,6 @@
 # Risks
 
-feasibility: red · H-open 4 · M-open 7 · spiked 0
+feasibility: amber · H-open 0 · M-open 3 (R-005 partly, R-009, R-010; each has a fallback) · spiked 4 (R-001..R-004)
 
 ## Does the core promise work end to end today?
 **No.** Evidence level: *seen in code* (call-graph trace), corroborated by docs/AUDIT.md (2026-09-12: "Scaffolded but not wired"),
@@ -32,15 +32,22 @@ Frontend for M0: whichever single head is cheapest to automate (proposal: CLI, p
 
 ## Risks
 
-### R-001 · impact H · evidence hypothesis
-The end-to-end path (steps 1-9 above) has never run over a relay. It is unknown how many further defects sit behind R-002/R-003
+### R-001 · impact H · evidence spiked (transport PROVEN seen running on real relays; engine, browser and tamper cases still open) — [RESULT](spikes/R-001-R-004-relay-roundtrip/RESULT.md)
+Spike 2026-09-30: two OS processes, own secp256k1 keys, NIP-44 v2 payloads in BIP-340-signed kind 9999 events, exchanged 12 alternating moves through wss://nos.lol; one process was
+crashed after turn 4 and restarted from its state file, caught up the missed turn from relay history (`since` = last created_at - 30 s), and A, B and a cold-start replay all ended on
+the same hash chain. Also run on damus (10 turns, hit its rate limit) and on nos.lol+damus together (6 turns, dedupe worked). Latency: median 119 ms (nos.lol) / 268 ms (damus)
+fan-out, 21 / 167 ms to `OK`. Not proven: real `TakGameSession` moves, tamper/illegal payload over a relay (step 9), browser head (R-005), retention over days (R-004).
+Original entry: The end-to-end path (steps 1-9 above) has never run over a relay. It is unknown how many further defects sit behind R-002/R-003
 (subscription filters, event ordering/dedupe, reconnect, replay of missed moves, relay rate limits).
 - check: spike a two-process ping-pong through a real relay, then through an in-memory fake relay for tests
 - fallback: reduce v1 to a single relay of the user's choice plus manual "paste move" exchange
 - source: features F-016, F-017; docs/AUDIT.md section 5
 
-### R-002 · impact H · evidence hypothesis
-Shared secret is not ECDH: `Nip44Encryption.DeriveSharedSecret` = SHA256(myPriv || theirPub) (Nip44Encryption.cs:81-93). Alice and Bob derive
+### R-002 · impact H · evidence spiked (defect proven seen running; fix path proven) — [RESULT](spikes/R-002-R-003-secp256k1-crypto/RESULT.md)
+Spike 2026-09-30: against the unmodified src, Alice's and Bob's secrets differ and Bob's decrypt fails (MAC check); the existing tests pass only because they
+derive both secrets with the same (priv, pub) pair. Fix path: NBitcoin.Secp256k1 4.0.1 + hand-written NIP-44 v2 glue passes all official vectors
+(35+32+24+10+3 valid, 12+8 invalid) on net10.0 and in browser-wasm; NNostr.Client 0.0.55 also passes (fallback). Residual: none for crypto; build must replace the code.
+Original entry: Shared secret is not ECDH: `Nip44Encryption.DeriveSharedSecret` = SHA256(myPriv || theirPub) (Nip44Encryption.cs:81-93). Alice and Bob derive
 different keys, so Bob cannot decrypt Alice's message. The only "round trip" test (TransportBenchmarkTests) decrypts with the sender's own
 keys, so it passes anyway. Also not compatible with NIP-44 v2 (as I know it: secp256k1 ECDH + HKDF + ChaCha20 + HMAC + padding; unverified against current spec).
 AGENTS.md invariant 3 says "derived ECDH shared secrets" - the code does not do that.
@@ -48,8 +55,12 @@ AGENTS.md invariant 3 says "derived ECDH shared secrets" - the code does not do 
 - fallback: use an existing vetted Nostr .NET library for signing and NIP-44 instead of hand-rolled code
 - source: seen in code; https://github.com/nostr-protocol/nips/blob/master/44.md (not fetched this session: unverified)
 
-### R-003 · impact H · evidence hypothesis
-Nostr events are never signed (`NostrEvent.Sig` never assigned) and identities are Ed25519, not secp256k1 x-only keys. NIP-01 relays verify
+### R-003 · impact H · evidence spiked (defect proven in code + running; fix path proven; relay acceptance of .NET-signed events observed in the R-001/R-004 spike) — [RESULT](spikes/R-002-R-003-secp256k1-crypto/RESULT.md)
+Spike 2026-09-30: `Sig` is never assigned anywhere in src/tests; identity is Ed25519 so the published npub is not a Nostr key. NEW related defect: `NostrEvent.ComputeId`
+uses the default System.Text.Json encoder (escapes `+`, `<`, `>`, non-ASCII), so the id is wrong for essentially every encrypted event (base64 contains `+`); STJ even with
+UnsafeRelaxedJsonEscaping still mismatched NIP-01 for DEL/emoji content, so ids must use a hand-written NIP-01 serializer. Fix path (secp256k1 key, BIP-340 sign/verify, NIP-01 id)
+passes official BIP-340 vectors and is cross-verified both ways against the Python BIP-340 reference; works in browser-wasm. Still owed: one signed event accepted by a real relay (R-004 spike).
+Original entry: Nostr events are never signed (`NostrEvent.Sig` never assigned) and identities are Ed25519, not secp256k1 x-only keys. NIP-01 relays verify
 `id` and BIP-340 `sig`; unsigned/invalid events should be rejected, so the profile publish claimed in the UI and all move events would be dropped
 (count shown to the user is "sent", not "accepted"). The npub/nsec encoding of an Ed25519 key is also not a usable Nostr identity.
 Two key types are also in play in the docs ("Ed25519 / Secp256k1"), which is an undecided design point (Q-004).
@@ -57,15 +68,20 @@ Two key types are also in play in the docs ("Ed25519 / Secp256k1"), which is an 
 - fallback: adopt secp256k1 Schnorr for identity+events and keep Ed25519 only if a decision record says why
 - source: seen in code (NostrModels.cs, CryptoSigner.cs); NIP-01 (unverified this session)
 
-### R-004 · impact H · evidence platform
-Public relay behaviour is unobserved: whether kind 4 with custom "g" tags and kind 20001 ephemeral events are accepted, retention for async
+### R-004 · impact H · evidence spiked (seen running: nos.lol and damus usable, primal unreachable, retention over days NOT measured) — [RESULT](spikes/R-001-R-004-relay-roundtrip/RESULT.md)
+Spike 2026-09-30: signed events accepted by nos.lol (kinds 4, 1059, 20001, 9999, 30078 all fan out live and are served back by `#p`, `#g`, author, id) and by damus (9999, 30078, 20001 fine).
+**Damus gates reads of kinds 4 and 1059 behind NIP-42 AUTH and its AUTH is broken ("relay needs serviceUrl to be configured")** so kind 4 / gift wraps cannot be the only path.
+Damus rate-limits (~5 events per burst per IP, "rate-limited: you are noting too much"). Primal: WebSocket handshake timed out on every attempt (unreachable from this network; inconclusive).
+No PoW or payment met; NIP-11 documents state no retention (owed: re-run `check-retention.mjs` after 24 h / 7 d). Recommendation: custom regular kind + NIP-44 content, nos.lol + damus
+defaults, publish to both; ephemeral 20001 works for Quick Play (matchmaking flow not run).
+Original entry: Public relay behaviour is unobserved: whether kind 4 with custom "g" tags and kind 20001 ephemeral events are accepted, retention for async
 play (days), rate limits, need for PoW/auth, and events dropped for unsigned/odd kinds. Quick Play depends on relays fanning out ephemeral events.
 Kind 4 is the legacy DM kind; NIP-17/59 gift wraps are the current private-message approach (unverified).
 - check: spike against the three default relays (send, subscribe, restart, fetch history)
 - fallback: relay list configurable, allow user-hosted relay; drop Quick Play from v1
 - source: docs/wire-protocol.md; unobserved
 
-### R-005 · impact M · evidence platform
+### R-005 · impact M · evidence platform (crypto part spiked: NBitcoin.Secp256k1 + BouncyCastle + HMAC/SHA256 run in browser-wasm, Debug and trimmed Release; sign 16 ms, verify 13 ms — see spikes/R-002-R-003-secp256k1-crypto/RESULT.md; WebSocket/background-tab parts still open)
 Blazor WASM must open relay WebSockets, run BouncyCastle crypto, and hold long-lived subscriptions inside a browser tab (throttled when backgrounded).
 Async play (days) needs storage + resubscribe on load, none of which the Blazor path has (F-019).
 - check: include the browser head in the M0 spike (second client in a tab)

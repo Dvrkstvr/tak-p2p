@@ -1,0 +1,5 @@
+node_modules/
+peer-bin/
+Peer/bin/
+Peer/obj/
+out/**/*.key

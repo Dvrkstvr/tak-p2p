@@ -1,0 +1,45 @@
+{"t_ms":1790724703214,"who":"B","ev":"start","d":{"myPub":"8341377917203ec7772ac8b25438dc40c9103b197df4ad3cc166889dba0280d0","peerPub":"d20f97bcf14b2addc399093c6931562ee8deab28ac593b394b81dacc69509428","game":"spike-bc47802969d8","role":"second","kind":9999,"replay":false,"resumedFromState":false,"Applied":0,"Published":0,"MaxCreatedAt":0}}
+{"t_ms":1790724703773,"who":"B","ev":"relay-connected","d":{"url":"wss://relay.damus.io","ms":537,"attempt":0}}
+{"t_ms":1790724703776,"who":"B","ev":"REQ-sent","d":{"url":"wss://relay.damus.io","since":1790724643}}
+{"t_ms":1790724703934,"who":"B","ev":"EOSE","d":{"url":"wss://relay.damus.io"}}
+{"t_ms":1790724704096,"who":"B","ev":"RECV","d":{"relay":"wss://relay.damus.io","turn":1,"id":"03b07793e625","latency_ms":531,"created_at":1790724703,"expected_next":1}}
+{"t_ms":1790724704100,"who":"B","ev":"APPLIED","d":{"turn":1,"hash":"87931b508d8b","by":"peer"}}
+{"t_ms":1790724704583,"who":"B","ev":"PUBLISHED","d":{"turn":2,"id":"71aab26d07618a37c592cd8eb8b642e8378e8959e31cd78a0319b9b40c080dae","kind":9999,"relaysTried":1,"bytes":989,"ok_ms":171,"results":["ok:true:"]}}
+{"t_ms":1790724704585,"who":"B","ev":"APPLIED","d":{"turn":2,"hash":"f593d19c4ce8","by":"me"}}
+{"t_ms":1790724705214,"who":"B","ev":"RECV","d":{"relay":"wss://relay.damus.io","turn":3,"id":"47976ea03e83","latency_ms":263,"created_at":1790724704,"expected_next":3}}
+{"t_ms":1790724705214,"who":"B","ev":"APPLIED","d":{"turn":3,"hash":"e1d1586dfda2","by":"peer"}}
+{"t_ms":1790724705687,"who":"B","ev":"PUBLISHED","d":{"turn":4,"id":"694f4c723831afd995dd664d2288e46559c17df0888eee046bde5c54428e2f78","kind":9999,"relaysTried":1,"bytes":989,"ok_ms":159,"results":["ok:true:"]}}
+{"t_ms":1790724705687,"who":"B","ev":"APPLIED","d":{"turn":4,"hash":"fda4ca2118bc","by":"me"}}
+{"t_ms":1790724705687,"who":"B","ev":"SIMULATED-KILL (self kill -9 after publishing turn 4)"}
+{"t_ms":1790724711964,"who":"B","ev":"start","d":{"myPub":"8341377917203ec7772ac8b25438dc40c9103b197df4ad3cc166889dba0280d0","peerPub":"d20f97bcf14b2addc399093c6931562ee8deab28ac593b394b81dacc69509428","game":"spike-bc47802969d8","role":"second","kind":9999,"replay":false,"resumedFromState":true,"Applied":4,"Published":4,"MaxCreatedAt":1790724704}}
+{"t_ms":1790724712513,"who":"B","ev":"relay-connected","d":{"url":"wss://relay.damus.io","ms":534,"attempt":0}}
+{"t_ms":1790724712516,"who":"B","ev":"REQ-sent","d":{"url":"wss://relay.damus.io","since":1790724674}}
+{"t_ms":1790724712689,"who":"B","ev":"RECV","d":{"relay":"wss://relay.damus.io","turn":5,"id":"77e97e53e676","latency_ms":6602,"created_at":1790724706,"expected_next":5}}
+{"t_ms":1790724712691,"who":"B","ev":"APPLIED","d":{"turn":5,"hash":"91633e6333c3","by":"peer"}}
+{"t_ms":1790724712693,"who":"B","ev":"RECV","d":{"relay":"wss://relay.damus.io","turn":3,"id":"47976ea03e83","latency_ms":7743,"created_at":1790724704,"expected_next":6}}
+{"t_ms":1790724712694,"who":"B","ev":"RECV","d":{"relay":"wss://relay.damus.io","turn":1,"id":"03b07793e625","latency_ms":9142,"created_at":1790724703,"expected_next":6}}
+{"t_ms":1790724712694,"who":"B","ev":"EOSE","d":{"url":"wss://relay.damus.io"}}
+{"t_ms":1790724713175,"who":"B","ev":"PUBLISHED","d":{"turn":6,"id":"22e0bb618fa523246873fac776844a106627520333b34874b2124e763f66a8a5","kind":9999,"relaysTried":1,"bytes":989,"ok_ms":166,"results":["ok:false:rate-limited: you are noting too much"]}}
+{"t_ms":1790724713176,"who":"B","ev":"PUBLISH-FAILED-EVERYWHERE","d":{"n":6}}
+{"t_ms":1790724714659,"who":"B","ev":"PUBLISHED","d":{"turn":6,"id":"5ea4d7cc1c4aac08311650c9ca623e6c98c9c4d364900021ad3e48304f020425","kind":9999,"relaysTried":1,"bytes":989,"ok_ms":160,"results":["ok:false:rate-limited: you are noting too much"]}}
+{"t_ms":1790724714660,"who":"B","ev":"PUBLISH-FAILED-EVERYWHERE","d":{"n":6}}
+{"t_ms":1790724714660,"who":"B","ev":"ABORT after 2 failed publishes (event budget)"}
+{"t_ms":1790724714660,"who":"B","ev":"DONE","d":{"Applied":5,"Published":4,"finalHash":"91633e6333c3e0edbf1f995b932a74cc94a0f3070f934a16bb8a20685171070e","arrivalOutOfOrder":2,"dupes":2,"dropped":0}}
+{"t_ms":1790724949233,"who":"B","ev":"start","d":{"myPub":"8341377917203ec7772ac8b25438dc40c9103b197df4ad3cc166889dba0280d0","peerPub":"d20f97bcf14b2addc399093c6931562ee8deab28ac593b394b81dacc69509428","game":"spike-bc47802969d8","role":"second","kind":9999,"replay":false,"resumedFromState":true,"Applied":5,"Published":4,"MaxCreatedAt":1790724706}}
+{"t_ms":1790724949797,"who":"B","ev":"relay-connected","d":{"url":"wss://relay.damus.io","ms":553,"attempt":0}}
+{"t_ms":1790724949800,"who":"B","ev":"REQ-sent","d":{"url":"wss://relay.damus.io","since":1790724676}}
+{"t_ms":1790724949973,"who":"B","ev":"RECV","d":{"relay":"wss://relay.damus.io","turn":5,"id":"77e97e53e676","latency_ms":243888,"created_at":1790724706,"expected_next":6}}
+{"t_ms":1790724949974,"who":"B","ev":"RECV","d":{"relay":"wss://relay.damus.io","turn":3,"id":"47976ea03e83","latency_ms":245024,"created_at":1790724704,"expected_next":6}}
+{"t_ms":1790724949975,"who":"B","ev":"RECV","d":{"relay":"wss://relay.damus.io","turn":1,"id":"03b07793e625","latency_ms":246424,"created_at":1790724703,"expected_next":6}}
+{"t_ms":1790724949976,"who":"B","ev":"EOSE","d":{"url":"wss://relay.damus.io"}}
+{"t_ms":1790724950944,"who":"B","ev":"PUBLISHED","d":{"turn":6,"id":"54e541814f617d711211b1f947f795fd1a1589322e3e0e1a1090fcdd89cd0168","kind":9999,"relaysTried":1,"bytes":989,"ok_ms":171,"results":["ok:true:"]}}
+{"t_ms":1790724950945,"who":"B","ev":"APPLIED","d":{"turn":6,"hash":"5910eafbd81c","by":"me"}}
+{"t_ms":1790724952830,"who":"B","ev":"RECV","d":{"relay":"wss://relay.damus.io","turn":7,"id":"8eeb07d07623","latency_ms":272,"created_at":1790724952,"expected_next":7}}
+{"t_ms":1790724952832,"who":"B","ev":"APPLIED","d":{"turn":7,"hash":"9a31a3103a10","by":"peer"}}
+{"t_ms":1790724954656,"who":"B","ev":"PUBLISHED","d":{"turn":8,"id":"c57e141994f25e26434dde18692c072bfc3fbb90416c09fa478b3c897a28938d","kind":9999,"relaysTried":1,"bytes":989,"ok_ms":314,"results":["ok:true:"]}}
+{"t_ms":1790724954656,"who":"B","ev":"APPLIED","d":{"turn":8,"hash":"cb9068a2462f","by":"me"}}
+{"t_ms":1790724956509,"who":"B","ev":"RECV","d":{"relay":"wss://relay.damus.io","turn":9,"id":"713c3c783efe","latency_ms":257,"created_at":1790724956,"expected_next":9}}
+{"t_ms":1790724956510,"who":"B","ev":"APPLIED","d":{"turn":9,"hash":"6670e682c08a","by":"peer"}}
+{"t_ms":1790724958219,"who":"B","ev":"PUBLISHED","d":{"turn":10,"id":"f7d8f916295261a6b452e73e8a63559de58750be5f34e1b52e3437ee50de41d6","kind":9999,"relaysTried":1,"bytes":1078,"ok_ms":194,"results":["ok:true:"]}}
+{"t_ms":1790724958220,"who":"B","ev":"APPLIED","d":{"turn":10,"hash":"843cb793f39f","by":"me"}}
+{"t_ms":1790725039255,"who":"B","ev":"TIMEOUT","d":{"Applied":10,"Published":10,"finalHash":"843cb793f39f8b9dc3c75065e6cb94d47a380bd242134f4a620f286c017e7c73","arrivalOutOfOrder":3,"dupes":3,"dropped":0}}

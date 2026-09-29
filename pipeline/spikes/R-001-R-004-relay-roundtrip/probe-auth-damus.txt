@@ -1,0 +1,37 @@
+[wss://relay.damus.io] AUTH challenge 5uiJhoeLIir5XZdJpSsefM
+[wss://relay.damus.io] CLOSED live ERROR: auth-required: requested filter requires authentication
+[wss://relay.damus.io] AUTH result {"ok":false,"msg":"error: relay needs serviceUrl to be configured before AUTH can work"}
+[wss://relay.damus.io]   auth -> {"ok":false,"msg":"error: relay needs serviceUrl to be configured before AUTH can work"}
+[wss://relay.damus.io] AUTH challenge 5uiJhoeLIir5XZdJpSsefM
+[wss://relay.damus.io] CLOSED live ERROR: auth-required: requested filter requires authentication
+[wss://relay.damus.io] B live sub (after auth if needed): CLOSED:ERROR: auth-required: requested filter requires authentication authed=false
+[wss://relay.damus.io] AUTH result {"ok":false,"msg":"error: relay needs serviceUrl to be configured before AUTH can work"}
+[wss://relay.damus.io] kind4 OK: {"ok":true,"msg":"","at":1790724236528,"ms":169}
+[wss://relay.damus.io] kind1059 OK: {"ok":true,"msg":"","at":1790724236716,"ms":170}
+[wss://relay.damus.io] live latency ms after auth: {"k4":null,"k1059":null}
+[wss://relay.damus.io] WS error Unexpected server response: 503
+[wss://relay.damus.io] WS close 1006
+[wss://relay.damus.io] connect attempt 1 failed: Unexpected server response: 503
+[wss://relay.damus.io] AUTH challenge 4QMFfnAxRn8DawKXncLrOh
+[wss://relay.damus.io] CLOSED h1 ERROR: auth-required: requested filter requires authentication
+[wss://relay.damus.io] AUTH result {"ok":false,"msg":"error: relay needs serviceUrl to be configured before AUTH can work"}
+[wss://relay.damus.io]   auth -> {"ok":false,"msg":"error: relay needs serviceUrl to be configured before AUTH can work"}
+[wss://relay.damus.io] AUTH challenge 4QMFfnAxRn8DawKXncLrOh
+[wss://relay.damus.io] CLOSED h1 ERROR: auth-required: requested filter requires authentication
+[wss://relay.damus.io] history as B: CLOSED:ERROR: auth-required: requested filter requires authentication; k4 present=false k1059 present=false
+[wss://relay.damus.io] AUTH result {"ok":false,"msg":"error: relay needs serviceUrl to be configured before AUTH can work"}
+[wss://relay.damus.io] AUTH challenge vTuKBOO7vYyE7wXfocrxai
+[wss://relay.damus.io] CLOSED h2 ERROR: auth-required: requested filter requires authentication
+[wss://relay.damus.io] AUTH result {"ok":false,"msg":"error: relay needs serviceUrl to be configured before AUTH can work"}
+[wss://relay.damus.io]   auth -> {"ok":false,"msg":"error: relay needs serviceUrl to be configured before AUTH can work"}
+[wss://relay.damus.io] AUTH challenge vTuKBOO7vYyE7wXfocrxai
+[wss://relay.damus.io] CLOSED h2 ERROR: auth-required: requested filter requires authentication
+[wss://relay.damus.io] history as stranger X asking for B's p-tag: CLOSED:ERROR: auth-required: requested filter requires authentication; k4 present=false (relay auth policy)
+[wss://relay.damus.io] AUTH result {"ok":false,"msg":"error: relay needs serviceUrl to be configured before AUTH can work"}
+[wss://relay.damus.io] AUTH challenge Za9yxHO6FrdGpftU6lLDyb
+[wss://relay.damus.io] CLOSED h3 ERROR: auth-required: requested filter requires authentication
+[wss://relay.damus.io] AUTH result {"ok":false,"msg":"error: relay needs serviceUrl to be configured before AUTH can work"}
+[wss://relay.damus.io]   auth -> {"ok":false,"msg":"error: relay needs serviceUrl to be configured before AUTH can work"}
+[wss://relay.damus.io] AUTH challenge Za9yxHO6FrdGpftU6lLDyb
+[wss://relay.damus.io] CLOSED h3 ERROR: auth-required: requested filter requires authentication
+[wss://relay.damus.io] history kind4 by #g as B: CLOSED:ERROR: auth-required: requested filter requires authentication; present=false

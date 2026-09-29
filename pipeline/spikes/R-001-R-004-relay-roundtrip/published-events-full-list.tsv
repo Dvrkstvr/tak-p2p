@@ -1,0 +1,52 @@
+run	process	relay	kind	turn	event_id	result
+real-nos-lol	A	nos.lol	9999	1	1e9f306bed7a69a0b14b9e710489051cccca7b99697a77bac2fe9e15b54b89b1	ok:true:
+real-nos-lol	A	nos.lol	9999	3	a9dbd64db771a009934b39314ce1f4af0adfcb1eeecb6ce250ccd5bb91f0a897	ok:true:
+real-nos-lol	A	nos.lol	9999	5	04568090db011299e06ae2ddfb70950a0f9699f3200bc9f303579c2763e2935c	ok:true:
+real-nos-lol	A	nos.lol	9999	7	5ec18539f2051acb69ae97d96ec1248912e30979c728e39dff51572551d68d76	ok:true:
+real-nos-lol	A	nos.lol	9999	9	347ad0d659c400854c4009d1e0906e3c84aa012b25d1f0f0120f41f18e046678	ok:true:
+real-nos-lol	A	nos.lol	9999	11	a1955cb53557959c0e57b161e965d3923af29a40c6f7ba71e19cf8b04a09ad7f	ok:true:
+real-nos-lol	B	nos.lol	9999	2	3f1115276c7d502164b7f921dce0957ce93789ed8e5903e8a12b261dc1ba7579	ok:true:
+real-nos-lol	B	nos.lol	9999	4	273835b3c49ec98ba2f8a7d6f59c7ee3d679b97250e37b2adec9c680ba662b59	ok:true:
+real-nos-lol	B	nos.lol	9999	6	023ddde7f4dab06755d298cc27213c87d848de473e6c1fe105bbf756dacd6660	ok:true:
+real-nos-lol	B	nos.lol	9999	8	2d5681a92879d0530eeffb43c6d842fd0647e0910320616ebc1662c67ee7e64c	ok:true:
+real-nos-lol	B	nos.lol	9999	10	c31314d56f98e84a4e6e5657ae476321e1bf5fed41551687b3279b2ff5db2ca2	ok:true:
+real-nos-lol	B	nos.lol	9999	12	250b97b4d8e8310475a7d8c612e3b6db06d90d3c8265967ec87c6187c0cc55b7	ok:true:
+real-damus	A	relay.damus.io	9999	1	03b07793e625dbf616581541154e8a51cff66f65356779ef75fbc870abfb5e57	ok:true:
+real-damus	A	relay.damus.io	9999	3	47976ea03e838a25ae2d863845d2d79d2dcffc36e24811dc7cca4d9a77c2b976	ok:true:
+real-damus	A	relay.damus.io	9999	5	77e97e53e67615fafa5108c466bb143d82201b252fe31495d838b3099ca55ea6	ok:true:
+real-damus	A	relay.damus.io	9999	7	8eeb07d07623ffb7aa56547e62ba3405e9efeae4b60f2a3663887041a94d619b	ok:true:
+real-damus	A	relay.damus.io	9999	9	713c3c783efe7eee874ff4bb1a1533431812566254fd0e117ff9d48b1a57b62c	ok:true:
+real-damus	A	relay.damus.io	9999	11	fcd18c50f9725141487d5062e93cbdeb021734297eb59904c8d663a9599351d5	ok:false:rate-limited: you are noting too much
+real-damus	A	relay.damus.io	9999	11	3a79a30a6ff93e925855e31ec71e5cebdf96252a9a3283e3453a166f553b1387	ok:false:rate-limited: you are noting too much
+real-damus	B	relay.damus.io	9999	2	71aab26d07618a37c592cd8eb8b642e8378e8959e31cd78a0319b9b40c080dae	ok:true:
+real-damus	B	relay.damus.io	9999	4	694f4c723831afd995dd664d2288e46559c17df0888eee046bde5c54428e2f78	ok:true:
+real-damus	B	relay.damus.io	9999	6	22e0bb618fa523246873fac776844a106627520333b34874b2124e763f66a8a5	ok:false:rate-limited: you are noting too much
+real-damus	B	relay.damus.io	9999	6	5ea4d7cc1c4aac08311650c9ca623e6c98c9c4d364900021ad3e48304f020425	ok:false:rate-limited: you are noting too much
+real-damus	B	relay.damus.io	9999	6	54e541814f617d711211b1f947f795fd1a1589322e3e0e1a1090fcdd89cd0168	ok:true:
+real-damus	B	relay.damus.io	9999	8	c57e141994f25e26434dde18692c072bfc3fbb90416c09fa478b3c897a28938d	ok:true:
+real-damus	B	relay.damus.io	9999	10	f7d8f916295261a6b452e73e8a63559de58750be5f34e1b52e3437ee50de41d6	ok:true:
+real-dual-FAILED-race-bug	A	nos.lol	9999	1	47756f3cd209ad3a4163761d008845c0823d7e714f821298b8d56570018fbcb5	ok:true:
+real-dual-FAILED-race-bug	A	relay.damus.io	9999	1	47756f3cd209ad3a4163761d008845c0823d7e714f821298b8d56570018fbcb5	ok:true:
+real-dual-FAILED-race-bug	B	nos.lol	9999	2	7bc15aca7b24e39bbf8d82e295de5b113431ea4a82039673d8c701d5162a0b16	ok:true:
+real-dual-FAILED-race-bug	B	relay.damus.io	9999	2	7bc15aca7b24e39bbf8d82e295de5b113431ea4a82039673d8c701d5162a0b16	ok:true:
+real-dual	A	nos.lol	9999	1	cbd5983f06e077570a7468b544143915ab568d9c995857cb20142431fad87113	ok:true:
+real-dual	A	relay.damus.io	9999	1	cbd5983f06e077570a7468b544143915ab568d9c995857cb20142431fad87113	ok:true:
+real-dual	A	nos.lol	9999	3	b76cc6cbcdc3bb86ca811b2e2dd79c09c1739b75c3860a482bafca6e153d7bc9	ok:true:
+real-dual	A	relay.damus.io	9999	3	b76cc6cbcdc3bb86ca811b2e2dd79c09c1739b75c3860a482bafca6e153d7bc9	ok:true:
+real-dual	A	nos.lol	9999	5	74a93b11d2304aef481dd5c512aecb324776973d7bae0aa7df5ba080ac39f7b4	ok:true:
+real-dual	A	relay.damus.io	9999	5	74a93b11d2304aef481dd5c512aecb324776973d7bae0aa7df5ba080ac39f7b4	ok:true:
+real-dual	B	nos.lol	9999	2	e503f0794b7f20624c791e23c11fdfaee116ca0ad8f3218c6b788e098eaffd95	ok:true:
+real-dual	B	relay.damus.io	9999	2	e503f0794b7f20624c791e23c11fdfaee116ca0ad8f3218c6b788e098eaffd95	ok:true:
+real-dual	B	nos.lol	9999	4	f2acc492e53c091e71eaee6f1706cf386939d17da85641979eb190bc4d823879	ok:true:
+real-dual	B	relay.damus.io	9999	4	f2acc492e53c091e71eaee6f1706cf386939d17da85641979eb190bc4d823879	ok:true:
+real-dual	B	nos.lol	9999	6	71ce6ca13f367fadfc1229d2a8ec62b55200514aad490d8150eb00fc6b7fd34f	ok:true:
+real-dual	B	relay.damus.io	9999	6	71ce6ca13f367fadfc1229d2a8ec62b55200514aad490d8150eb00fc6b7fd34f	ok:false:rate-limited: you are noting too much
+probe-kinds	probe	nos.lol	9999	-	4c55a034600eb4530201c71ef96c0ab81d6218099e5c5a0fe8447bc320ae20f1	ok:True:
+probe-kinds	probe	nos.lol	30078	-	a5cfe31a2ccfa4de4bbbc32292f39ea67f5364b964952dcbcfac0b6b9f14408e	ok:True:
+probe-kinds	probe	relay.damus.io	9999	-	9a42b47bc96e5fae7ebf4f924d770fc42463c5277d643b82de9ba7e3b37eccd3	ok:True:
+probe-kinds	probe	relay.damus.io	30078	-	658e63fd0db9c92fbd6c5019d44240fa065afa9ae780a9c6ac878019b3c2cba3	ok:True:
+real-nos-lol	replay(stray)	nos.lol	9999	2	0751fe4676d305dec0bc7a9bafce3e3bca03002de25967fe52119979badccbf5	ok:true:(seen on relay)
+real-dual-FAILED-race-bug	replay(stray)	nos.lol	9999	2	4d98b5747343129a60415cac4a0660516b034da6110495b18384a90d86fc7834	ok:true:(seen on relay)
+real-dual	replay(stray)	nos.lol	9999	2	e76cd624f5ab56706cff1d891514964f76115aecf7ea12a6d11895743ba48f88	ok:true:(seen on relay)
+real-damus	replay(stray)	relay.damus.io	9999	2	0c983a43c90a45d2377781a84f1cf082e50533da4b9f6ae1095e036d367e82b4	ok:true:(seen on relay)
+real-dual-FAILED-race-bug	replay(stray)	relay.damus.io	9999	2	4d98b5747343129a60415cac4a0660516b034da6110495b18384a90d86fc7834	ok:true:(seen on relay)

@@ -1,0 +1,8 @@
+game=spike-714b526a4aea A=4f118436f579bbb2e9d013ba80ed66ff3ec1fac3bd78b042f17411792c3af4a5 B=ae503c45d7a3fb2f3d9bc83cd33213248742744dba28f0a9566cd0cf566a2930 relay=wss://nos.lol,wss://relay.damus.io kind=9999 turns=8
+B first run exited with code 2 (expected non-zero: killed after publishing turn 4)
+--- restarting B (same key, same state file) at 01:41:09
+B second run exit 2
+A exit 2
+--- cold replay of B's view (fresh process, B's key, NO state file)
+replay exit 0
+{"t_ms":1790725420886,"who":"B-replay","ev":"DONE","d":{"Applied":2,"Published":0,"finalHash":"2b275ac302f1bf92aa6df79617eaacedde367344a59c84dae3794ce0fa3b6e00","arrivalOutOfOrder":0,"dupes":0,"dropped":0}}

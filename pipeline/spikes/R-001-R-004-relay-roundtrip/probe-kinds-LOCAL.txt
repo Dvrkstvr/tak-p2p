@@ -1,0 +1,3 @@
+[ws://127.0.0.1:7777] kind 9999: {"sub_eose":"EOSE","publish_ok":true,"publish_msg":"","publish_ms":3,"live_ms":3,"hist_by_p":true,"hist_by_p_status":"EOSE","hist_by_g":true,"hist_by_g_status":"EOSE","hist_by_author":true,"hist_by_author_status":"EOSE"}
+[ws://127.0.0.1:7777] WS close 1005
+[ws://127.0.0.1:7777] kind 30078: {"sub_eose":"EOSE","publish_ok":true,"publish_msg":"","publish_ms":3,"live_ms":3,"hist_by_p":true,"hist_by_p_status":"EOSE","hist_by_g":true,"hist_by_g_status":"EOSE","hist_by_author":true,"hist_by_author_status":"EOSE"}

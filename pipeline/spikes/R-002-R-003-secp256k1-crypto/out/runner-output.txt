@@ -1,0 +1,42 @@
+== Q1: R-002 against CURRENT src (Nip44Encryption + CryptoSigner Ed25519 identities) ==
+  [PASS] Alice and Bob derive DIFFERENT shared secrets (ECDH would make them equal)  -- alice=005e65e723b1315e.. bob=7486a41259f3b6fe..
+  [PASS] Bob CANNOT decrypt Alice's message with his own priv + Alice's pub  -- InvalidCipherTextException: mac check in ChaCha20Poly1305 failed
+  [PASS] (control) Alice decrypting her own message with her own secret passes -> existing tests are blind to R-002
+  [PASS] (format) current payload is not NIP-44 v2 layout: 12-byte nonce + Poly1305 tag, nonce not 32 bytes  -- len=36, spec min is 99 bytes / 132 base64 chars
+  [PASS] current NostrEvent.ComputeId differs from NIP-01 id for base64 content containing '+' (every encrypted event)  -- current=0ad740fb6c0a.. nip01=0ec505b17b9a..
+  [PASS] current NostrEvent.Sig is empty string (never assigned) -> relays see no signature
+  [PASS] (identity) secp256k1 pubkey of the same 32-byte secret != the Ed25519 pubkey the app publishes as 'npub'
+== Q2a: NIP-44 v2 official vectors (paulmillr/nip44 nip44.vectors.json) ==
+  [PASS] get_conversation_key valid (35)  -- 35/35
+  [PASS] get_message_keys (32)  -- 32/32
+  [PASS] calc_padded_len (24)  -- 24/24
+  [PASS] encrypt_decrypt: both-direction conv key, deterministic encrypt == payload, decrypt == plaintext (10)  -- 10/10 
+  [PASS] encrypt_decrypt_long_msg (3)  -- 3/3
+  [PASS] invalid decrypt is rejected (12)  -- 12/12
+  [PASS] invalid get_conversation_key is rejected (8)  -- 8/8
+  [PASS] empty plaintext rejected (0 bytes)
+  [INFO] vectors file (2024-12) lists lengths 0,65536,100000,10000000 as invalid; nostr-protocol/nips 44.md (2026-06-28, #1907) now allows >=65536 via 6-byte prefix. We follow current spec: 65536-byte message encrypt rejected=False. Game payloads are <1 KB; irrelevant in practice.
+  [PASS] current-spec extended prefix (100000 bytes) round-trips
+== Q2b: BIP-340 official vectors (bitcoin/bips test-vectors.csv): verify ==
+     skip index 15: message is 0 bytes (Nostr always signs the 32-byte event id; variable-length BIP-340 not needed)
+     skip index 16: message is 1 bytes (Nostr always signs the 32-byte event id; variable-length BIP-340 not needed)
+     skip index 17: message is 17 bytes (Nostr always signs the 32-byte event id; variable-length BIP-340 not needed)
+     skip index 18: message is 100 bytes (Nostr always signs the 32-byte event id; variable-length BIP-340 not needed)
+  [PASS] BIP-340 verify vectors with 32-byte messages, incl. invalid ones (15)  -- 15/15
+  [PASS] secret -> x-only pubkey derivation matches vectors (8)  -- 8/8
+== Q2c: two independent peers, real random keys, sign / verify / NIP-44 round trip ==
+  [PASS] conv(a,B) == conv(b,A)
+  [PASS] Bob decrypts Alice's payload
+  [PASS] Alice decrypts Bob's reply
+  [PASS] Eve (third key) cannot decrypt
+  [PASS] tampered ciphertext rejected by MAC
+  [PASS] signed event verifies (id recomputed + BIP-340)
+  [PASS] tampered content rejected
+  [PASS] wrong pubkey rejected
+  wrote 5 signed events to out/events.jsonl for the independent Python verifier
+== Q2d: events signed by the Python BIP-340 reference implementation verified by C# ==
+  [PASS] Python-signed event verifies in C# (content from python...)
+  [PASS] Python-signed event verifies in C# (content a1>+ <b2 "q"...)
+  [PASS] Python-signed event verifies in C# (content 🦄 表 ...)
+
+SUMMARY: 29 pass, 0 fail

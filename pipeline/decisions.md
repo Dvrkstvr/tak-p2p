@@ -72,3 +72,20 @@ Retire these AGENTS.md rituals: the DEVLOG timeline and detailed entries (git lo
 - instead of: the full 4-doc mirroring ritual
 - follow-up: AGENTS.md section 2 still mandates the ritual. Edit it on a separate branch (with D-009); existing docs are not deleted
 - revisit if: the user wants a public changelog
+
+## D-014 · 2026-09-30 · stage 3 · by: user
+The relay spike may publish test events to the public default relays: throwaway keys only, encrypted payloads where possible, at most ~60 events, and no kind-0/kind-1 notes. Before approval was asked for (the conductor's miss), 11 events were sent: nos.lol 3, damus 5, primal 3 (unconfirmed). The conductor first told the user it was 3; corrected 2026-09-30. After approval, ~51-54 were sent (published-events-full-list.tsv). All are logged in that spike's RESULT.md.
+- why: R-001/R-004 are platform questions; only real relays can answer them
+- instead of: a local relay only (leaves the gate red), or the user running the scripts
+- revisit if: any future spike or feature needs to publish to public services; ask again, since this approval covers only this spike
+
+## D-015 · 2026-09-30 · stage 3 · by: spike
+Transport design inputs for the architect:
+- moves use a custom regular event kind (1000-9999, number fixed at stage 6) with NIP-44 v2 content and p + g tags, not kind 4 or 1059 (damus gates DM kinds behind a broken AUTH);
+- default relays are nos.lol + damus, publishing to both with dedupe; primal is dropped until it is shown reachable;
+- Quick Play uses ephemeral kind 20001;
+- NIP-01 ids come from a hand-written serializer;
+- the crypto library is NBitcoin.Secp256k1 4.0.1 + BouncyCastle ChaCha20 with ~150 lines of NIP-44 glue.
+Settles D-007 and D-004.
+- why: spikes R-001-R-004 and R-002-R-003 (RESULT.md in each)
+- revisit if: the retention re-check (24 h / 7 d) fails, or damus's rate limit (~5 events per burst per IP) bites real games

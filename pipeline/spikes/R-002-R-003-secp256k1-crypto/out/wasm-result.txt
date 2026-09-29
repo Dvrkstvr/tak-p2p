@@ -1,0 +1,12 @@
+﻿Blazor WASM (net10.0, browser-wasm) page output, read via document.getElementById('status'/'result').innerText
+
+--- Debug build, dotnet run dev server, http://localhost:5225/ ---
+DONE pass=10 fail=0 runtime=browser-wasm os=Browser browser=True
+keygen x2: 1550 ms (first use, includes secp256k1 context init) | 2x ECDH+HKDF: 22 ms | NIP-44 enc+dec: 4 ms | sign: 13 ms | verify: 11 ms
+[PASS] SHA256+HMACSHA256, RandomNumberGenerator, conv(a,B)==conv(b,A), Bob decrypts Alice, signed event verifies, tampered rejected,
+       NIP-44 get_conversation_key 35/35, encrypt/decrypt 10/10, invalid decrypt 12/12, BIP-340 verify 15/15
+
+--- Release publish (IL-trimmed, no wasm-tools/AOT), static python http.server, http://localhost:5226/ ---
+DONE pass=10 fail=0 runtime=browser-wasm os=Browser browser=True
+keygen x2: 442 ms | 2x ECDH+HKDF: 21 ms | NIP-44 enc+dec: 19 ms | sign: 16 ms | verify: 13 ms
+same 10 PASS lines

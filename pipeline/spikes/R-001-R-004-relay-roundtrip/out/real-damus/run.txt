@@ -1,0 +1,10 @@
+game=spike-bc47802969d8 A=d20f97bcf14b2addc399093c6931562ee8deab28ac593b394b81dacc69509428 B=8341377917203ec7772ac8b25438dc40c9103b197df4ad3cc166889dba0280d0 relay=wss://relay.damus.io kind=9999 turns=12
+B first run exited with code 35 (expected non-zero: killed after publishing turn 4)
+--- restarting B (same key, same state file) at 01:31:51
+B second run exit 0
+A exit 2
+--- cold replay of B's view (fresh process, B's key, NO state file)
+replay exit 0
+{"t_ms":1790724714660,"who":"B","ev":"DONE","d":{"Applied":5,"Published":4,"finalHash":"91633e6333c3e0edbf1f995b932a74cc94a0f3070f934a16bb8a20685171070e","arrivalOutOfOrder":2,"dupes":2,"dropped":0}}
+{"t_ms":1790724854763,"who":"B-replay","ev":"DONE","d":{"Applied":5,"Published":0,"finalHash":"91633e6333c3e0edbf1f995b932a74cc94a0f3070f934a16bb8a20685171070e","arrivalOutOfOrder":3,"dupes":0,"dropped":0}}
+--- resume damus game after 75s pause at 01:35:49

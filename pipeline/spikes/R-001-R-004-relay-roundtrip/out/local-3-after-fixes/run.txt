@@ -1,0 +1,10 @@
+game=spike-e8696a37460f A=27b7963d722a9eb8600f4b17da93dd4418769f8fd7a28a9dbc83d618f3e0c53e B=fd5661a25a1bc017672af05c34448d8827d3b6c1a67a4c8c7d65a41aec885f31 relay=ws://127.0.0.1:7777 kind=9999 turns=12
+B first run exited with code 35 (expected non-zero: killed after publishing turn 4)
+--- restarting B (same key, same state file) at 01:47:56
+B second run exit 0
+A exit 0
+--- cold replay of B's view (fresh process, B's key, NO state file)
+replay exit 0
+{"t_ms":1790725679018,"who":"A","ev":"DONE","d":{"Applied":12,"Published":11,"finalHash":"91511dd691b63fd11ff5ad721db08c277e54ddd8abf757e37d0cb100ffd920e6","arrivalOutOfOrder":0,"dupes":0,"dropped":0}}
+{"t_ms":1790725679018,"who":"B","ev":"DONE","d":{"Applied":12,"Published":12,"finalHash":"91511dd691b63fd11ff5ad721db08c277e54ddd8abf757e37d0cb100ffd920e6","arrivalOutOfOrder":2,"dupes":2,"dropped":0}}
+{"t_ms":1790725679867,"who":"B-replay","ev":"DONE","d":{"Applied":12,"Published":0,"finalHash":"91511dd691b63fd11ff5ad721db08c277e54ddd8abf757e37d0cb100ffd920e6","arrivalOutOfOrder":5,"dupes":0,"dropped":0}}

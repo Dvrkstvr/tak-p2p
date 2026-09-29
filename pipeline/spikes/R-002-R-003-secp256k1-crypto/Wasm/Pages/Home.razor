@@ -1,0 +1,92 @@
+@page "/"
+@using System.Diagnostics
+@using System.Security.Cryptography
+@using System.Text
+@using System.Text.Json
+@using Spike.Crypto
+@inject HttpClient Http
+
+<h1>secp256k1 / NIP-44 in Blazor WASM</h1>
+<p id="status">@status</p>
+<pre id="result">@string.Join("\n", lines)</pre>
+
+@code {
+    string status = "running...";
+    List<string> lines = new();
+    int pass, fail;
+
+    static byte[] H(string s) => Convert.FromHexString(s);
+    static string X(byte[] b) => Convert.ToHexStringLower(b);
+    bool Throws(Action a) { try { a(); return false; } catch { return true; } }
+    void Check(string name, bool ok, string detail = "")
+    {
+        if (ok) pass++; else fail++;
+        lines.Add($"[{(ok ? "PASS" : "FAIL")}] {name} {detail}");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        try { await Run(); }
+        catch (Exception e) { lines.Add("EXCEPTION: " + e); fail++; }
+        status = $"DONE pass={pass} fail={fail} runtime={System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier} os={System.Runtime.InteropServices.RuntimeInformation.OSDescription} browser={OperatingSystem.IsBrowser()}";
+        StateHasChanged();
+    }
+
+    async Task Run()
+    {
+        lines.Add($"OperatingSystem.IsBrowser() = {OperatingSystem.IsBrowser()}");
+
+        // 1. hash / HMAC primitives available in browser-wasm?
+        Check("SHA256 + HMACSHA256 (System.Security.Cryptography) usable", X(SHA256.HashData(Encoding.UTF8.GetBytes("abc"))).StartsWith("ba7816bf") && HMACSHA256.HashData(new byte[32], new byte[1]).Length == 32);
+        Check("RandomNumberGenerator.GetBytes usable", RandomNumberGenerator.GetBytes(32).Any(b => b != 0));
+
+        // 2. two peers: keygen, sign, verify, NIP-44 round trip
+        var sw = Stopwatch.StartNew();
+        var alice = NostrKey.Generate(); var bob = NostrKey.Generate();
+        lines.Add($"keygen x2: {sw.ElapsedMilliseconds} ms"); sw.Restart();
+        var ev = new NostrEventLite { Kind = 4, CreatedAt = 1700000000, Content = "x", Tags = { new() { "p", bob.PubHex } } };
+        var ca = alice.ConversationKey(bob.XOnlyPub); var cb = bob.ConversationKey(alice.XOnlyPub);
+        lines.Add($"2x ECDH+HKDF: {sw.ElapsedMilliseconds} ms"); sw.Restart();
+        Check("conv(a,B) == conv(b,A)", ca.SequenceEqual(cb));
+        var msg = "{\"ptn\":\"a1>+\",\"prev\":\"00ff\"} \U0001F984";
+        var payload = Nip44.Encrypt(msg, ca);
+        Check("Bob decrypts Alice's NIP-44 v2 payload", Nip44.Decrypt(payload, cb) == msg, $"({sw.ElapsedMilliseconds} ms enc+dec)");
+        sw.Restart();
+        ev.Content = payload; ev.Sign(alice);
+        lines.Add($"sign event: {sw.ElapsedMilliseconds} ms"); sw.Restart();
+        Check("signed event verifies", ev.Verify(), $"({sw.ElapsedMilliseconds} ms)");
+        ev.Content += "x";
+        Check("tampered event rejected", !ev.Verify());
+
+        // 3. official vectors, fetched over HTTP from wwwroot
+        var json = await Http.GetStringAsync("vectors/nip44.vectors.json");
+        using var doc = JsonDocument.Parse(json); var valid = doc.RootElement.GetProperty("v2").GetProperty("valid");
+        int n = 0, ok = 0;
+        foreach (var t in valid.GetProperty("get_conversation_key").EnumerateArray())
+        { n++; if (X(new NostrKey(H(t.GetProperty("sec1").GetString()!)).ConversationKey(H(t.GetProperty("pub2").GetString()!))) == t.GetProperty("conversation_key").GetString()) ok++; }
+        Check($"NIP-44 get_conversation_key vectors {ok}/{n}", ok == n);
+        n = ok = 0;
+        foreach (var t in valid.GetProperty("encrypt_decrypt").EnumerateArray())
+        {
+            n++; var conv = H(t.GetProperty("conversation_key").GetString()!);
+            var p = t.GetProperty("payload").GetString()!; var pt = t.GetProperty("plaintext").GetString()!;
+            if (Nip44.Encrypt(pt, conv, H(t.GetProperty("nonce").GetString()!)) == p && Nip44.Decrypt(p, conv) == pt) ok++;
+        }
+        Check($"NIP-44 encrypt/decrypt vectors {ok}/{n}", ok == n);
+        n = ok = 0;
+        foreach (var t in doc.RootElement.GetProperty("v2").GetProperty("invalid").GetProperty("decrypt").EnumerateArray())
+        { n++; if (Throws(() => Nip44.Decrypt(t.GetProperty("payload").GetString()!, H(t.GetProperty("conversation_key").GetString()!)))) ok++; }
+        Check($"NIP-44 invalid-decrypt vectors rejected {ok}/{n}", ok == n);
+
+        var csv = await Http.GetStringAsync("vectors/bip340-test-vectors.csv");
+        n = ok = 0;
+        foreach (var line in csv.Split('\n').Skip(1))
+        {
+            var f = line.Trim().Split(','); if (f.Length < 7 || f[4].Length != 64) continue; n++;
+            bool expect = f[6] == "TRUE"; bool got; try { got = NostrKey.VerifyBip340(H(f[2]), H(f[4]), H(f[5])); } catch { got = false; }
+            if (got == expect) ok++;
+        }
+        Check($"BIP-340 verify vectors (32-byte msgs) {ok}/{n}", ok == n);
+    }
+}

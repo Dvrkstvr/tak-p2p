@@ -1,0 +1,33 @@
+{"t_ms":1790725509865,"who":"B","ev":"start","d":{"myPub":"eb490a07005cedf3b0de8a8a215e4926030e725fc501befbc0964203f2cf0ad8","peerPub":"f83d2a1f38b9a17ca775b7be47d355449713dee6268847ceacb17dc98a733d65","game":"spike-ac97888913b6","role":"second","kind":9999,"replay":false,"resumedFromState":false,"Applied":0,"Published":0,"MaxCreatedAt":0}}
+{"t_ms":1790725509978,"who":"B","ev":"relay-connected","d":{"url":"wss://nos.lol","ms":91,"attempt":0}}
+{"t_ms":1790725509980,"who":"B","ev":"REQ-sent","d":{"url":"wss://nos.lol","since":1790725449}}
+{"t_ms":1790725509999,"who":"B","ev":"EOSE","d":{"url":"wss://nos.lol"}}
+{"t_ms":1790725510282,"who":"B","ev":"RECV","d":{"relay":"wss://nos.lol","turn":1,"id":"cbd5983f06e0","latency_ms":74,"created_at":1790725510,"expected_next":1}}
+{"t_ms":1790725510285,"who":"B","ev":"APPLIED","d":{"turn":1,"hash":"70d32112158e","by":"peer"}}
+{"t_ms":1790725510551,"who":"B","ev":"relay-connected","d":{"url":"wss://relay.damus.io","ms":656,"attempt":0}}
+{"t_ms":1790725510551,"who":"B","ev":"REQ-sent","d":{"url":"wss://relay.damus.io","since":1790725480}}
+{"t_ms":1790725510711,"who":"B","ev":"EOSE","d":{"url":"wss://relay.damus.io"}}
+{"t_ms":1790725510812,"who":"B","ev":"RECV-OWN (rehydrate)","d":{"relay":"wss://relay.damus.io","turn":2,"id":"e503f0794b7f","latency_ms":216,"created_at":1790725510,"expected_next":2}}
+{"t_ms":1790725510812,"who":"B","ev":"APPLIED","d":{"turn":2,"hash":"e7e0076dd8d2","by":"me(from relay)"}}
+{"t_ms":1790725510833,"who":"B","ev":"PUBLISHED","d":{"turn":2,"id":"e503f0794b7f20624c791e23c11fdfaee116ca0ad8f3218c6b788e098eaffd95","kind":9999,"relaysTried":2,"bytes":989,"ok_ms":235,"results":["ok:true:","ok:true:"]}}
+{"t_ms":1790725511276,"who":"B","ev":"RECV","d":{"relay":"wss://nos.lol","turn":3,"id":"b76cc6cbcdc3","latency_ms":81,"created_at":1790725511,"expected_next":3}}
+{"t_ms":1790725511277,"who":"B","ev":"APPLIED","d":{"turn":3,"hash":"793f07f87a1b","by":"peer"}}
+{"t_ms":1790725511681,"who":"B","ev":"RECV-OWN (rehydrate)","d":{"relay":"wss://nos.lol","turn":4,"id":"f2acc492e53c","latency_ms":99,"created_at":1790725511,"expected_next":4}}
+{"t_ms":1790725511682,"who":"B","ev":"APPLIED","d":{"turn":4,"hash":"9ef108202f24","by":"me(from relay)"}}
+{"t_ms":1790725511747,"who":"B","ev":"PUBLISHED","d":{"turn":4,"id":"f2acc492e53c091e71eaee6f1706cf386939d17da85641979eb190bc4d823879","kind":9999,"relaysTried":2,"bytes":989,"ok_ms":164,"results":["ok:true:","ok:true:"]}}
+{"t_ms":1790725511748,"who":"B","ev":"SIMULATED-KILL (self kill -9 after publishing turn 4)"}
+{"t_ms":1790725518023,"who":"B","ev":"start","d":{"myPub":"eb490a07005cedf3b0de8a8a215e4926030e725fc501befbc0964203f2cf0ad8","peerPub":"f83d2a1f38b9a17ca775b7be47d355449713dee6268847ceacb17dc98a733d65","game":"spike-ac97888913b6","role":"second","kind":9999,"replay":false,"resumedFromState":true,"Applied":4,"Published":4,"MaxCreatedAt":1790725511}}
+{"t_ms":1790725518128,"who":"B","ev":"relay-connected","d":{"url":"wss://nos.lol","ms":97,"attempt":0}}
+{"t_ms":1790725518130,"who":"B","ev":"REQ-sent","d":{"url":"wss://nos.lol","since":1790725481}}
+{"t_ms":1790725518167,"who":"B","ev":"RECV","d":{"relay":"wss://nos.lol","turn":5,"id":"74a93b11d230","latency_ms":6153,"created_at":1790725512,"expected_next":5}}
+{"t_ms":1790725518170,"who":"B","ev":"APPLIED","d":{"turn":5,"hash":"7a4368a2d63c","by":"peer"}}
+{"t_ms":1790725518171,"who":"B","ev":"RECV","d":{"relay":"wss://nos.lol","turn":3,"id":"b76cc6cbcdc3","latency_ms":6976,"created_at":1790725511,"expected_next":6}}
+{"t_ms":1790725518171,"who":"B","ev":"RECV","d":{"relay":"wss://nos.lol","turn":1,"id":"cbd5983f06e0","latency_ms":7977,"created_at":1790725510,"expected_next":6}}
+{"t_ms":1790725518172,"who":"B","ev":"EOSE","d":{"url":"wss://nos.lol"}}
+{"t_ms":1790725518564,"who":"B","ev":"RECV-OWN (rehydrate)","d":{"relay":"wss://nos.lol","turn":6,"id":"71ce6ca13f36","latency_ms":81,"created_at":1790725518,"expected_next":6}}
+{"t_ms":1790725518564,"who":"B","ev":"APPLIED","d":{"turn":6,"hash":"70128b87f758","by":"me(from relay)"}}
+{"t_ms":1790725518565,"who":"B","ev":"relay-connected","d":{"url":"wss://relay.damus.io","ms":525,"attempt":0}}
+{"t_ms":1790725518565,"who":"B","ev":"REQ-sent","d":{"url":"wss://relay.damus.io","since":1790725488}}
+{"t_ms":1790725518733,"who":"B","ev":"EOSE","d":{"url":"wss://relay.damus.io"}}
+{"t_ms":1790725518914,"who":"B","ev":"PUBLISHED","d":{"turn":6,"id":"71ce6ca13f367fadfc1229d2a8ec62b55200514aad490d8150eb00fc6b7fd34f","kind":9999,"relaysTried":2,"bytes":989,"ok_ms":428,"results":["ok:true:","ok:false:rate-limited: you are noting too much"]}}
+{"t_ms":1790725518916,"who":"B","ev":"DONE","d":{"Applied":6,"Published":6,"finalHash":"70128b87f7580e59c7ad19a6f616d93973065c4f0bf920b15a9a2959a69697ab","arrivalOutOfOrder":2,"dupes":7,"dropped":0}}
