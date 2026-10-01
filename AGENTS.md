@@ -1,6 +1,6 @@
 # Agent Guidelines & Workflow Rules: Tak P2P
 
-> Instructions, architectural invariants, and mandatory maintenance protocols for AI pair programmers and automated coding agents operating in the `tak-p2p` repository.
+> Instructions and architectural invariants for AI pair programmers and automated coding agents operating in the `tak-p2p` repository.
 
 ---
 
@@ -22,46 +22,25 @@
 
 ---
 
-## 2. Mandatory DevLog & Documentation Maintenance Protocol
+## 2. Status, Checks & Commits
 
-Whenever you complete a milestone, architectural feature, or significant refactoring in this repository, **you MUST execute the following documentation maintenance steps**:
+### Where status lives
+* Project status lives in [pipeline/STATUS.md](pipeline/STATUS.md) and [pipeline/features.json](pipeline/features.json). Nowhere else.
+* A feature counts as done only when `features.json` marks it passing, with evidence (a command run, a log or a screenshot).
+* The one mirrored status is the "Implementation Status" column of the README device matrix. Keep it, and make it match `pipeline/features.json`. Don't mark a platform Implemented unless its features pass there.
+* Retired (D-013): the `docs/DEVLOG.md` timeline and detailed entries (git log is the history), milestone status tables mirrored into `README.md`, `docs/v1-mvp.md` and `docs/PROJECT_SPECIFICATION.md`, and test counts in any doc or commit message. The existing docs stay in the repo, but don't add new entries to them.
 
-### Step 1: Run Full Test Verification
-* Execute:
-  ```powershell
-  dotnet test TakGame.sln
-  ```
-* Ensure that **100% of unit tests pass** across all test suites (`TakEngine.Core.Tests`: 95 tests, `TakEngine.Transport.Tests`: 19 tests, totaling **114 unit tests**) before logging or committing.
-* *Note:* `dotnet test` executes each test project in parallel and prints per-assembly summaries; do not mistake a single assembly's count for the solution total.
+### Before every commit
+Both commands must pass:
+```powershell
+dotnet build TakGame.sln
+dotnet test TakGame.sln
+```
+`dotnet test` runs every test project in the solution. Treat any failure in any assembly as red.
 
-### Step 2: Update `docs/DEVLOG.md`
-* Open [docs/DEVLOG.md](file:///e:/repos/tak-p2p/docs/DEVLOG.md).
-* Prepend a new entry to the **Commit & Milestone Timeline** table with:
-  * Commit short hash
-  * Exact ISO/local timestamp
-  * Milestone / Scope
-  * Key Deliverables summary
-  * Total passing test count (107)
-* Add a detailed subsection under **Detailed Entry Logs** documenting:
-  * Author & Timestamp
-  * Scope
-  * Affected files (with clickable `file:///` links)
-  * Deliverables and test results
-
-### Step 3: Synchronize Status in Specifications
-* Verify and update:
-  * [README.md](file:///e:/repos/tak-p2p/README.md) – Device matrix, solution layout, and documentation index.
-  * [docs/v1-mvp.md](file:///e:/repos/tak-p2p/docs/v1-mvp.md) – "v1 Acceptance Criteria & Milestone Status" table.
-  * [docs/PROJECT_SPECIFICATION.md](file:///e:/repos/tak-p2p/docs/PROJECT_SPECIFICATION.md) – Master milestone status table and roadmap.
-  * [docs/DEVLOG.md](file:///e:/repos/tak-p2p/docs/DEVLOG.md) – Master chronological commit and milestone log.
-
-### Step 4: Commit & Push to GitHub
-* Stage all changes (source code, tests, and documentation).
-* Commit with a descriptive conventional commit message:
-  ```powershell
-  git commit -m "Milestone M1.X: <summary of deliverables> with <N> unit tests"
-  git push origin main
-  ```
+### Commits
+* Stage source, tests and any doc the change affects. Write a short, accurate message with no test counts.
+* Follow [pipeline/playbook.md](pipeline/playbook.md) for approach, quality bar and run/verify commands.
 
 ---
 
@@ -70,18 +49,20 @@ Whenever you complete a milestone, architectural feature, or significant refacto
 1. **Deterministic Colors:** Always use `ColorResolver.ResolveColors(seed, peerA, peerB)` for color assignment in multiplayer handshakes. Never roll random colors locally without a shared cryptographic seed.
 2. **Move Chaining:** Every move entity strictly maintains:
    $$\text{StateHash} = \text{SHA-256}(\text{PrevStateHash} \,\|\, \text{TurnIndex} \,\|\, \text{PlayerPubKey} \,\|\, \text{PtnMove} \,\|\, \text{TpsSnapshot})$$
-3. **NIP-44 Encryption:** Wire envelopes over Nostr must use `Nip44Encryption.Encrypt` / `Decrypt` with derived ECDH shared secrets.
+3. **Keys & NIP-44 Encryption (target, NOT YET IMPLEMENTED):** Per D-011, each player has one secp256k1 key. It serves as the Nostr identity (npub), signs events with BIP-340, derives NIP-44 v2 conversation keys by ECDH, and signs moves. Wire envelopes must be encrypted with real NIP-44 v2, so that the recipient can decrypt with (their private key, sender's public key).
+   *Today's code does not do this.* `Nip44Encryption.DeriveSharedSecret` is `SHA256(myPriv || theirPub)`, not ECDH, so two peers derive different secrets. Identities are Ed25519. See [pipeline/risks.md](pipeline/risks.md) R-002 (and R-003 for event signing). Fix it test-first with a two-peer encrypt/decrypt test. Never test by decrypting with the sender's own keys.
 4. **PTN & Direction Encoding:** When serializing JSON for transport, always use `TransportEnvelope.SerializerOptions` (`JavaScriptEncoder.UnsafeRelaxedJsonEscaping`) so characters like `+`, `>`, and `<` are not escaped to unicode entities.
 5. **Offline-First Storage:** Use `SqliteGameStorage` on desktop/mobile and `BrowserStorage` on Blazor WASM. Both caches must be able to restore the board to any turn index $K$ in $O(1)$ time via `TpsSerializer`.
 6. **Blazor Dev-Server Clean Rebuild:** If incremental builds of `TakApp.Blazor` cause 404 errors for `dotnet.<hash>.js` in development, perform a clean build (`Remove-Item -Recurse -Force src/TakApp.Blazor/bin, src/TakApp.Blazor/obj; dotnet build src/TakApp.Blazor/TakApp.Blazor.csproj`).
-7. **Solution-Wide Multi-Assembly Tests:** The test suite spans multiple test projects (`TakEngine.Core.Tests` + `TakEngine.Transport.Tests`). Always verify both projects pass completely (114 tests).
+7. **Solution-Wide Multi-Assembly Tests:** The test suite spans multiple test projects (`TakEngine.Core.Tests` + `TakEngine.Transport.Tests`). Always verify every project passes; `dotnet test TakGame.sln` covers them all.
 
 ---
 
 ## 4. Documentation Map
 
 * Master Spec: [docs/PROJECT_SPECIFICATION.md](file:///e:/repos/tak-p2p/docs/PROJECT_SPECIFICATION.md)
-* Development Log: [docs/DEVLOG.md](file:///e:/repos/tak-p2p/docs/DEVLOG.md)
+* Project Status: [pipeline/STATUS.md](pipeline/STATUS.md) · Features & evidence: [pipeline/features.json](pipeline/features.json) · Decisions: [pipeline/decisions.md](pipeline/decisions.md)
+* Development Log (historical, no longer updated per D-013): [docs/DEVLOG.md](file:///e:/repos/tak-p2p/docs/DEVLOG.md)
 * System Architecture: [docs/system-overview.md](file:///e:/repos/tak-p2p/docs/system-overview.md)
 * MVP Milestone Guide: [docs/v1-mvp.md](file:///e:/repos/tak-p2p/docs/v1-mvp.md)
 * Competitive & Tournaments: [docs/v2-tournaments.md](file:///e:/repos/tak-p2p/docs/v2-tournaments.md)
