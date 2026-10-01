@@ -4,7 +4,7 @@
 
 ## Now
 - track: deep · approach: spec-first (+ prototype-first: relay round-trip spikes)
-- stage: 5 Design — next (deep: novel flows only; M0 is CLI, design tasks sit in M1/M4/M5)
+- stage: 6 Architecture — in progress
 - clarity: scope 5/5 · blocking 0 · assumed 9 · deferred 3
 - feasibility: amber · H-open 0 · M-open 3 · spiked 4
 - milestone: M0-A (CI gate, crypto, fake-relay game) · features passing 16/56 · M0 14 new features open · owed checks 4
@@ -17,8 +17,8 @@
 | 2 | Feasibility | done (adopt) | red: R-001..R-004 H, unproven | 2026-09-30 |
 | 3 | Spike | done | pass: 2/2 RESULT.md; feasibility amber | 2026-09-30 |
 | 4 | Scope | done | pass 5/5; signed off D-022 | 2026-10-01 |
-| 5 | Design | todo | only for novel screens (join/invite flow) | — |
-| 6 | Architecture | todo | + decision records | — |
+| 5 | Design | deferred to M1 start (D-023) | M0 has no novel screen; tokens + 3 design tasks at M1/M4/M5 | 2026-10-02 |
+| 6 | Architecture | active | + decision records | — |
 | 7 | Build | todo | + mutation check | — |
 | 8 | Review | todo | code, ux, copy, security | — |
 | 9 | Release | todo | — | — |

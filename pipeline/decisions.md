@@ -134,3 +134,10 @@ MVP cut signed off as proposed in pipeline/scope.md:
 - why: user chose every recommended option
 - instead of: browser in M0, a smaller fake-relay-only M0, Android in v1, or cutting the stale timers or desktop first
 - revisit if: M0-A runs past ~1.5 weeks (re-plan trigger in scope.md)
+
+## D-023 · 2026-10-02 · stage 5 · by: assumed
+Stage 5 (Design) is skipped for M0 and runs at the start of M1. M0 is CLI-only and its host/join flow is fully specified in scope.md (interaction specs). spec-first does not call for mockups.
+The design tasks (Blazor stepped tower gesture F-022 at M1, Quick Play at M4, stale/auto-draw at M5) and the design-token set (needed before M1, the first UI milestone) are run by ux-mocker at the start of M1, M4 and M5.
+- why: no novel screen in M0; mocking browser flows now would precede the M1 engine rewrite they depend on
+- instead of: mocking all three flows now
+- revisit if: M0's CLI host/join turns out to need a UX decision the spec does not cover
