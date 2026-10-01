@@ -28,13 +28,14 @@ Ed25519 identity and wrap events some other way? Today identities are Ed25519 (C
 - B) Keep Ed25519 for moves, add secp256k1 for the Nostr layer — two keys per user, more code, better only if there is a reason for Ed25519 (none found in docs)
 - C) Drop Nostr compatibility, run own relay protocol — contradicts "public relays, zero servers"
 
-## Q-005 · deferred · stage 4 · open
+## Q-005 · assumable · stage 4 · assumed → D-019 (was deferred; re-checked at scope 2026-10-01)
 Polish list that README/AUDIT mention: sound, animations, undo/takeback, board flip, match history, settings page, drag and drop, PWA/offline. Which are in v1, which later?
-Not needed before M0. Re-check at scope.
+- default used: none of them in v1 except what resume needs ("My games" list), key backup, relay/connection status; everything else Later, undo Not doing. Cost of a wrong guess: a day or less (items are additive). See scope.md.
 
-## Q-006 · deferred · stage 4 · open
+## Q-006 · assumable · stage 4 · answered → D-018/D-022 (was deferred; re-checked at scope 2026-10-01)
 Platform priority for v1: web only, web + desktop + CLI, or all six heads (incl. Android APK, iOS/iPad, macOS)? Android/iOS have never run on a device, iOS needs a Mac and Apple signing.
-Not blocking M0 (which uses the cheapest head plus the web head), but changes scope and README claims. Default proposed at scope: web + desktop + CLI, mobile relabelled "experimental".
+- default used: v1 = Web (Pages) + CLI + Windows desktop (Avalonia); Android experimental with one owed smoke test; iOS and macOS desktop app not v1. The user confirms this at the MVP-cut sign-off,
+  because it changes README claims; it is reversible (adds milestones, does not rewrite M0-M5).
 
 ## Q-007 · assumable · stage 2 · assumed → D-004
 May the project take a dependency on a maintained Nostr/secp256k1 library (signing, NIP-44) instead of the hand-rolled code in TakEngine.Transport?
@@ -66,9 +67,18 @@ after adoption (adopt.md step 5)?
 Should Pages deploy and release workflows be gated on `dotnet test` (and a PR check added) so main cannot auto-deploy a red build?
 - default: yes, first small task of stage 7; touches only .github/workflows.
 
-## Q-014 · deferred · stage 9 · open
+## Q-014 · deferred · stage 9 · open (re-checked at scope 2026-10-01: still deferred, due at M7 / F-054, does not block M0-M6)
 Licence: README badge says MIT, no LICENSE file. Which licence? Public repo, so decide before wider sharing.
+- proposed default for the user: MIT (the badge already says so). Not recorded as an assumption because a licence is the owner's legal call; ask at the M7 boundary.
 
-## Q-015 · deferred · stage 4 · open
+## Q-015 · assumable · stage 4 · assumed → D-020 (was deferred; re-checked at scope 2026-10-01)
 v2 scope (tournaments, spectators/broadcast, co-signed receipts, ELO): keep the documents, or archive them? Spectator engine (F-013) exists and is tested but unused.
-Parked until M0 and v1 are done.
+- default used: keep the documents and the engine untouched; add a "not in v1" banner at M7. Nothing is deleted.
+
+## Q-016 · deferred · stage 4 · open (re-check at M5 start)
+How do two clients agree that a game was idle for 7 days with no authority (R-011)? Timestamps are sender-controlled and NTP can fail. Proposed in scope.md: each client computes a local verdict, and a signed
+timeout notice is applied only if the other side's own computation agrees; unresolved disagreement keeps the game open. Needs a design pass before M5 build. Not needed before then.
+
+## Q-017 · deferred · stage 4 · open (re-check at M3 start)
+Key backup UX (R-009): how much friction to put around exporting/importing the secret key (show nsec, file download, QR, passphrase)? A lost key is a lost game and a leaked key lets someone play as the user.
+Needed before F-049 is built (M3); the design lens should propose options.

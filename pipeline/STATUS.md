@@ -4,11 +4,11 @@
 
 ## Now
 - track: deep · approach: spec-first (+ prototype-first: relay round-trip spikes)
-- stage: 4 Scope — next; needs user sign-off on the MVP cut (M0 = relay path)
-- clarity: adopt deliverables 6/6 · blocking 0 · assumed 7 · deferred 4
+- stage: 5 Design — next (deep: novel flows only; M0 is CLI, design tasks sit in M1/M4/M5)
+- clarity: scope 5/5 · blocking 0 · assumed 9 · deferred 3
 - feasibility: amber · H-open 0 · M-open 3 · spiked 4
-- milestone: none yet (M0 = relay path, cut at stage 4) · features passing 16/30 · owed checks 4
-- next: dispatch scope-cutter; M0 = crypto replacement (tests first) + real-engine move exchange over nos.lol+damus + tamper case → `/pipeline:run`
+- milestone: M0-A (CI gate, crypto, fake-relay game) · features passing 16/56 · M0 14 new features open · owed checks 4
+- next: run stage 5 (likely skip for M0: no new screens), then stage 6 architect → `/pipeline:run`
 
 ## Stages
 | # | Stage | State | Gate | Date |
@@ -16,7 +16,7 @@
 | 1 | Intake | done (adopt) | brief signed off (D-001); 0 blocking | 2026-09-30 |
 | 2 | Feasibility | done (adopt) | red: R-001..R-004 H, unproven | 2026-09-30 |
 | 3 | Spike | done | pass: 2/2 RESULT.md; feasibility amber | 2026-09-30 |
-| 4 | Scope | active | needs user sign-off; M0 = relay path | — |
+| 4 | Scope | done | pass 5/5; signed off D-022 | 2026-10-01 |
 | 5 | Design | todo | only for novel screens (join/invite flow) | — |
 | 6 | Architecture | todo | + decision records | — |
 | 7 | Build | todo | + mutation check | — |

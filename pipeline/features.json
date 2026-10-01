@@ -1,65 +1,72 @@
 {
-  "_note": "Adopt audit 2026-09-30. Evidence run: `dotnet test TakGame.sln` -> Transport 19/19, Core 95/95 (114 total, 0 failed). `dotnet build` of Blazor, Cli, Avalonia.Desktop -> 0 errors. `gh run list` for CI. passes=true means the named tests/CI run exercise that behaviour; nothing here was driven in a real UI or over a real relay. Milestone labels: M0 = proposed core-promise path (to be confirmed at scope); existing = built before adoption; M1/Later = proposed.",
+  "_note": "Adopt audit 2026-09-30 + scope cut 2026-10-01 (DRAFT until the user signs off the MVP cut). Evidence run for F-001..F-030: `dotnet test TakGame.sln` -> Transport 19/19, Core 95/95 (114 total, 0 failed); `dotnet build` of Blazor, Cli, Avalonia.Desktop -> 0 errors; `gh run list` for CI. passes=true means the named tests/CI run exercise that behaviour; nothing adopted was driven in a real UI or over a real relay. F-001..F-030 keep their ids, passes and evidence (adopted evidence); only milestone, and for passes:false items the acceptance wording, were changed at scope. New features start passes:false, evidence:null. milestone values: M0..M7 (see scope.md), Later, Not doing. A `note` field marks adopted evidence that M0 will touch and must re-earn.",
   "features": [
     {
       "id": "F-001",
-      "milestone": "existing",
+      "milestone": "M0",
       "behaviour": "Tak rules engine: 4x4/5x5/6x6 setup, reserves, first-turn swap, placement, slides with carry limit, wall flattening by capstone",
       "acceptance": ["BoardTests + MovementTests pass"],
       "passes": true,
-      "evidence": "dotnet test TakGame.sln 2026-09-30: TakEngine.Core.Tests 95/95 passed (BoardTests.cs, MovementTests.cs present in tests/TakEngine.Core.Tests)."
+      "evidence": "dotnet test TakGame.sln 2026-09-30: TakEngine.Core.Tests 95/95 passed (BoardTests.cs, MovementTests.cs present in tests/TakEngine.Core.Tests).",
+      "note": "adopted; M0 builds on it unchanged"
     },
     {
       "id": "F-002",
-      "milestone": "existing",
+      "milestone": "M0",
       "behaviour": "Road (DFS) win detection incl. capstone, walls blocking, zigzag",
       "acceptance": ["RoadFinderTests pass"],
       "passes": true,
-      "evidence": "dotnet test 2026-09-30, Core 95/95 incl. RoadFinderTests.cs. Flat-count and draw endings not separately evidenced."
+      "evidence": "dotnet test 2026-09-30, Core 95/95 incl. RoadFinderTests.cs. Flat-count and draw endings not separately evidenced.",
+      "note": "adopted; M0 builds on it unchanged"
     },
     {
       "id": "F-003",
-      "milestone": "existing",
+      "milestone": "M0",
       "behaviour": "PTN and TPS parse/serialize round trip",
       "acceptance": ["PtnTests + TpsTests pass"],
       "passes": true,
-      "evidence": "dotnet test 2026-09-30 (PtnTests.cs, TpsTests.cs). Interop with real PlayTak PTN files not tested."
+      "evidence": "dotnet test 2026-09-30 (PtnTests.cs, TpsTests.cs). Interop with real PlayTak PTN files not tested.",
+      "note": "adopted; PTN is the move text on the wire"
     },
     {
       "id": "F-004",
-      "milestone": "existing",
+      "milestone": "Not doing",
       "behaviour": "SHA-256 state-hash chain and Ed25519 sign/verify of moves",
       "acceptance": ["CryptoTests pass"],
       "passes": true,
-      "evidence": "dotnet test 2026-09-30 (CryptoTests.cs). Ed25519 is not the Nostr key type (secp256k1), see F-014."
+      "evidence": "dotnet test 2026-09-30 (CryptoTests.cs). Ed25519 is not the Nostr key type (secp256k1), see F-014.",
+      "note": "Ed25519 half retired by D-011 (CryptoSigner deleted in M0, F-031/F-033). The hash-chain half (StateHasher) stays and is re-covered by F-033. Kept here as adopted evidence, not deleted."
     },
     {
       "id": "F-005",
-      "milestone": "existing",
+      "milestone": "M0",
       "behaviour": "Local game session (pass and play) with resign, road win event, first-turn swap",
       "acceptance": ["TakGameSessionTests local cases pass"],
       "passes": true,
-      "evidence": "dotnet test 2026-09-30, TakGameSessionTests.cs (local cases). Session-level only: the Blazor UI does NOT use TakGameSession (it uses GameBoard directly in WebGameSessionManager.cs)."
+      "evidence": "dotnet test 2026-09-30, TakGameSessionTests.cs (local cases). Session-level only: the Blazor UI does NOT use TakGameSession (it uses GameBoard directly in WebGameSessionManager.cs).",
+      "note": "adopted; local resign only, remote resign is F-050"
     },
     {
       "id": "F-006",
-      "milestone": "existing",
+      "milestone": "M0",
       "behaviour": "Remote-session move exchange in one process: signature, prev-hash, turn-owner checks; protocol violation detected",
       "acceptance": ["RemoteP2P_SynchronizesMovesAndHashChain and RemoteP2P_DetectsProtocolViolations pass"],
       "passes": true,
-      "evidence": "dotnet test 2026-09-30, TakGameSessionTests.cs lines 161-261. In-process only, no transport between the two sessions."
+      "evidence": "dotnet test 2026-09-30, TakGameSessionTests.cs lines 161-261. In-process only, no transport between the two sessions.",
+      "note": "these tests use Ed25519 today; F-033 rewrites them for secp256k1 and the evidence must be re-earned then"
     },
     {
       "id": "F-007",
-      "milestone": "existing",
+      "milestone": "M3",
       "behaviour": "SQLite persistence of games/moves with O(1) restore to any turn (replay scrub)",
       "acceptance": ["SqliteStorageTests pass"],
       "passes": true,
-      "evidence": "dotnet test 2026-09-30 (SqliteStorageTests.cs). Only the CLI is seen using SqliteGameStorage; Blazor's BrowserStorage persists keys only (per docs/AUDIT.md, not re-verified)."
+      "evidence": "dotnet test 2026-09-30 (SqliteStorageTests.cs). Only the CLI is seen using SqliteGameStorage; Blazor's BrowserStorage persists keys only (per docs/AUDIT.md, not re-verified).",
+      "note": "M0 persists only what resume needs for the CLI (F-037); browser storage and the games list arrive in M3"
     },
     {
       "id": "F-008",
-      "milestone": "existing",
+      "milestone": "M5",
       "behaviour": "Stale (Day 3) and auto-draw (Day 7) rules with NTP time, engine level",
       "acceptance": ["StaleSystemTests + NtpTimeTests pass"],
       "passes": true,
@@ -67,35 +74,39 @@
     },
     {
       "id": "F-009",
-      "milestone": "existing",
+      "milestone": "M1",
       "behaviour": "Offline minimax AI bot with difficulty tiers (engine)",
       "acceptance": ["TakBotTests pass"],
       "passes": true,
-      "evidence": "dotnet test 2026-09-30 (TakBotTests.cs). Playing strength and fun not evaluated."
+      "evidence": "dotnet test 2026-09-30 (TakBotTests.cs). Playing strength and fun not evaluated.",
+      "note": "reached by users through the Blazor vs-AI path, protected by F-041/F-043 in M1"
     },
     {
       "id": "F-010",
-      "milestone": "existing",
+      "milestone": "M0",
       "behaviour": "Invite code encode/decode (tak:// URI, web URL, TAK1_ token) and NIP-19 npub/nsec Bech32",
       "acceptance": ["InviteCodeTests + Nip19Tests pass"],
       "passes": true,
-      "evidence": "dotnet test 2026-09-30, Transport 19/19 and Core 95/95."
+      "evidence": "dotnet test 2026-09-30, Transport 19/19 and Core 95/95.",
+      "note": "adopted; host key in the invite becomes a 32-byte secp256k1 x-only key (F-031) and the seed becomes mandatory (F-017). Re-run after M0."
     },
     {
       "id": "F-011",
-      "milestone": "existing",
+      "milestone": "M4",
       "behaviour": "Quick Play broadcast/challenge message construction and deterministic colour resolution (message level)",
       "acceptance": ["MatchmakingHandshakeTests pass"],
       "passes": true,
-      "evidence": "dotnet test 2026-09-30. Builds and parses messages only; nothing publishes or subscribes for them (QuickPlayMatchmaker is used only by CLI Program.cs, which then 'simulates')."
+      "evidence": "dotnet test 2026-09-30. Builds and parses messages only; nothing publishes or subscribes for them (QuickPlayMatchmaker is used only by CLI Program.cs, which then 'simulates').",
+      "note": "ColorResolver is used by F-017 in M0; the Quick Play message layer is exercised in M4"
     },
     {
       "id": "F-012",
-      "milestone": "existing",
+      "milestone": "M0",
       "behaviour": "NIP-01 message parse/serialize, event id computation, kind-0 profile parse/cache",
       "acceptance": ["NostrMessageTests + NostrProfileTests pass"],
       "passes": true,
-      "evidence": "dotnet test 2026-09-30, Transport 19/19."
+      "evidence": "dotnet test 2026-09-30, Transport 19/19.",
+      "note": "the ComputeId part is replaced by F-032 (spike R-003: the current id is wrong for base64 content). Message parse/serialize stays; re-run after M0."
     },
     {
       "id": "F-013",
@@ -103,83 +114,126 @@
       "behaviour": "Spectator session verifies signature, hash chain and legality of a move stream; delayed broadcast queue (engine only)",
       "acceptance": ["SpectatorTests pass"],
       "passes": true,
-      "evidence": "dotnet test 2026-09-30 (SpectatorTests.cs). No frontend or transport consumes it."
+      "evidence": "dotnet test 2026-09-30 (SpectatorTests.cs). No frontend or transport consumes it.",
+      "note": "uses the Ed25519 verify path today; will need the secp256k1 verify when picked up (Later)"
     },
     {
       "id": "F-014",
       "milestone": "M0",
-      "behaviour": "Events published to a real relay are accepted: valid Nostr event signature (BIP-340 Schnorr on secp256k1) and Nostr-compatible identity keys",
-      "acceptance": ["Publish one signed event to a real relay and read back an OK true message", "Same event fetched by a second client"],
+      "behaviour": "Events published by the app to a real relay are accepted: valid Nostr event signature (BIP-340 Schnorr on secp256k1) and Nostr-compatible identity keys",
+      "acceptance": [
+        "LiveRelay test: the app's own code (not the spike) publishes one signed event to wss://nos.lol and wss://relay.damus.io and reads back OK true from each",
+        "A second client fetches the same event by id and verifies id and sig",
+        "Edge: an event whose content contains + < > an emoji and DEL is accepted (id computed by the hand-written serializer)",
+        "Failure: a deliberately corrupted sig is answered OK false by the relay and surfaced as Refused(invalid), not as Sent"
+      ],
       "passes": false,
-      "evidence": "Seen in code: NostrEvent.Sig is never assigned anywhere in src (only the property declaration matches); identity keys are Ed25519 (CryptoSigner.cs), not secp256k1. Relays following NIP-01 should reject such events (inferred, unverified against a live relay)."
+      "evidence": null
     },
     {
       "id": "F-015",
       "milestone": "M0",
-      "behaviour": "Move payload is encrypted by the sender and decrypted by the OTHER peer (both sides derive the same shared secret)",
-      "acceptance": ["Test where Alice encrypts with (alicePriv, bobPub) and Bob decrypts with (bobPriv, alicePub)"],
+      "behaviour": "Move payload is encrypted by the sender and decrypted by the OTHER peer with standard NIP-44 v2 (both sides derive the same conversation key)",
+      "acceptance": [
+        "Official nip44.vectors.json passes: conversation key 35 valid + 8 invalid, message keys, padded length, encrypt/decrypt (both directions), long messages",
+        "Two independent random keypairs: conv(a,B) == conv(b,A); Bob decrypts Alice and Alice decrypts Bob",
+        "Failure: a third key, a flipped MAC bit, a wrong version byte and bad padding all fail to decrypt",
+        "The old test that decrypts with the sender's own keys is deleted"
+      ],
       "passes": false,
-      "evidence": "Seen in code: Nip44Encryption.DeriveSharedSecret = SHA256(privateKey || peerPublicKey) (Nip44Encryption.cs:81-93), which is not ECDH; the two peers derive different secrets. TransportBenchmarkTests decrypts with DeriveSharedSecret(senderPriv, recipientPub), the sender's own keys on both sides, so the passing round trip never exercises a second peer. Also ChaCha20-Poly1305 with HKDF, which differs from the NIP-44 v2 spec as I know it (unverified against current spec text)."
+      "evidence": null
     },
     {
       "id": "F-016",
       "milestone": "M0",
-      "behaviour": "A move made in client A is sent over relays and applied and verified in client B (and back), through NostrTransportClient into TakGameSession.ProcessRemoteMove",
-      "acceptance": ["Two processes/devices, real relay, 10 alternating moves, both show same state hash", "Illegal/tampered payload injected by a test peer is dropped and flagged"],
+      "behaviour": "A move made in client A is sent over relays and applied and verified in client B (and back), through the relay client and coordinator into TakGameSession.ProcessRemoteMove, to a road win",
+      "acceptance": [
+        "Automated (fake relay, CI): two TakGameSessions in two coordinators play a scripted 5x5 game to a road win, both end Completed with the same result and the same final state hash",
+        "Automated: the same game with every event delivered twice and with random reordering still ends at the same hash",
+        "LiveRelay test (by hand): two OS processes over nos.lol + damus play a 10-move opening with equal hashes",
+        "Failure: a move that is illegal on the board is refused locally and nothing is published"
+      ],
       "passes": false,
-      "evidence": "Seen in code: SendMoveEnvelopeAsync, SubscribeIncomingMovesAsync and OnMoveEnvelopeReceived have zero call sites outside NostrTransportClient.cs; ConnectAllAsync is called only from ProfileModal.razor (kind-0 profile). TakGameSession.OnRemoteEnvelopeReady/ProcessRemoteMove are used only by tests. No test touches a relay or a fake relay."
+      "evidence": null
     },
     {
       "id": "F-017",
       "milestone": "M0",
-      "behaviour": "Direct invite: host creates link/QR, guest opens it and both land in the same live game",
-      "acceptance": ["Host on device 1 generates invite, guest on device 2 opens it, first move by white appears on both"],
+      "behaviour": "Direct invite: host creates an invite, guest opens it, the JOIN/ACCEPT handshake resolves colours, and both land in the same live game",
+      "acceptance": [
+        "Fake relay: host creates invite (with seed), guest joins, both resolve opposite colours from ColorResolver(seed, host, guest), white's first move shows on both",
+        "Edge: a repeated JOIN from the same guest gets ACCEPT again and does not start a second game",
+        "Failure: a second guest with a different key is ignored and surfaced; an ACCEPT from a non-host key is dropped and flagged; a malformed invite, missing seed, size 7 or self-invite fails with a specific message and no network traffic",
+        "Edge: host restarted before the guest joins still accepts the JOIN (invite persisted)"
+      ],
       "passes": false,
-      "evidence": "Seen in code: Blazor HandleJoinCode calls Session.StartLocalMatch (Home.razor ~L289-294); CLI JoinInviteCodeAsync parses the code then calls PlayLocalMatchAsync (Program.cs). Invite generation works (F-010); joining never connects."
+      "evidence": null
     },
     {
       "id": "F-018",
-      "milestone": "M1",
+      "milestone": "M4",
       "behaviour": "Quick Play pool: two strangers searching the same board size are paired over relays",
-      "acceptance": ["Two clients start Quick Play 5x5 within 60 s and get the same game id and opposite colours"],
+      "acceptance": [
+        "Two clients start Quick Play 5x5 within 60 s and get the same game id and opposite colours",
+        "Edge: both searchers challenge at once, only one game is created (lower pubkey challenges)",
+        "Failure: no other searcher within 60 s gives a clear 'nobody found' and returns to the menu; Cancel stops advertising; the same user in two tabs never matches themself",
+        "Design task done first: the Quick Play state spec in scope.md is confirmed or amended by an M4 spike on real relays"
+      ],
       "passes": false,
-      "evidence": "Seen in code: CLI PlayQuickPlayAsync builds a proposal and broadcast event, prints 'Starting match simulation', then plays a local match (Program.cs ~L335-352). Nothing publishes the kind 20001 event or listens for it."
+      "evidence": null
     },
     {
       "id": "F-019",
-      "milestone": "M1",
-      "behaviour": "Resume an in-progress game after closing the app or browser tab",
-      "acceptance": ["Make 3 moves, close and reopen, board and history restored"],
+      "milestone": "M3",
+      "behaviour": "Resume an in-progress game after closing the app or browser tab, in every v1 head",
+      "acceptance": [
+        "Make 3 moves, close and reopen the browser tab: board, history, whose turn and the opponent link are restored, and a move made by the opponent while closed appears after reopening",
+        "Same for the CLI and (M6) the desktop app",
+        "Failure: cleared browser storage (key still backed up, F-049) rebuilds the game from relays and says so; no key means the game is not recoverable and the message says that"
+      ],
       "passes": false,
-      "evidence": "docs/AUDIT.md (2026-09-12) says Blazor game state is not persisted; not re-verified. SQLite storage exists (F-007) and is used by the CLI (seen in code)."
+      "evidence": null
     },
     {
       "id": "F-020",
-      "milestone": "M1",
-      "behaviour": "Stale-game warning and Day 7 auto-draw visible to the user in a frontend",
-      "acceptance": ["Game older than 3 days shows a warning on open; older than 7 days ends as a draw"],
+      "milestone": "M5",
+      "behaviour": "Stale-game warning (3 days) and auto-draw (7 days) visible to the user in every v1 head",
+      "acceptance": [
+        "Game idle more than 3 days shows a warning on open, with who is expected to move",
+        "Game idle more than 7 days ends as a draw, labelled as this client's verdict (design accepted first, Q-016)",
+        "Failure: NTP unreachable falls back to the local clock with a visible 'time not verified' label and never auto-draws on a skewed clock",
+        "Edge: a valid move arriving right at the boundary wins over the draw"
+      ],
       "passes": false,
-      "evidence": "Engine logic tested (F-008) but StaleMatchMonitor has no caller in any frontend."
+      "evidence": null
     },
     {
       "id": "F-021",
-      "milestone": "existing",
-      "behaviour": "Blazor web client: play locally (pass and play) and vs AI in the browser with full rules",
-      "acceptance": ["Open the GitHub Pages site, play a 5x5 game vs AI to a win", "Illegal moves are not offered by the UI"],
+      "milestone": "M1",
+      "behaviour": "Blazor web client: play locally (pass and play) and vs AI in the browser with full rules, every move going through TakGameSession",
+      "acceptance": [
+        "Open the GitHub Pages site (or dotnet run), play a 5x5 game vs AI to a win; Playwright script drives it and stores a log or screenshot",
+        "Illegal moves are not offered by the UI and are rejected by the engine if forced",
+        "WebGameSessionManager's duplicate board and road logic is deleted (D-008); one rules implementation remains"
+      ],
       "passes": false,
-      "evidence": "Blazor builds (0 errors) and Pages deploy CI is green (gh run 36642739073), but no test drives the UI and the auditor did not run the site. Blazor has its own board/road logic (WebGameSessionManager.cs) separate from TakGameSession. DEVLOG's 'verified via browser subagent' has no stored log or screenshot."
+      "evidence": null
     },
     {
       "id": "F-022",
-      "milestone": "existing",
-      "behaviour": "PlayTak-style controls in Blazor: click reserve, rotate to wall, right-click quick wall, stepped tower movement with count selection, cancel on out-of-range click (M1.15 to M1.15.3)",
-      "acceptance": ["By hand: move a 3-stack 1-1-1 and 2-1 on 5x5, cancel mid-move, place a wall via right click"],
+      "milestone": "M1",
+      "behaviour": "PlayTak-style controls in Blazor keep working unchanged after the move to the engine: click reserve, rotate to wall, right-click quick wall, stepped tower movement with count selection, cancel on out-of-range click",
+      "acceptance": [
+        "A written state/transition table of the gestures exists (design task) and Playwright encodes it",
+        "Scripted: move a 3-stack 1-1-1 and 2-1 on 5x5, cancel mid-move, place a wall via right click; each ends in the expected board",
+        "Failure: an out-of-range click mid-move cancels the move and places no tile; a move that exceeds the carry limit is not offered"
+      ],
       "passes": false,
-      "evidence": "Four commits in about 2 h touching the same 3 files (Play.razor, TakBoardView.razor, tak-theme.css); zero automated UI tests; no run log. Owed to the user or verifier: hand-play."
+      "evidence": null
     },
     {
       "id": "F-023",
-      "milestone": "existing",
+      "milestone": "M1",
       "behaviour": "Piece SVG rendering is culture-invariant (no comma decimals)",
       "acceptance": ["SvgTileRendererTests pass for de-DE, fr-FR, en-US"],
       "passes": true,
@@ -187,49 +241,68 @@
     },
     {
       "id": "F-024",
-      "milestone": "existing",
-      "behaviour": "CLI (Spectre.Console) local game and vs AI with typed commands",
-      "acceptance": ["Run TakApp.Cli, play a 4x4 game to a road win, result saved to SQLite"],
+      "milestone": "M7",
+      "behaviour": "CLI (Spectre.Console) local game and vs AI with typed commands, still working after the M0 host/join changes",
+      "acceptance": [
+        "Run the published TakApp.Cli, play a 4x4 game to a road win vs the local second player; result saved",
+        "Failure: an illegal typed move prints the engine's reason and does not change the board",
+        "The menu no longer contains simulated 'Join' or 'Quick Play' text (removed in M0)"
+      ],
       "passes": false,
       "evidence": "Builds (0 errors). Not driven by the auditor; no tests cover Program.cs or the renderer."
     },
     {
       "id": "F-025",
-      "milestone": "existing",
-      "behaviour": "Avalonia desktop GUI: play a local game and a 'remote' game",
-      "acceptance": ["Launch the desktop app on Windows and play a local game"],
+      "milestone": "M6",
+      "behaviour": "Avalonia desktop GUI: play a local game on Windows",
+      "acceptance": [
+        "Launch the published desktop app on Windows and play a local 5x5 game to a win",
+        "The simulated 'remote' mode (two random keys in one process) is removed",
+        "Failure: clicking an illegal destination does not move anything and gives feedback"
+      ],
       "passes": false,
       "evidence": "Builds (0 errors). Not run. MainViewModel 'remote' mode generates two random keypairs in-process (MainViewModel.cs L21-25), so it is a simulated peer, not a network game. No Avalonia headless tests."
     },
     {
       "id": "F-026",
-      "milestone": "existing",
+      "milestone": "Later",
       "behaviour": "Android APK and iOS app run on a device",
-      "acceptance": ["Install the release APK on a phone and play a local game"],
+      "acceptance": [
+        "M7 smoke (owed): install the release APK on one phone and play a local game; result recorded either way",
+        "iOS is not in v1 (D-018)"
+      ],
       "passes": false,
-      "evidence": "docs/AUDIT.md says never tested on device; iOS needs macOS/Xcode. The Android/iOS projects were not built by the auditor (workloads not checked)."
+      "evidence": "docs/AUDIT.md says never tested on device; iOS needs macOS/Xcode. The Android/iOS projects were not built by the auditor (workloads not checked).",
+      "note": "mobile is experimental, not a v1 deliverable (Q-006 default, D-018)"
     },
     {
       "id": "F-027",
-      "milestone": "existing",
+      "milestone": "M0",
       "behaviour": "GitHub Pages deploy of the Blazor client on push to main",
       "acceptance": ["Workflow run succeeds"],
       "passes": true,
-      "evidence": "gh run list 2026-09-30: 'Deploy Blazor WebAssembly to GitHub Pages' success, run 36642739073 (2026-09-29) and earlier runs. Says nothing about the site working in a browser (F-021)."
+      "evidence": "gh run list 2026-09-30: 'Deploy Blazor WebAssembly to GitHub Pages' success, run 36642739073 (2026-09-29) and earlier runs. Says nothing about the site working in a browser (F-021).",
+      "note": "adopted; after F-029 the deploy has a test job in front of it and must stay green"
     },
     {
       "id": "F-028",
-      "milestone": "existing",
+      "milestone": "M7",
       "behaviour": "Release workflow publishes Windows/Linux Desktop and CLI archives with checksums",
       "acceptance": ["Workflow run succeeds and a release exists"],
       "passes": true,
-      "evidence": "gh run list: 'Build & Publish Release' success (run 34677878321, workflow_dispatch); gh release list shows v0.1.0 Latest. Archives were not downloaded or launched."
+      "evidence": "gh run list: 'Build & Publish Release' success (run 34677878321, workflow_dispatch); gh release list shows v0.1.0 Latest. Archives were not downloaded or launched.",
+      "note": "adopted; the test gate in front of release.yml is tracked under F-056"
     },
     {
       "id": "F-029",
-      "milestone": "M1",
-      "behaviour": "CI runs the unit tests on every push/PR",
-      "acceptance": ["A workflow with `dotnet test TakGame.sln` fails the build on a red test"],
+      "milestone": "M0",
+      "behaviour": "CI runs the unit tests on every push/PR and a red test stops the Pages deploy",
+      "acceptance": [
+        "ci.yml runs `dotnet test` on push and pull_request excluding Category=LiveRelay; proven by a throwaway branch with a failing test that turns the run red, then green after revert (both run ids recorded)",
+        "deploy-gh-pages.yml publish job has needs: test, so a red test blocks the deploy",
+        "Edge: restore on ubuntu works without Android/iOS workloads; if not, the per-project or .slnf fallback is used and AGENTS.md/playbook name the real command",
+        "Owed to the user: enable required status check on main"
+      ],
       "passes": false,
       "evidence": "Seen in code: neither .github/workflows/deploy-gh-pages.yml nor release.yml has a test step. docs/AUDIT.md flagged this as Critical on 2026-09-12; still open."
     },
@@ -237,9 +310,334 @@
       "id": "F-030",
       "milestone": "Later",
       "behaviour": "PWA installable/offline, sound, animations, undo, match history, settings page, drag and drop",
-      "acceptance": ["defined at scope"],
+      "acceptance": ["defined when an item is pulled into a milestone (Q-005 / D-019)"],
       "passes": false,
       "evidence": "README claims PWA/drag-and-drop; docs/AUDIT.md says not implemented; src/TakApp.Blazor/wwwroot has no manifest or service worker (contains assets, css, icon-192.png, index.html)."
+    },
+    {
+      "id": "F-031",
+      "milestone": "M0",
+      "behaviour": "One secp256k1 key per player is the identity for everything (npub, event signing, NIP-44, move signatures), generated once and persisted",
+      "acceptance": [
+        "Key generation, x-only pubkey, secret-to-pubkey vectors from bitcoin/bips test-vectors.csv (8/8) pass",
+        "npub/nsec NIP-19 round trip and the NIP-19 spec example pair decode to the documented hex",
+        "Reopening the app (CLI, restart) loads the same key; a key file with bad length or an out-of-range scalar gives a clear error and is not overwritten",
+        "No reference to the Ed25519 CryptoSigner remains in src/ (D-011)",
+        "Pubkeys not 32 bytes or not on the curve are rejected on input"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-032",
+      "milestone": "M0",
+      "behaviour": "Nostr events get a correct NIP-01 id (hand-written serializer) and a BIP-340 signature, verified before anything else is done with a received event",
+      "acceptance": [
+        "BIP-340 verify vectors (15) pass, including the invalid ones",
+        "Fixed known-good ids (computed by an independent implementation, e.g. the spike's Python-verified events.jsonl) match for content containing + < > & quotes, newline, U+0001, DEL and emoji",
+        "A C#-signed event verifies in the spike's Python reference verifier",
+        "Failure: flipped id, flipped sig bit, tampered content or pubkey of length != 32 all fail verification and are never decrypted"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-033",
+      "milestone": "M0",
+      "behaviour": "TakGameSession signs each local move with the player's secp256k1 key and emits the full envelope (game id, turn, pubkey, prev hash, ptn, signature); ProcessRemoteMove verifies it and extends the hash chain StateHash = SHA-256(prev, turn, pubkey, ptn, tps)",
+      "acceptance": [
+        "Two sessions with independent keys play each other in-process to a road win with equal final hash",
+        "Failure rows: wrong author, bad signature, wrong prev hash, wrong turn owner, malformed PTN and an illegal move each return a failure, raise OnProtocolViolationDetected and leave the board and hash untouched",
+        "The hash chain matches a fixed known sequence (golden vector), so a refactor cannot silently change it",
+        "Edge: first-turn colour swap move round trips"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-034",
+      "milestone": "M0",
+      "behaviour": "Relay client: publish to several relays with per-relay status, subscribe with the two-filter REQ, reconnect with backoff, dedupe by event id",
+      "acceptance": [
+        "Against the in-memory fake relay (verifies id and sig, REQ/EVENT/EOSE/CLOSE): publish is Sent when any relay says OK true",
+        "Fake relay injects OK false rate-limited: status Refused(rate-limited), retry with backoff, never more than 4 events per 10 s",
+        "Fake relay drops the socket or answers HTTP 503: client reconnects with 1,2,4..30 s backoff and resubscribes with since = maxCreatedAt - 30 s, no event lost or applied twice",
+        "Failure: CLOSED auth-required marks that relay read-impossible and the other relay carries on",
+        "LiveRelay (by hand): the same client works against nos.lol and damus together"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-035",
+      "milestone": "M0",
+      "behaviour": "Turn-exchange coordinator (head-agnostic library): sends my moves, orders and applies the opponent's, tolerates duplicates, reordering and late events, persists its progress",
+      "acceptance": [
+        "Property-style test: the same game delivered in any order, with duplicates, ends at the same hash",
+        "Turn t+2 before t+1 is buffered, then applied in order once t+1 arrives; a gap of 20 s triggers a catch-up request",
+        "Duplicate of an applied turn is ignored silently; a different move for an applied turn is dropped and flagged (first seen wins)",
+        "Events after Completed are ignored",
+        "Restart after publish-but-before-save republishes the same turn and the peer ignores the duplicate",
+        "Own-key echoes from the relay are ignored; moves entered while all relays are down are sent on reconnect"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-036",
+      "milestone": "M0",
+      "behaviour": "CLI head: `host` prints an invite and waits; `join <invite>` connects; both play the game with live status lines (relays, waiting for opponent, opponent moved, rejected move) instead of the old simulated join",
+      "acceptance": [
+        "Two CLI processes (two terminals or two machines): host + join over nos.lol + damus, play moves entered at the prompt",
+        "Status distinguishes 'sent' from 'accepted by relay' and shows per-relay refusals",
+        "Failure: pasting a bad invite, an unreachable relay list or a taken invite prints the specific message from the invite spec and exits cleanly",
+        "grep of src/TakApp.Cli shows no 'simulation' / 'Connecting...' placeholder text and the local game still starts from the menu"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-037",
+      "milestone": "M0",
+      "behaviour": "Restart and catch-up: kill one side mid-game, restart it, and it resumes and re-syncs missed moves from relay history",
+      "acceptance": [
+        "Fake relay (CI): crash side B after its turn 4, A plays turn 5, restart B with its state: B shows turn 5 and continues; final hashes equal",
+        "Live (by hand, nos.lol + damus): same scenario with a killed CLI process",
+        "Cold rebuild: a fresh process with B's key and no state rebuilds the game from relays and ends at the same hash, labelled 'rebuilt from relays'",
+        "Failure: a missing turn (relay lacks it) leaves the game in 'waiting for move n+1', never skips it; a rebuilt hash that differs from the surviving side's shows a fork warning"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-038",
+      "milestone": "M0",
+      "behaviour": "A tampered, forged or illegal move from the opponent is dropped, surfaced to the user, and the game continues",
+      "acceptance": [
+        "Automated matrix over the fake relay, one case per row of the Tamper spec: bad sig, stranger author, undecryptable, bad envelope signature, hash fork, wrong turn owner or illegal move, conflicting duplicate",
+        "Each case: board and hash unchanged, a visible warning for rows 3-7 (count-only for rows 1-2), flag persisted across restart",
+        "Live (by hand, one case): a test-peer tool publishes a correctly signed but illegal move to the real relays; the CLI warns and continues; a following legal move from the real opponent is accepted",
+        "Failure of the check itself: the test suite goes red if the drop is removed (deliberate-break check)"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-039",
+      "milestone": "M0",
+      "behaviour": "M0 exit run: the core promise executed end to end by hand on two machines over nos.lol + damus",
+      "acceptance": [
+        "Machine 1 hosts, machine 2 joins; a 5x5 game is played to a road win; both print the same result and the same final state hash",
+        "One side is killed and restarted mid-game and the game continues",
+        "One forged move from the test-peer tool is rejected and shown",
+        "Transcript or screenshots stored under pipeline/ ; if no second machine is available this is an owed check and the feature stays passes:false"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-040",
+      "milestone": "M3",
+      "behaviour": "Relay retention evidence: game events are still served after the time scale async play needs",
+      "acceptance": [
+        "check-retention.mjs (spike) re-run at 24 h and 7 d on the spike's published events: served count recorded for nos.lol and damus",
+        "If an event is gone before 7 d the v1 promise for async play is restated (shorter window, or state/outbox republish on reconnect) before M3 closes",
+        "Failure: a relay that serves nothing after 7 d is dropped from the defaults or labelled"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-041",
+      "milestone": "M1",
+      "behaviour": "Blazor uses TakGameSession through an adapter for all play (local, vs AI); the duplicate WebGameSessionManager board and road code is gone",
+      "acceptance": [
+        "All engine tests still pass; no code in TakApp.Blazor decides legality or road wins",
+        "Playwright regression (F-043) passes: place, slide, cancel, win, vs AI full game",
+        "Failure: forcing an illegal move through the adapter returns the engine's error and the UI shows it"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-042",
+      "milestone": "M1",
+      "behaviour": "Browser relay spike: a Blazor WASM tab opens WebSockets to nos.lol + damus, publishes and receives a signed NIP-44 event, and survives a backgrounded tab",
+      "acceptance": [
+        "Tab A (browser) and the CLI exchange 6 events over nos.lol + damus with ClientWebSocket; ids and sigs verify on both sides",
+        "Tab backgrounded for 5 minutes, then foregrounded: it reconnects and catches up with the since-30 s REQ",
+        "Failure: if ClientWebSocket does not work in the WASM runtime, the result is recorded and the fallback (JS interop WebSocket) or the R-005 fallback (browser stays local/AI only) is chosen before M2 starts"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-043",
+      "milestone": "M1",
+      "behaviour": "UI test harness for the browser head: a Playwright script drives the real site, with logs/screenshots stored as evidence",
+      "acceptance": [
+        "One command runs the script against a local build and writes a log and screenshots",
+        "The script fails when a cell click is broken on purpose (deliberate-break check)",
+        "A state/transition table of the existing gestures exists in pipeline/ (design task) and the script cites it"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-044",
+      "milestone": "M2",
+      "behaviour": "Browser multiplayer: host creates a game and shares an invite link; the other player opens it in a browser and both play over relays through the coordinator",
+      "acceptance": [
+        "Browser host + browser guest (two tabs/profiles) play a 5x5 game to a road win, same hash",
+        "Failure: opening the link with a malformed code shows an error page with a way back to the menu; opening a link for a game already taken says so",
+        "Moves go through TakGameSession and the coordinator; no separate browser-only rules or hash code"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-045",
+      "milestone": "M2",
+      "behaviour": "Cross-head game: browser versus CLI to a road win, both showing the same result and final hash (the brief's MVP-done check #1)",
+      "acceptance": [
+        "Pages site in one browser, CLI on another machine or terminal, 5x5, invite exchanged, game to a road win, same hash on both",
+        "Run in both directions (browser hosts / CLI hosts)",
+        "Owed to the user if a second device is not available to the agent"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-046",
+      "milestone": "M2",
+      "behaviour": "Browser shows connection and integrity status: relays connected/refused, waiting for opponent, rejected moves with the reason",
+      "acceptance": [
+        "Status shows per-relay state and 'sent' vs 'accepted'",
+        "A forged move injected by the test-peer tool produces the visible rejected-move banner; the game continues",
+        "Failure: with the network blocked the page says offline and queues the move"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-047",
+      "milestone": "M2",
+      "behaviour": "Invite UX: copy link, QR code, waiting state with cancel, and clear errors for every invite failure",
+      "acceptance": [
+        "Host page shows copyable link and QR (existing QrCodeSvgHelper); a phone camera scan opens the join page",
+        "Waiting state shows 'waiting for opponent since ...' and a Cancel button that discards the invite",
+        "Failure matrix reproduced by hand: malformed, truncated, wrong board size, already taken, host unreachable, self-invite each show a distinct message"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-048",
+      "milestone": "M3",
+      "behaviour": "'My games' list: every in-progress game with opponent, turn, last activity and an Open action",
+      "acceptance": [
+        "Two games in progress are listed after a reload with correct turn and last-move time",
+        "Failure: a game whose local record is corrupted is listed as 'cannot open' with a Rebuild-from-relays action and does not break the list"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-049",
+      "milestone": "M3",
+      "behaviour": "Key backup and restore: export the key with a warning, import it on a new browser profile or device and open the same games",
+      "acceptance": [
+        "Export, wipe storage, import: the games list rebuilds from relays and play continues",
+        "Failure: importing an invalid or short key is rejected with a message and the existing key is not replaced",
+        "Wording of the warning is reviewed by the copy lens (Q-017 decides the UX before build)"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-050",
+      "milestone": "M3",
+      "behaviour": "Resign: either player can resign at any time; the opponent's client ends the game as won",
+      "acceptance": [
+        "Resign with confirmation on my turn and on the opponent's turn: both clients show the result",
+        "Cancel at the confirmation sends nothing",
+        "Edge: a resign sent while the opponent's move was in flight still ends the game on both sides; a move arriving after a resign is ignored",
+        "Failure: a RESIGN from a stranger key or for another game is dropped; a resign that no relay accepts stays 'pending delivery' and retries"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-051",
+      "milestone": "M3",
+      "behaviour": "Opponent-offline status: 'waiting for opponent, last move seen <time>' and an outbox banner when I am offline",
+      "acceptance": [
+        "Opponent idle 10+ minutes on their turn: the waiting line shows the last verified opponent event time",
+        "Own network off: banner says moves are queued; a move made offline is sent when the network returns",
+        "Failure: no automatic forfeit appears before Day 7 under any condition"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-052",
+      "milestone": "M5",
+      "behaviour": "Day-7 auto-draw is agreed between clients (signed timeout notice) rather than unilateral, per the design accepted in M5",
+      "acceptance": [
+        "Both clients online past Day 7 end the game as a draw with the same final result",
+        "Failure: a timeout notice from a client whose clock says Day 6 is not applied by the other; disagreement is shown as 'opponent says timed out, you disagree' and the game stays open"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-053",
+      "milestone": "M6",
+      "behaviour": "Desktop multiplayer: Avalonia desktop hosts or joins an invite over relays through the coordinator, plays, resumes and shows rejected moves",
+      "acceptance": [
+        "Desktop on Windows vs browser (or CLI) on another machine: 5x5 game to a road win with equal hash",
+        "Close and reopen the desktop app mid-game: the game resumes",
+        "Failure: a bad invite shows the invite-spec message; a forged move from the test-peer tool shows the rejected-move banner"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-054",
+      "milestone": "M7",
+      "behaviour": "Repository is honest to a newcomer: LICENSE file exists (Q-014) and the README device matrix matches features.json",
+      "acceptance": [
+        "LICENSE present and matches what the README badge says",
+        "README 'Implemented' column equals the v1 platform set (Web, CLI, Windows desktop) and marks Android as experimental, iOS/macOS as not in v1 (D-018)",
+        "Failure: a grep for the removed claims (PWA, drag-and-drop, 114/107 tests) in README finds none"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-055",
+      "milestone": "M7",
+      "behaviour": "Key-storage threat model is written and the cheap mitigations are in: where the secret lives per head, what an XSS or a shared device exposes, what export does",
+      "acceptance": [
+        "A one-page threat model exists under docs/decisions/ or pipeline/ and names the browser storage choice and why",
+        "Security lens review pass finds no secret in logs, URLs or analytics on any head",
+        "Failure: the invite link and the status lines never contain the secret key (grep + manual check)"
+      ],
+      "passes": false,
+      "evidence": null
+    },
+    {
+      "id": "F-056",
+      "milestone": "M7",
+      "behaviour": "Release-binary run: the published CLI and desktop archives (not `dotnet run`) play a game to a road win over relays",
+      "acceptance": [
+        "Download the release archives from GitHub, run CLI vs the Pages site, to a road win, equal hash",
+        "release.yml has a test job in front of publish: a deliberately red test on a throwaway branch stops the release job",
+        "Failure: the archive checksum mismatch is detected by the documented command",
+        "Owed to the user if a second machine is not available"
+      ],
+      "passes": false,
+      "evidence": null
     }
   ]
 }

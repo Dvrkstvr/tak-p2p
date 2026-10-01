@@ -89,3 +89,48 @@ Transport design inputs for the architect:
 Settles D-007 and D-004.
 - why: spikes R-001-R-004 and R-002-R-003 (RESULT.md in each)
 - revisit if: the retention re-check (24 h / 7 d) fails, or damus's rate limit (~5 events per burst per IP) bites real games
+
+## D-016 · 2026-10-01 · stage 4 · by: user (confirmed in D-022)
+M0 head is the CLI (two processes) plus an in-memory fake-relay test; the browser head is M1 (engine migration + WebSocket spike) and M2 (multiplayer), not M0. M0 is split into checkpoints M0-A (fake relay, CI) and M0-B (live relays). Quick Play is M4 and the first thing cut if time runs short. Answers the scope question "browser in M0 or M1".
+- why: browser needs the D-008 rewrite (Blazor does not use TakGameSession); crypto already proven in WASM; CLI is cheapest to automate; keeps M0 to one kind of failure
+- instead of: browser in M0 (doubles M0, mixes migration risk with transport risk)
+- revisit if: the user wants the public site playable sooner; or F-042 (browser relay spike) fails, in which case the R-005 fallback applies (browser stays local/AI, desktop moves up)
+
+## D-017 · 2026-10-01 · stage 4 · by: assumed
+CI gate shape (extends D-010): new ci.yml running `dotnet test` on push and PR with live-relay tests excluded (`Category!=LiveRelay`), plus `needs: test` in front of the Pages publish; release.yml gated at M7. Branch protection on main is owed to the user. If `dotnet test TakGame.sln` cannot restore on ubuntu because of Android/iOS projects, fall back to per-project or a .slnf (unverified).
+- why: spec-first needs the test suite as the gate; public relays are flaky and rate-limited and must stay out of CI
+- instead of: gating only the deploy, or running live relays in CI
+- revisit if: the user prefers deploys ungated (D-010 caveat)
+
+## D-018 · 2026-10-01 · stage 4 · by: user (confirmed in D-022)
+v1 platform set (answers Q-006): Web (GitHub Pages), CLI, Windows desktop (Avalonia). Android experimental with one owed smoke test at M7; iOS/iPadOS and a macOS desktop app are not v1; README device matrix relabelled at M7 to match features.json.
+- why: the promise needs two heads that talk to each other; Android/iOS never ran on a device and iOS needs a Mac and Apple signing (R-010)
+- instead of: all six heads; or web only
+- revisit if: the user owns an Android phone and wants it in v1 (adds a milestone), or wants web-only
+
+## D-019 · 2026-10-01 · stage 4 · by: assumed
+Polish list (answers Q-005): in v1 only "My games", resume, resign, key backup, relay/connection status, rejected-move warnings. Later: board flip, replay scrub UI, sound, animations, drag and drop, settings page, PWA/offline, finished-game history, themes. Not doing: undo/takeback. Draw offer is Later.
+- why: each item adds untested surface before the promise has users; draw offer and undo need peer-consent protocols with no authority to arbitrate
+- instead of: carrying the README's polish claims into v1
+- revisit if: the user asks for a specific item; items are additive, so reversible within a milestone
+
+## D-020 · 2026-10-01 · stage 4 · by: assumed
+v2 documents and spectator engine (answers Q-015): kept untouched; "not in v1" banner added at M7; nothing deleted. Licence (Q-014) stays a question for the user at M7, proposed MIT.
+- why: no cost to keeping them; v2 is parked until v1 is proven
+- instead of: archiving the v2 docs now
+- revisit if: the user wants them archived
+
+## D-021 · 2026-10-01 · stage 4 · by: assumed
+Resign is in v1 (M3, signed RESIGN message not conditioned on the hash chain); draw by agreement is Later; undo is Not doing; tampering never auto-forfeits (the client drops, flags, shows a banner, and the user decides). Opponent silence is a status line, not a forfeit, until the Day-7 design (Q-016, M5).
+- why: no authority exists to rule on cheating or abandonment (R-011); resign is the one cheap way to end a game
+- instead of: auto-win on invalid move; draw-offer state machine in v1
+- revisit if: the user wants draw offers in v1 (adds a design task and about a day)
+
+## D-022 · 2026-10-01 · stage 4 · by: user
+MVP cut signed off as proposed in pipeline/scope.md:
+- M0 is CLI + fake-relay tests, as M0-A then M0-B; the browser comes at M1/M2 (D-016 confirmed).
+- v1 platforms are Web + CLI + Windows desktop. Android is experimental. iOS/iPadOS and macOS are not in v1 (D-018 confirmed).
+- If v1 runs long, Quick Play (M4) is cut first.
+- why: user chose every recommended option
+- instead of: browser in M0, a smaller fake-relay-only M0, Android in v1, or cutting the stale timers or desktop first
+- revisit if: M0-A runs past ~1.5 weeks (re-plan trigger in scope.md)
