@@ -30,4 +30,4 @@
 - Retired rituals (D-013): DEVLOG, mirrored milestone tables, test counts in docs. AGENTS.md section 2 still mandates them; edit it on a separate branch with D-009 (lean CLAUDE.md).
 - UI/new-frontend freeze until M0 passes (D-006).
 - Owed from spikes: re-run spikes/R-001-R-004-relay-roundtrip/check-retention.mjs after 24 h and 7 d (from 2026-09-30), and retry primal from another network.
-- Transport: custom kind 3825, NIP-44 v2, p+g tags, nos.lol+damus (D-025). Checks: playbook.md (TakGame.Ci.slnf, LiveRelay excluded). Q-018 (public publishing in M0-B) must be answered before F-014.
+- Transport: custom kind 3825, NIP-44 v2, p+g tags, nos.lol+damus (D-025). Checks: playbook.md (TakGame.Ci.slnf, LiveRelay excluded). Permissions: pushes allowed except main (D-031); M0 live relay budget ≤150 events, logged (D-032).

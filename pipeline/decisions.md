@@ -142,7 +142,7 @@ The design tasks (Blazor stepped tower gesture F-022 at M1, Quick Play at M4, st
 - instead of: mocking all three flows now
 - revisit if: M0's CLI host/join turns out to need a UX decision the spec does not cover
 
-## D-024 · 2026-10-02 · stage 6 · by: assumed
+## D-024 · 2026-10-02 · stage 6 · by: user (confirmed in chat 2026-10-02)
 The licence is MIT. A root LICENSE file was added in the user-started side-task session (commit 92cf239), merged into pipeline/adopt as 414ff74. It matches the README badge. Answers Q-014.
 - why: the user ran that session; MIT was the proposed default
 - revisit if: the user says otherwise (the user never stated it in this chat)
@@ -182,3 +182,18 @@ Agent verify method: (1) headless fake-relay game tests in CI; (2) two CLI proce
 - why: lets an agent run the two-process promise without public traffic; one fake relay implementation for tests and tools
 - instead of: the spike's Node local relay; a Docker relay in CI
 - revisit if: live runs keep finding behaviour the fake lacks
+
+## D-031 · 2026-10-02 · stage 7 · by: user
+Pushes to GitHub (Dvrkstvr/tak-p2p) are allowed for M0: the pipeline/adopt branch, and one throwaway branch with a deliberately failing test that proves the CI gate (F-029), deleted afterwards. Never push to or merge into main without asking.
+- why: user chose the recommended option
+- instead of: pushing pipeline/adopt only, or no pushes
+- revisit if: anything would touch main, tags, releases or repo settings (branch protection stays the user's action)
+
+## D-032 · 2026-10-02 · stage 7 · by: user
+M0-B's hand-run LiveRelay tests may publish to wss://nos.lol and wss://relay.damus.io, within these limits:
+- throwaway keys only, encrypted content, no kind 0/1 events;
+- at most 150 events in total across M0, each run's events logged with ids in the evidence;
+- the conductor asks again before exceeding 150.
+Covers F-014, the CLI live game, live restart and one live tamper. Answers Q-018.
+- why: user chose the recommended option
+- revisit if: the event budget is about to be exceeded, or a run needs new kinds or relays
