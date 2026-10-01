@@ -133,3 +133,12 @@ simply stop responding or replay old events. Game-state disputes (both clients d
 ### R-012 · impact L · evidence known
 No LICENSE file although README badge claims MIT; docs contain unfiltered claims (UI-MOCKUPS, placeholder SVG screenshots). Low cost, do before wider sharing.
 - source: ls repo root
+
+### R-013 · impact L · evidence inferred (stage 6, 2026-10-02)
+Two wire details are inferred, not seen running: (a) nos.lol and damus accept and serve kind 3825 (they did for 9999 in the spike; NIP-01 treats the whole 1000-9999 range as regular); (b) the NIP-01 id for content with control characters other than the seven named escapes: nips/01.md says "verbatim", the spike serializer writes them as JSON.stringify does (backslash-u00xx) and matched Python. Our own events carry only base64 content and hex/uuid tags, so (b) cannot affect a game; (a) would block M0-B.
+- check: F-014 LiveRelay publishes one kind-3825 event with U+0001 in a tag value to both relays and reads `OK true`
+- fallback: (a) pick another free regular kind (docs/decisions/0003 lists the registry check); (b) follow what the relays accept
+- source: pipeline/architecture.md "Wire format"; docs/decisions/0003
+
+### R-008 note (stage 6, 2026-10-02)
+CI gate written and run locally (ci.yml + deploy `needs: test`; all four commands green on the .slnf with workloads disabled). Not yet proven on GitHub (F-029 red/green branch). Known flaky test until F-015 deletes it: `TransportBenchmarkTests.RoundTripPayloadProcessing_CompletesWellUnder300ms` (wall-clock; failed once at 300 ms on a cold Release run).

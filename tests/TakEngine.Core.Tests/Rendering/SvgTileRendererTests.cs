@@ -33,7 +33,7 @@ public class SvgTileRendererTests
                     string svg = SvgTileRenderer.RenderPieceSvg(piece, 123.456, 789.123, isTop: true);
 
                     Assert.False(string.IsNullOrEmpty(svg));
-                    
+
                     // Verify that no attribute has a comma decimal e.g. "123,45"
                     // Commas are only permitted in polygon points as coordinate pair separators e.g. "123.45,789.12"
                     // Parse as XML fragment to verify structural validity

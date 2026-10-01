@@ -1,0 +1,53 @@
+name: CI
+
+# The gate (F-029, D-017): build with the warning policy, format check, unit tests.
+# Live-relay tests (Category=LiveRelay) never run here; they publish to public relays and run by hand.
+# TakGame.Ci.slnf leaves out the Android/iOS heads, which need workloads a plain runner lacks.
+on:
+  push:
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build, format, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore TakGame.Ci.slnf
+
+      - name: Build (compiler warnings are errors via Directory.Build.props)
+        run: dotnet build TakGame.Ci.slnf --no-restore -c Release
+
+      - name: Format check
+        run: dotnet format TakGame.Ci.slnf --verify-no-changes --no-restore
+
+      - name: Test (excluding LiveRelay)
+        run: >
+          dotnet test TakGame.Ci.slnf --no-build -c Release
+          --filter "Category!=LiveRelay"
+          --logger trx --results-directory TestResults
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults
+          if-no-files-found: ignore

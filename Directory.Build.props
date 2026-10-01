@@ -1,0 +1,10 @@
+<Project>
+  <!-- Warning policy (docs/decisions/0008-check-commands-and-warning-policy.md).
+       Compiler and NuGet warnings fail the build. MSBuild/SDK workload warnings stay warnings
+       (the wasm toolchain warns about SQLite's native e_sqlite3 in TakApp.Blazor; see TakEngine.Core rule).
+       Low/moderate package-vulnerability advisories warn; high/critical fail. -->
+  <PropertyGroup>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902</WarningsNotAsErrors>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,16 @@
+{
+  "solution": {
+    "path": "TakGame.sln",
+    "projects": [
+      "src/TakEngine.Abstractions/TakEngine.Abstractions.csproj",
+      "src/TakEngine.Core/TakEngine.Core.csproj",
+      "src/TakEngine.Transport/TakEngine.Transport.csproj",
+      "src/TakApp.Cli/TakApp.Cli.csproj",
+      "src/TakApp.Blazor/TakApp.Blazor.csproj",
+      "src/TakApp.Avalonia/TakApp.Avalonia.csproj",
+      "src/TakApp.Avalonia.Desktop/TakApp.Avalonia.Desktop.csproj",
+      "tests/TakEngine.Core.Tests/TakEngine.Core.Tests.csproj",
+      "tests/TakEngine.Transport.Tests/TakEngine.Transport.Tests.csproj"
+    ]
+  }
+}

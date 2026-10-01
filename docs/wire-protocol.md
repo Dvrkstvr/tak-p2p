@@ -1,5 +1,7 @@
 # Wire Protocol & Nostr Transport Specification
 
+> **Superseded for M0 onward (2026-10-02):** the wire format is kind 3825 with NIP-44 v2 content and `p` + `g` tags, see `pipeline/architecture.md` and `docs/decisions/0003`, `0004`. The kind-4 design below is historical.
+
 Communication between peers occurs over free public Nostr relays (e.g., `wss://relay.damus.io`, `wss://nos.lol`, `wss://relay.primal.net`).
 
 ---

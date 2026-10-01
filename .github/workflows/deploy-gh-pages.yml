@@ -16,7 +16,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  test:
+    # Same gate as every push and PR (ci.yml). A red test stops the deploy (F-029).
+    uses: ./.github/workflows/ci.yml
+
   build-and-deploy:
+    needs: test
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

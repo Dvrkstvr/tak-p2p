@@ -67,7 +67,7 @@ after adoption (adopt.md step 5)?
 Should Pages deploy and release workflows be gated on `dotnet test` (and a PR check added) so main cannot auto-deploy a red build?
 - default: yes, first small task of stage 7; touches only .github/workflows.
 
-## Q-014 · deferred · stage 9 · open (re-checked at scope 2026-10-01: still deferred, due at M7 / F-054, does not block M0-M6)
+## Q-014 · deferred · stage 9 · assumed → D-024 (MIT LICENSE added by the user's side-task session, merged 414ff74)
 Licence: README badge says MIT, no LICENSE file. Which licence? Public repo, so decide before wider sharing.
 - proposed default for the user: MIT (the badge already says so). Not recorded as an assumption because a licence is the owner's legal call; ask at the M7 boundary.
 
@@ -82,3 +82,10 @@ timeout notice is applied only if the other side's own computation agrees; unres
 ## Q-017 · deferred · stage 4 · open (re-check at M3 start)
 Key backup UX (R-009): how much friction to put around exporting/importing the secret key (show nsec, file download, QR, passphrase)? A lost key is a lost game and a leaked key lets someone play as the user.
 Needed before F-049 is built (M3); the design lens should propose options.
+
+## Q-018 · deferred · stage 6 · open (must be answered before M0-B step 7, F-014)
+May M0-B's live checks publish to the public relays nos.lol and damus? D-014's approval covered only the stage-3 spike. Affected: F-014 (one signed event + one corrupted-sig event per relay), the LiveRelay runs of F-016, F-034, F-037, F-038 (one forged move via tools/TakTestPeer) and the agent's two-CLI run over public relays. Estimate: about 60-100 kind-3825 events in total, throwaway keys, NIP-44-encrypted content, no kind 0/1, every event id listed in the evidence.
+- A) Yes, under those limits for all of M0-B (recommended: M0-B cannot pass without it)
+- B) Yes, but only the user runs the live commands (the agent prepares them)
+- C) No: M0 ends at M0-A (fake relay only) and the core promise stays unproven on real relays
+Not needed for M0-A, which uses only the in-memory fake relay and tools/TakRelay.Local on localhost.

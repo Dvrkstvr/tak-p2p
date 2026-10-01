@@ -141,3 +141,44 @@ The design tasks (Blazor stepped tower gesture F-022 at M1, Quick Play at M4, st
 - why: no novel screen in M0; mocking browser flows now would precede the M1 engine rewrite they depend on
 - instead of: mocking all three flows now
 - revisit if: M0's CLI host/join turns out to need a UX decision the spec does not cover
+
+## D-024 · 2026-10-02 · stage 6 · by: assumed
+The licence is MIT. A root LICENSE file was added in the user-started side-task session (commit 92cf239), merged into pipeline/adopt as 414ff74. It matches the README badge. Answers Q-014.
+- why: the user ran that session; MIT was the proposed default
+- revisit if: the user says otherwise (the user never stated it in this chat)
+
+## D-025 · 2026-10-02 · stage 6 · by: assumed
+Wire format: game actions use custom regular event kind **3825** (free in the NIPs README kind table and in registry-of-kinds schema.yaml, both fetched 2026-10-02; outside the NIP-90 5000-7000 ranges), tags exactly `p` + `g`, NIP-44 v2 content holding a JSON envelope with `pv` = 1, `action_type` JOIN/ACCEPT/MOVE/RESIGN, game id, turn, player pubkey, prev hash, action data and a BIP-340 signature over `ActionDigest` (layout in pipeline/architecture.md). Republish = the stored event verbatim. Records: docs/decisions/0003, 0004.
+- why: D-015 left the number and envelope to stage 6; spike 9999 was a test value; an inner signature makes stored moves verifiable without their event
+- instead of: kind 9999, an addressable kind, kind 4 / gift wrap, event signature only
+- revisit if: F-014 shows nos.lol or damus refusing 3825 (inferred to work from 9999), or another app uses 3825
+
+## D-026 · 2026-10-02 · stage 6 · by: assumed
+Module layout: new projects TakEngine.Crypto (keys, BIP-340, NIP-44, NIP-19), TakEngine.Multiplayer (handshakes, TurnExchange, tamper classifier, link status, GameCoordinator, MultiplayerGame facade), TakEngine.Storage.Local (SQLite store + key file; SqliteGameStorage moves out of Core), tests/TakEngine.Testing (fakes), tools/TakRelay.Local and tools/TakTestPeer. Deciding logic is pure (no I/O, clock or RNG); clock seam is BCL TimeProvider with FakeTimeProvider. Record: docs/decisions/0009.
+- why: Core and Transport both need the key but must not reference each other; the coordinator needs both; SQLite must leave the browser build
+- instead of: crypto in Core with Transport -> Core, coordinator in Transport, folders instead of projects
+- revisit if: a new project is still under ~200 lines after M3 (merge it)
+
+## D-027 · 2026-10-02 · stage 6 · by: assumed
+Check commands: restore / build / `dotnet format --verify-no-changes` / test `--filter "Category!=LiveRelay"`, all on `TakGame.Ci.slnf` (every project except Android/iOS). Warning policy in Directory.Build.props: TreatWarningsAsErrors (compiler + NuGet), NU1901/NU1902 stay warnings, no command-line -warnaserror. Format adopted with .editorconfig (LF) and .gitattributes (eol=lf); 3 files had trailing whitespace on blank lines, fixed with no code change. ci.yml on push/PR/workflow_call; Pages deploy `needs: test`. Record: docs/decisions/0008. Settles the D-017 fallback (the .slnf, proven: full .sln fails NETSDK1208 without workloads, the .slnf builds and tests clean).
+- why: a plain ubuntu runner has no android/ios workloads; the wasm workload's SQLite MSBuild warning would fail -warnaserror locally
+- instead of: per-project commands; -warnaserror; no format check
+- revisit if: mobile heads become v1 deliverables; the format check causes churn without catching anything
+
+## D-028 · 2026-10-02 · stage 6 · by: assumed
+Mutation check = Stryker.NET 5.0.0 as a repo-local tool (dotnet-tools.json), run by hand per pure module when its feature passes and at milestone end; bar >= 80 % per module, survivors killed or justified in review notes; deliberate-break for shells. Verified on .NET 10: StateHasher.cs run, 35 s, score 73.68 %. Record: docs/decisions/0007.
+- why: deep track + spec-first require it; Stryker 5.0.0 targets the .NET 10 runtime and was seen running here
+- instead of: deliberate-break only; Stryker in CI
+- revisit if: Stryker fails on a later SDK
+
+## D-029 · 2026-10-02 · stage 6 · by: assumed
+Stored data: SQLite `PRAGMA user_version` (0 = pre-M0, M0 ships 2), JSON blobs carry `v`; forward-only numbered migrations, each tested from a committed fixture; newer-than-known opens read-only. Legacy Ed25519 rows are kept as `SigScheme = 'legacy-ed25519'` and never verified (D-011 no migration). Browser identity moves to `tak.identity.v1` and never reads the old `tak_p2p_privkey`. CLI data lives in LocalApplicationData/tak-p2p/<profile> (or --data-dir). Record: docs/decisions/0010.
+- why: an Ed25519 secret is also a valid secp256k1 scalar and would silently become a different npub; no remote game exists to lose (R-001)
+- instead of: re-signing or deleting legacy data
+- revisit if: evidence of external users with stored remote games
+
+## D-030 · 2026-10-02 · stage 6 · by: assumed
+Agent verify method: (1) headless fake-relay game tests in CI; (2) two CLI processes against tools/TakRelay.Local (the same InMemoryRelay over localhost WebSockets) using `--profile` and a `--plain` one-line-per-event output contract; (3) the same against nos.lol + damus by hand after approval (Q-018); (4) two machines owed to the user (F-039). Record: docs/decisions/0006.
+- why: lets an agent run the two-process promise without public traffic; one fake relay implementation for tests and tools
+- instead of: the spike's Node local relay; a Docker relay in CI
+- revisit if: live runs keep finding behaviour the fake lacks
