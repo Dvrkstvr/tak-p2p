@@ -4,7 +4,7 @@
 
 ## Now
 - track: deep · approach: spec-first (+ prototype-first: relay round-trip spikes)
-- stage: 7 Build — M0-A next, starting with F-029 (CI gate proof)
+- stage: 7 Build — M0-A in progress on branch m0a-crypto-fake-relay-game (subagent-driven; plans A1 CI+crypto, A2 envelope+relay, A3 exchange+game)
 - clarity: scope 5/5 · blocking 0 · assumed 9 · deferred 3
 - feasibility: amber · H-open 0 · M-open 3 · spiked 4
 - milestone: M0-A (CI gate, crypto, fake-relay game) · features passing 16/56 · M0 14 new features open · owed checks 4

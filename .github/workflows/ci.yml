@@ -33,14 +33,14 @@ jobs:
         run: dotnet restore TakGame.Ci.slnf
 
       - name: Build (compiler warnings are errors via Directory.Build.props)
-        run: dotnet build TakGame.Ci.slnf --no-restore -c Release
+        run: dotnet build TakGame.Ci.slnf --no-restore
 
       - name: Format check
         run: dotnet format TakGame.Ci.slnf --verify-no-changes --no-restore
 
       - name: Test (excluding LiveRelay)
         run: >
-          dotnet test TakGame.Ci.slnf --no-build -c Release
+          dotnet test TakGame.Ci.slnf --no-build
           --filter "Category!=LiveRelay"
           --logger trx --results-directory TestResults
 

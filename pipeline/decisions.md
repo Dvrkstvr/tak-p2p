@@ -197,3 +197,20 @@ M0-B's hand-run LiveRelay tests may publish to wss://nos.lol and wss://relay.dam
 Covers F-014, the CLI live game, live restart and one live tamper. Answers Q-018.
 - why: user chose the recommended option
 - revisit if: the event budget is about to be exceeded, or a run needs new kinds or relays
+
+## D-033 · 2026-10-03 · stage 7 · by: assumed
+CI runs exactly the playbook's four check commands in the default Debug configuration. `-c Release` was removed from ci.yml (flagged as gap (a) while writing Plan A1; .claude/rules/ci.md requires identical commands).
+- why: a local green must mean a CI green; Release-only differences would surface as "works on my machine"
+- revisit if: a Release-only defect (trimming, optimisation) shows up, then add a separate Release job rather than diverging the gate
+
+## D-034 · 2026-10-03 · stage 7 · by: assumed
+These Plan A1 gaps are accepted as written in docs/superpowers/plans/2026-10-02-m0a-plan-a1-ci-gate-and-crypto.md:
+- NIP-44 plaintext is capped at 65535 bytes, per the 2-byte prefix and the vectors. docs/decisions/0002's "64 KiB" means this; the 2026 extended prefix is not supported.
+- F-031's "CLI restart loads the same key" is proven at FileKeyStore level in A1 and end to end at F-036.
+- IKeyStore deals in raw bytes, and LoadOrCreate lives in Storage.Local. The browser needs its own at M1.
+- SqliteGameStorage moves out of Core with F-037.
+- F-032's "never decrypted" is proven by A2's EnvelopeCodec.
+- Blazor's identity key changes to tak.identity.v1, so browser users get a new npub (consistent with D-011).
+- Tasks fill `evidence` only; the verifier flips `passes`.
+- Watch item for F-037: after A1, CLI move rows carry BIP-340 signatures, so its migration must not label them 'legacy-ed25519'.
+- Owed to the user: enable a required status check on main (proving deploy-blocking live would need a push to main, which D-031 forbids).
