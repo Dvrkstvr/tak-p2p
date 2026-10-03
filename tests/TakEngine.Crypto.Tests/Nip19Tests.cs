@@ -101,6 +101,27 @@ public class Nip19Tests
         Assert.Throws<InvalidKeyException>(() => SecretKey.FromNsec(input));
     }
 
+    [Theory]
+    [InlineData(5)]   // 8 five-bit groups: the decoder ends with exactly 8 buffered bits
+    [InlineData(10)]
+    [InlineData(32)]
+    public void PayloadsOfAnyLength_RoundTripThroughEncodeAndDecode(int length)
+    {
+        byte[] payload = [.. Enumerable.Range(0, length).Select(i => (byte)(i * 37 + 11))];
+        var (hrp, data) = Nip19.DecodeToBytes(Nip19.Encode("test", payload));
+        Assert.Equal("test", hrp);
+        Assert.Equal(payload, data);
+    }
+
+    [Theory]
+    [InlineData("nonumbersinhere")]      // no '1' separator at all, long enough for a checksum
+    [InlineData("1qqqqqqqqqqqqq")]       // empty human-readable part
+    public void MissingOrLeadingSeparator_IsAFormatError(string input)
+    {
+        var ex = Assert.Throws<FormatException>(() => Nip19.DecodeToBytes(input));
+        Assert.Contains("separator", ex.Message);
+    }
+
     [Fact]
     public void UppercaseInput_IsAccepted()
     {

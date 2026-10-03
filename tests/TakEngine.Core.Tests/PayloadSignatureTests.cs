@@ -30,9 +30,9 @@ public class PayloadSignatureTests
     }
 
     [Theory]
-    [InlineData(null, Payload, "00")]
-    [InlineData("abcd", Payload, "00")]
-    [InlineData("eefdea4cdb677750a420fee807eacf21eb9898ae79b9768766e4faa04a2d4a34", Payload, "00")]
+    [InlineData(null, Payload, "SIG")]
+    [InlineData("abcd", Payload, "SIG")]
+    [InlineData("eefdea4cdb677750a420fee807eacf21eb9898ae79b9768766e4faa04a2d4a34", Payload, "SIG")]
     [InlineData("VALIDKEY", null, "SIG")]
     [InlineData("VALIDKEY", Payload, null)]
     [InlineData("VALIDKEY", Payload, "bad_signature_hex")]
