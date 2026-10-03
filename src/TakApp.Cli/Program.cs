@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Spectre.Console;
 using TakApp.Cli.Input;
@@ -10,6 +11,7 @@ using TakEngine.Core.Board;
 using TakEngine.Core.Cryptography;
 using TakEngine.Core.Serialization;
 using TakEngine.Core.Storage;
+using TakEngine.Crypto;
 using TakEngine.Transport.Matchmaking;
 
 namespace TakApp.Cli;
@@ -116,7 +118,7 @@ public static class Program
 
         var board = new GameBoard(size);
         var gameId = Guid.NewGuid();
-        var keyPair = CryptoSigner.GenerateKeyPair();
+        var keyPair = SecretKey.Generate(() => RandomNumberGenerator.GetBytes(SecretKey.Length));
         string genesisHash = StateHasher.ComputeGenesisHash(size);
         string prevStateHash = genesisHash;
         int moveIndex = 1;
@@ -125,7 +127,7 @@ public static class Program
             Id: gameId,
             BoardSize: size,
             LocalPlayerColor: PlayerColor.White,
-            OpponentPubKey: keyPair.PublicKeyHex,
+            OpponentPubKey: keyPair.PublicKey.ToHex(),
             Status: GameStatus.Active,
             WinnerPubKey: null,
             StartedAt: DateTime.UtcNow,
@@ -163,13 +165,13 @@ public static class Program
 
                 lastMoveStr = cmd.Move.ToPtn();
                 string tpsSnapshot = TpsSerializer.Serialize(board);
-                string stateHash = StateHasher.ComputeStateHash(prevStateHash, moveIndex, keyPair.PublicKeyHex, lastMoveStr, tpsSnapshot);
-                string signature = CryptoSigner.Sign(keyPair.PrivateKeyHex, stateHash);
+                string stateHash = StateHasher.ComputeStateHash(prevStateHash, moveIndex, keyPair.PublicKey.ToHex(), lastMoveStr, tpsSnapshot);
+                string signature = PayloadSignature.Sign(keyPair, stateHash);
 
                 var moveEntity = new MoveEntity(
                     GameId: gameId,
                     TurnIndex: moveIndex++,
-                    PlayerPubKey: keyPair.PublicKeyHex,
+                    PlayerPubKey: keyPair.PublicKey.ToHex(),
                     PtnMove: lastMoveStr,
                     TpsSnapshot: tpsSnapshot,
                     StateHash: stateHash,
@@ -233,7 +235,7 @@ public static class Program
         var bot = new MinimaxTakBot(difficulty);
         var board = new GameBoard(size);
         var gameId = Guid.NewGuid();
-        var keyPair = CryptoSigner.GenerateKeyPair();
+        var keyPair = SecretKey.Generate(() => RandomNumberGenerator.GetBytes(SecretKey.Length));
         string genesisHash = StateHasher.ComputeGenesisHash(size);
         string prevStateHash = genesisHash;
         int moveIndex = 1;
@@ -289,13 +291,13 @@ public static class Program
 
                 lastMoveStr = move.ToPtn();
                 string tpsSnapshot = TpsSerializer.Serialize(board);
-                string stateHash = StateHasher.ComputeStateHash(prevStateHash, moveIndex, keyPair.PublicKeyHex, lastMoveStr, tpsSnapshot);
-                string signature = CryptoSigner.Sign(keyPair.PrivateKeyHex, stateHash);
+                string stateHash = StateHasher.ComputeStateHash(prevStateHash, moveIndex, keyPair.PublicKey.ToHex(), lastMoveStr, tpsSnapshot);
+                string signature = PayloadSignature.Sign(keyPair, stateHash);
 
                 var moveEntity = new MoveEntity(
                     GameId: gameId,
                     TurnIndex: moveIndex++,
-                    PlayerPubKey: keyPair.PublicKeyHex,
+                    PlayerPubKey: keyPair.PublicKey.ToHex(),
                     PtnMove: lastMoveStr,
                     TpsSnapshot: tpsSnapshot,
                     StateHash: stateHash,
@@ -334,11 +336,11 @@ public static class Program
         AnsiConsole.MarkupLine("[bold cyan]Quick Play Matchmaking[/]");
         AnsiConsole.MarkupLine("Connecting to public Nostr relays: [grey]wss://relay.damus.io, wss://nos.lol, wss://relay.primal.net[/]...");
 
-        var keyPair = CryptoSigner.GenerateKeyPair();
-        var proposal = QuickPlayMatchmaker.CreateChallenge(BoardSize.Five, keyPair.PublicKeyHex);
-        var broadcast = QuickPlayMatchmaker.CreateBroadcastEvent(keyPair.PublicKeyHex, BoardSize.Five, ["wss://relay.damus.io"]);
+        var keyPair = SecretKey.Generate(() => RandomNumberGenerator.GetBytes(SecretKey.Length));
+        var proposal = QuickPlayMatchmaker.CreateChallenge(BoardSize.Five, keyPair.PublicKey.ToHex());
+        var broadcast = QuickPlayMatchmaker.CreateBroadcastEvent(keyPair.PublicKey.ToHex(), BoardSize.Five, ["wss://relay.damus.io"]);
 
-        AnsiConsole.MarkupLine($"[green]✓[/] Matchmaking ticket created with ephemeral key [grey]{keyPair.PublicKeyHex[..12]}...[/]");
+        AnsiConsole.MarkupLine($"[green]✓[/] Matchmaking ticket created with ephemeral key [grey]{keyPair.PublicKey.ToHex()[..12]}...[/]");
         AnsiConsole.MarkupLine($"[yellow]Broadcast Kind: 20001 (TTL: 60s)[/] looking for opponent on 5x5 pool...");
 
         // Simulate match setup for demonstration
@@ -353,9 +355,9 @@ public static class Program
         RenderHeader();
         AnsiConsole.MarkupLine("[bold cyan]Generate Direct Invite Code / QR[/]");
 
-        var keyPair = CryptoSigner.GenerateKeyPair();
+        var keyPair = SecretKey.Generate(() => RandomNumberGenerator.GetBytes(SecretKey.Length));
         var gameId = Guid.NewGuid();
-        var invite = new InviteCode(gameId, keyPair.PublicKeyHex, BoardSize.Five, ["wss://relay.damus.io"]);
+        var invite = new InviteCode(gameId, keyPair.PublicKey.ToHex(), BoardSize.Five, ["wss://relay.damus.io"]);
 
         AnsiConsole.WriteLine();
         AnsiConsole.MarkupLine("[bold yellow]Shareable Link (URI):[/]");

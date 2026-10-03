@@ -1,14 +1,19 @@
 using System;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.JSInterop;
-using TakEngine.Core.Cryptography;
 using TakEngine.Crypto;
 
 namespace TakApp.Blazor.Services;
 
 public sealed class BrowserStorage
 {
+    // The secp256k1 identity (D-011) lives under a new name, in the same {"v":1,"nsec":...} format as the CLI key file.
+    // The old Ed25519 entries (tak_p2p_privkey / tak_p2p_pubkey) are never read: an Ed25519 secret is also a valid
+    // secp256k1 scalar and would silently become a different npub (docs/decisions/0010). Only ClearIdentityAsync removes them.
+    private const string IdentityKey = "tak.identity.v1";
+
     private readonly IJSRuntime _js;
 
     public BrowserStorage(IJSRuntime js)
@@ -40,45 +45,40 @@ public sealed class BrowserStorage
         }
     }
 
+    /// <summary>
+    /// Loads the identity, or creates and stores one on first use. A stored identity that cannot be read throws
+    /// <see cref="IdentityFormatException"/> and is left untouched (never silently replaced).
+    /// </summary>
     public async Task<(string PrivKeyHex, string PubKeyHex)> GetOrCreateKeypairAsync()
     {
-        string? privKey = await GetItemAsync("tak_p2p_privkey");
-        string? pubKey = await GetItemAsync("tak_p2p_pubkey");
-
-        if (!string.IsNullOrEmpty(privKey) && !string.IsNullOrEmpty(pubKey))
+        string? document = await ReadIdentityAsync();
+        if (!string.IsNullOrEmpty(document))
         {
-            return (privKey, pubKey);
+            SecretKey stored = IdentityDocument.Parse(document);
+            return (stored.ToHex(), stored.PublicKey.ToHex());
         }
 
-        var (generatedPriv, generatedPub) = CryptoSigner.GenerateKeyPair();
-        await SetItemAsync("tak_p2p_privkey", generatedPriv);
-        await SetItemAsync("tak_p2p_pubkey", generatedPub);
-
-        return (generatedPriv, generatedPub);
+        SecretKey created = SecretKey.Generate(() => RandomNumberGenerator.GetBytes(SecretKey.Length));
+        await SetItemAsync(IdentityKey, IdentityDocument.Serialize(created));
+        return (created.ToHex(), created.PublicKey.ToHex());
     }
 
-    public async Task SetKeypairAsync(string privKeyHex, string pubKeyHex)
+    // Unlike GetItemAsync, a failed read must not look like "no identity": that would generate a key and overwrite the stored one.
+    private async Task<string?> ReadIdentityAsync()
     {
-        await SetItemAsync("tak_p2p_privkey", privKeyHex);
-        await SetItemAsync("tak_p2p_pubkey", pubKeyHex);
+        return await _js.InvokeAsync<string?>("localStorage.getItem", IdentityKey);
     }
 
+    /// <summary>Replaces the identity with an imported nsec or 64-char hex secret; throws <see cref="InvalidKeyException"/> if invalid.</summary>
     public async Task<(string PrivKeyHex, string PubKeyHex)> ImportPrivateKeyAsync(string privateKeyOrNsec)
     {
-        string privHex;
-        if (privateKeyOrNsec.StartsWith("nsec1", StringComparison.OrdinalIgnoreCase))
-        {
-            var (_, hex) = Nip19.Decode(privateKeyOrNsec);
-            privHex = hex;
-        }
-        else
-        {
-            privHex = privateKeyOrNsec.Trim().ToLowerInvariant();
-        }
+        string input = privateKeyOrNsec.Trim();
+        SecretKey key = input.StartsWith("nsec1", StringComparison.OrdinalIgnoreCase)
+            ? SecretKey.FromNsec(input)
+            : SecretKey.FromHex(input);
 
-        string pubHex = CryptoSigner.GetPublicKeyHex(privHex);
-        await SetKeypairAsync(privHex, pubHex);
-        return (privHex, pubHex);
+        await SetItemAsync(IdentityKey, IdentityDocument.Serialize(key));
+        return (key.ToHex(), key.PublicKey.ToHex());
     }
 
     public async Task<string?> GetNicknameAsync()
@@ -129,6 +129,7 @@ public sealed class BrowserStorage
     {
         try
         {
+            await _js.InvokeVoidAsync("localStorage.removeItem", IdentityKey);
             await _js.InvokeVoidAsync("localStorage.removeItem", "tak_p2p_privkey");
             await _js.InvokeVoidAsync("localStorage.removeItem", "tak_p2p_pubkey");
             await _js.InvokeVoidAsync("localStorage.removeItem", "tak_p2p_nickname");

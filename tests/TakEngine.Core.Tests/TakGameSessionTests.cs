@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TakEngine.Abstractions;
 using TakEngine.Core.Cryptography;
 using TakEngine.Core.Session;
+using TakEngine.Crypto;
 using Xunit;
 
 namespace TakEngine.Core.Tests;
@@ -160,8 +161,10 @@ public class TakGameSessionTests
     [Fact]
     public void RemoteP2P_SynchronizesMovesAndHashChain()
     {
-        var (alicePub, alicePriv) = CryptoSigner.GenerateKeyPair();
-        var (bobPub, bobPriv) = CryptoSigner.GenerateKeyPair();
+        SecretKey alicePriv = TestKeys.Create(1);
+        SecretKey bobPriv = TestKeys.Create(2);
+        string alicePub = alicePriv.PublicKey.ToHex();
+        string bobPub = bobPriv.PublicKey.ToHex();
         var gameId = GameId.New();
 
         var aliceSession = TakGameSession.CreateRemote(
@@ -169,14 +172,14 @@ public class TakGameSessionTests
             BoardSize.Five,
             PlayerColor.White,
             alicePriv,
-            bobPub);
+            bobPriv.PublicKey);
 
         var bobSession = TakGameSession.CreateRemote(
             gameId,
             BoardSize.Five,
             PlayerColor.Black,
             bobPriv,
-            alicePub);
+            alicePriv.PublicKey);
 
         Assert.Equal(aliceSession.CurrentStateHash, bobSession.CurrentStateHash);
 
@@ -221,9 +224,11 @@ public class TakGameSessionTests
     [Fact]
     public void RemoteP2P_DetectsProtocolViolations()
     {
-        var (alicePub, alicePriv) = CryptoSigner.GenerateKeyPair();
-        var (bobPub, bobPriv) = CryptoSigner.GenerateKeyPair();
-        var (attackerPub, attackerPriv) = CryptoSigner.GenerateKeyPair();
+        SecretKey alicePriv = TestKeys.Create(1);
+        SecretKey bobPriv = TestKeys.Create(2);
+        SecretKey attackerPriv = TestKeys.Create(3);
+        string alicePub = alicePriv.PublicKey.ToHex();
+        string attackerPub = attackerPriv.PublicKey.ToHex();
         var gameId = GameId.New();
 
         var bobSession = TakGameSession.CreateRemote(
@@ -231,13 +236,13 @@ public class TakGameSessionTests
             BoardSize.Five,
             PlayerColor.Black,
             bobPriv,
-            alicePub);
+            alicePriv.PublicKey);
 
         ProtocolViolationException? caughtViolation = null;
         bobSession.OnProtocolViolationDetected += ex => caughtViolation = ex;
 
         // 1. Attacker pubkey violation
-        string fakeSig = CryptoSigner.Sign(attackerPriv, $"{bobSession.CurrentStateHash}:a1");
+        string fakeSig = PayloadSignature.Sign(attackerPriv, $"{bobSession.CurrentStateHash}:a1");
         var res1 = bobSession.ProcessRemoteMove(attackerPub, bobSession.CurrentStateHash, "a1", fakeSig);
         Assert.False(res1.IsSuccess);
         Assert.NotNull(caughtViolation);
@@ -252,7 +257,7 @@ public class TakGameSessionTests
 
         // 3. Hash mismatch violation
         caughtViolation = null;
-        string validSig = CryptoSigner.Sign(alicePriv, $"{bobSession.CurrentStateHash}:a1");
+        string validSig = PayloadSignature.Sign(alicePriv, $"{bobSession.CurrentStateHash}:a1");
         var res3 = bobSession.ProcessRemoteMove(alicePub, "0000000000000000000000000000000000000000000000000000000000000000", "a1", validSig);
         Assert.False(res3.IsSuccess);
         Assert.NotNull(caughtViolation);

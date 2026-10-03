@@ -78,33 +78,4 @@ public class CryptoTests
         bool isValid = StateHasher.VerifyChain(tamperedChain, genesisHash);
         Assert.False(isValid);
     }
-
-    [Fact]
-    public void KeyPair_GeneratesValidEd25519_AndSignsVerifies()
-    {
-        var keyPair = CryptoSigner.GenerateKeyPair();
-
-        Assert.NotNull(keyPair.PublicKeyHex);
-        Assert.NotNull(keyPair.PrivateKeyHex);
-        Assert.Equal(64, keyPair.PublicKeyHex.Length); // 32 bytes hex
-        Assert.Equal(64, keyPair.PrivateKeyHex.Length); // 32 bytes hex
-
-        string message = "tak-move-payload-hash-3c3+12";
-        string signature = CryptoSigner.Sign(keyPair.PrivateKeyHex, message);
-
-        Assert.NotNull(signature);
-        Assert.Equal(128, signature.Length); // 64 bytes hex signature
-
-        bool verified = CryptoSigner.Verify(keyPair.PublicKeyHex, message, signature);
-        Assert.True(verified);
-
-        // Verification fails if message is altered
-        bool tampered = CryptoSigner.Verify(keyPair.PublicKeyHex, "tampered-payload", signature);
-        Assert.False(tampered);
-
-        // Verification fails with different key
-        var otherKeyPair = CryptoSigner.GenerateKeyPair();
-        bool wrongKey = CryptoSigner.Verify(otherKeyPair.PublicKeyHex, message, signature);
-        Assert.False(wrongKey);
-    }
 }

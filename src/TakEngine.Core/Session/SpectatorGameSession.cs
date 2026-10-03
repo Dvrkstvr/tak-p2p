@@ -100,7 +100,7 @@ public sealed class SpectatorGameSession : ISpectatorGameSession
 
         // 5. Verify Cryptographic Signature
         string signingPayload = envelope.GetSigningPayload();
-        if (!CryptoSigner.Verify(envelope.PlayerPubKey, signingPayload, envelope.Signature))
+        if (!PayloadSignature.Verify(envelope.PlayerPubKey, signingPayload, envelope.Signature))
         {
             RaiseDesync($"Invalid cryptographic signature on turn {envelope.TurnIndex} from {envelope.PlayerPubKey}");
             return false;

@@ -5,6 +5,7 @@ using TakEngine.Core.Board;
 using TakEngine.Core.Cryptography;
 using TakEngine.Core.Rules;
 using TakEngine.Core.Serialization;
+using TakEngine.Crypto;
 
 namespace TakEngine.Core.Session;
 
@@ -12,8 +13,8 @@ public sealed class TakGameSession : ITakGameSession
 {
     private readonly GameBoard _board;
     private readonly bool _isRemote;
-    private readonly string? _localPrivateKeyHex;
-    private readonly string? _opponentPubKeyHex;
+    private readonly SecretKey? _localKey;
+    private readonly PublicKey? _opponentPubKey;
     private string _currentStateHash;
 
     public GameId Id { get; }
@@ -40,14 +41,14 @@ public sealed class TakGameSession : ITakGameSession
         BoardSize size,
         PlayerColor localColor,
         bool isRemote,
-        string? localPrivateKeyHex = null,
-        string? opponentPubKeyHex = null)
+        SecretKey? localKey = null,
+        PublicKey? opponentPubKey = null)
     {
         Id = id;
         LocalColor = localColor;
         _isRemote = isRemote;
-        _localPrivateKeyHex = localPrivateKeyHex;
-        _opponentPubKeyHex = opponentPubKeyHex;
+        _localKey = localKey;
+        _opponentPubKey = opponentPubKey;
         _board = new GameBoard(size);
         _currentStateHash = StateHasher.ComputeGenesisHash(size);
     }
@@ -65,22 +66,25 @@ public sealed class TakGameSession : ITakGameSession
     }
 
     /// <summary>
-    /// Creates a remote P2P session with deterministic local color and cryptographic signing.
+    /// Creates a remote P2P session: local moves are signed with the player's secp256k1 key, remote moves must come
+    /// from <paramref name="opponentPubKey"/>.
     /// </summary>
     public static TakGameSession CreateRemote(
         GameId id,
         BoardSize size,
         PlayerColor localColor,
-        string localPrivateKeyHex,
-        string opponentPubKeyHex)
+        SecretKey localKey,
+        PublicKey opponentPubKey)
     {
+        ArgumentNullException.ThrowIfNull(localKey);
+        ArgumentNullException.ThrowIfNull(opponentPubKey);
         return new TakGameSession(
             id,
             size,
             localColor,
             isRemote: true,
-            localPrivateKeyHex: localPrivateKeyHex,
-            opponentPubKeyHex: opponentPubKeyHex);
+            localKey: localKey,
+            opponentPubKey: opponentPubKey);
     }
 
     public IReadOnlyList<TakMove> GetLegalMovesForSquare(Coord coord)
@@ -176,7 +180,7 @@ public sealed class TakGameSession : ITakGameSession
             return CommandResult.Fail(ex.Message);
         }
 
-        if (_opponentPubKeyHex != null && !string.Equals(playerPubKey, _opponentPubKeyHex, StringComparison.OrdinalIgnoreCase))
+        if (_opponentPubKey != null && !string.Equals(playerPubKey, _opponentPubKey.ToHex(), StringComparison.OrdinalIgnoreCase))
         {
             var ex = new ProtocolViolationException($"Received move from unauthorized pubkey: {playerPubKey}");
             OnProtocolViolationDetected?.Invoke(ex);
@@ -191,9 +195,9 @@ public sealed class TakGameSession : ITakGameSession
             return CommandResult.Fail(ex.Message);
         }
 
-        // Verify Ed25519 signature over (prevStateHash + ptnMove)
+        // Verify the BIP-340 signature over (prevStateHash + ptnMove); F-033 replaces this payload with ActionDigest
         string payload = $"{prevStateHash}:{ptnMove}";
-        if (!CryptoSigner.Verify(playerPubKey, payload, signature))
+        if (!PayloadSignature.Verify(playerPubKey, payload, signature))
         {
             var ex = new ProtocolViolationException("Invalid cryptographic signature on remote move payload.");
             OnProtocolViolationDetected?.Invoke(ex);
@@ -242,8 +246,8 @@ public sealed class TakGameSession : ITakGameSession
         string ptn = move.ToPtn();
         string tps = TpsSerializer.Serialize(_board);
 
-        string playerPubKey = _isRemote && _localPrivateKeyHex != null
-            ? CryptoSigner.GetPublicKeyHex(_localPrivateKeyHex)
+        string playerPubKey = _isRemote && _localKey != null
+            ? _localKey.PublicKey.ToHex()
             : "local-player";
 
         string prevHash = _currentStateHash;
@@ -251,11 +255,11 @@ public sealed class TakGameSession : ITakGameSession
 
         OnMoveExecuted?.Invoke(snapshot, move);
 
-        if (_isRemote && _localPrivateKeyHex != null)
+        if (_isRemote && _localKey != null)
         {
             // Compute signature over previous state hash + ptn move
             string payload = $"{prevHash}:{ptn}";
-            string sig = CryptoSigner.Sign(_localPrivateKeyHex, payload);
+            string sig = PayloadSignature.Sign(_localKey, payload);
             OnRemoteEnvelopeReady?.Invoke(sig);
         }
 
