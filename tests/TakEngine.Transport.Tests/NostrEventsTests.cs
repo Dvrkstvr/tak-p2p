@@ -152,6 +152,26 @@ public class NostrEventsTests
         Assert.False(NostrEvents.Verify(e));
     }
 
+    [Theory]
+    [InlineData("id")]
+    [InlineData("sig")]
+    [InlineData("content")]
+    [InlineData("tags")]
+    public void ExactlyOneNullField_InAnOtherwiseValidEvent_FailsVerification_WithoutThrowing(string field)
+    {
+        NostrEvent e = Copy(SignedByAlice());
+        Assert.True(NostrEvents.Verify(e)); // the copy is valid until one field is nulled
+        switch (field)
+        {
+            case "id": e.Id = null!; break;
+            case "sig": e.Sig = null!; break;
+            case "content": e.Content = null!; break;
+            case "tags": e.Tags = null!; break;
+        }
+
+        Assert.False(NostrEvents.Verify(e));
+    }
+
     [Fact]
     public void NullTagValue_InAnOtherwiseValidEvent_FailsVerification()
     {
