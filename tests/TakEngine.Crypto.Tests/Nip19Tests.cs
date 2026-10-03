@@ -102,7 +102,7 @@ public class Nip19Tests
     }
 
     [Theory]
-    [InlineData(5)]   // 8 five-bit groups: the decoder ends with exactly 8 buffered bits
+    [InlineData(5)]   // 8 five-bit groups: after the 8th the decoder holds exactly 8 buffered bits (one byte to emit)
     [InlineData(10)]
     [InlineData(32)]
     public void PayloadsOfAnyLength_RoundTripThroughEncodeAndDecode(int length)
