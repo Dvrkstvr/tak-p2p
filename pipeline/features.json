@@ -304,7 +304,7 @@
         "Owed to the user: enable required status check on main"
       ],
       "passes": false,
-      "evidence": "Seen in code: neither .github/workflows/deploy-gh-pages.yml nor release.yml has a test step. docs/AUDIT.md flagged this as Critical on 2026-09-12; still open."
+      "evidence": "Seen running 2026-10-03: ci.yml on ubuntu-latest restores, builds, format-checks and tests TakGame.Ci.slnf (no Android/iOS workloads needed) excluding Category=LiveRelay. Milestone branch m0a-crypto-fake-relay-game green: run 37117005641 (https://github.com/Dvrkstvr/tak-p2p/actions/runs/37117005641). Throwaway branch ci-gate-proof-f029 with GateProofTests.DeliberatelyRed_ProvesTheCiGate: red run 37117088437 (https://github.com/Dvrkstvr/tak-p2p/actions/runs/37117088437), failed step 'Test (excluding LiveRelay)'; green after revert: run 37117165333 (https://github.com/Dvrkstvr/tak-p2p/actions/runs/37117165333); branch deleted locally and on origin. Seen in code: deploy-gh-pages.yml job test uses ./.github/workflows/ci.yml and build-and-deploy has needs: test (not exercised live: that needs a push to main, which D-031 forbids). Owed to the user: enable the required status check on main. release.yml gets its gate in M7."
     },
     {
       "id": "F-030",
