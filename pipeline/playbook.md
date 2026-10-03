@@ -39,6 +39,8 @@ dotnet test TakGame.Ci.slnf --no-build --filter "Category!=LiveRelay"
   Fix with `dotnet format TakGame.Ci.slnf`.
 - `dotnet test` prints one summary per test assembly; any failure in any assembly is red. Known flake until F-015 deletes it:
   `TransportBenchmarkTests.RoundTripPayloadProcessing_CompletesWellUnder300ms` (wall-clock, failed once at exactly 300 ms on a cold Release run).
+- Watching CI: until `ci.yml` is on main, `gh run list --workflow ci.yml` returns 404. Find the branch's run with
+  `gh api "repos/Dvrkstvr/tak-p2p/actions/runs?head_sha=<sha>"` (the entry whose `path` is `.github/workflows/ci.yml`), then `gh run watch <id> --exit-status`.
 - Full solution incl. mobile heads (local only, needs the android/ios workloads): `dotnet build TakGame.sln`.
 
 ### Live-relay tests (by hand, never in CI)
