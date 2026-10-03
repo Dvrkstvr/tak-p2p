@@ -9,6 +9,7 @@
 - feasibility: amber · H-open 0 · M-open 3 · spiked 4
 - milestone: M0-A (CI gate, crypto, fake-relay game) · features passing 16/56 · M0 14 new features open · owed checks 4
 - next: build M0-A test-first: F-029 → F-031/F-032/F-015 crypto → F-033 → F-034 → F-035/F-017 → F-016 → `/pipeline:run`
+- autopilot: M0-A · round 1/12 · progress 7·0·16·0 · stall 0
 
 ## Stages
 | # | Stage | State | Gate | Date |
