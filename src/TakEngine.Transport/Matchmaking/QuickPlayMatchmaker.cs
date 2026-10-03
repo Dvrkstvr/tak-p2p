@@ -46,7 +46,7 @@ public sealed class QuickPlayMatchmaker
             Content = content
         };
 
-        evt.Id = evt.ComputeId();
+        evt.Id = Nip01Serializer.ComputeId(evt);
         return evt;
     }
 

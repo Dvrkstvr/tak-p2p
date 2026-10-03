@@ -19,6 +19,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- NIP-01 known-good events from independent implementations: nip01-vectors.json (make_nip01_vectors.py, Python
+         json/hashlib + BIP-340 reference) and the spike's Python-verified events (pipeline/spikes/R-002-R-003-secp256k1-crypto/out/). -->
+    <EmbeddedResource Include="Vectors\*.json;Vectors\*.jsonl" LogicalName="Vectors/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\TakEngine.Abstractions\TakEngine.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\TakEngine.Transport\TakEngine.Transport.csproj" />
   </ItemGroup>

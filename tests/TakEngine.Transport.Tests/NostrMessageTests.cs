@@ -10,7 +10,7 @@ namespace TakEngine.Transport.Tests;
 public class NostrMessageTests
 {
     [Fact]
-    public void NostrEvent_ComputeId_ReturnsSha256Hex()
+    public void Nip01Serializer_ComputeId_ReturnsSha256Hex()
     {
         var evt = new NostrEvent
         {
@@ -21,7 +21,7 @@ public class NostrMessageTests
             Content = "test content"
         };
 
-        string id = evt.ComputeId();
+        string id = Nip01Serializer.ComputeId(evt);
 
         Assert.Equal(64, id.Length);
         Assert.Matches("^[0-9a-f]{64}$", id);

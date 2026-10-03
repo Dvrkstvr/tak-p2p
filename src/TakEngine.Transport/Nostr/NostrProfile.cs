@@ -40,7 +40,7 @@ public sealed record NostrProfile(
             Tags = new(),
             Content = json
         };
-        evt.Id = evt.ComputeId();
+        evt.Id = Nip01Serializer.ComputeId(evt);
         return evt;
     }
 }

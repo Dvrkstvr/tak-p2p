@@ -117,7 +117,7 @@ public sealed class NostrTransportClient : IAsyncDisposable
             ],
             Content = encryptedContent
         };
-        evt.Id = evt.ComputeId();
+        evt.Id = Nip01Serializer.ComputeId(evt);
 
         int publishedCount = 0;
         foreach (var relay in _relays)
@@ -197,6 +197,10 @@ public sealed class NostrTransportClient : IAsyncDisposable
         if (message is EventRelayMessage eventMsg)
         {
             var evt = eventMsg.Event;
+
+            // Nothing is decrypted or parsed until the id and BIP-340 signature check out; failures are dropped silently.
+            if (!NostrEvents.Verify(evt))
+                return;
 
             // Handle Kind 0 Metadata (Profile / Nickname)
             if (evt.Kind == 0)
