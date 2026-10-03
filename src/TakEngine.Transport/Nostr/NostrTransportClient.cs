@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using TakEngine.Crypto;
 
 namespace TakEngine.Transport.Nostr;
 
@@ -100,8 +102,8 @@ public sealed class NostrTransportClient : IAsyncDisposable
         CancellationToken cancellationToken = default)
     {
         string json = JsonSerializer.Serialize(envelope);
-        byte[] sharedSecret = Nip44Encryption.DeriveSharedSecret(_localPrivKey, recipientPubKey);
-        string encryptedContent = Nip44Encryption.Encrypt(json, sharedSecret);
+        byte[] conversationKey = Nip44.ConversationKey(SecretKey.FromHex(_localPrivKey), PublicKey.FromHex(recipientPubKey));
+        string encryptedContent = Nip44.Encrypt(json, conversationKey, RandomNumberGenerator.GetBytes(Nip44.NonceLength));
 
         var evt = new NostrEvent
         {
@@ -212,8 +214,8 @@ public sealed class NostrTransportClient : IAsyncDisposable
 
             try
             {
-                byte[] sharedSecret = Nip44Encryption.DeriveSharedSecret(_localPrivKey, evt.Pubkey);
-                string decryptedJson = Nip44Encryption.Decrypt(evt.Content, sharedSecret);
+                byte[] conversationKey = Nip44.ConversationKey(SecretKey.FromHex(_localPrivKey), PublicKey.FromHex(evt.Pubkey));
+                string decryptedJson = Nip44.Decrypt(evt.Content, conversationKey);
 
                 var envelope = JsonSerializer.Deserialize<TransportEnvelope>(decryptedJson);
                 if (envelope != null)
