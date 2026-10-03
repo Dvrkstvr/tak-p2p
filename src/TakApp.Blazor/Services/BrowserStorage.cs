@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.JSInterop;
 using TakEngine.Core.Cryptography;
+using TakEngine.Crypto;
 
 namespace TakApp.Blazor.Services;
 

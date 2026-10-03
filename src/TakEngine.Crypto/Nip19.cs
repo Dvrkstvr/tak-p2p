@@ -2,13 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace TakEngine.Core.Cryptography;
+namespace TakEngine.Crypto;
 
 /// <summary>
-/// Implements NIP-19 Bech32 encoding and decoding for Nostr identities (npub, nsec).
+/// NIP-19 bech32 encoding and decoding for Nostr identities (npub, nsec). Moved from TakEngine.Core.Cryptography (F-031).
 /// </summary>
 public static class Nip19
 {
+    public const string NpubPrefix = "npub";
+    public const string NsecPrefix = "nsec";
+
     private const string Charset = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
     private static readonly uint[] Generator = [0x3b6a57b2u, 0x26508e6du, 0x1ea119fau, 0x3d4233ddu, 0x2a1462b3u];
 
@@ -26,9 +29,14 @@ public static class Nip19
 
     public static (string Hrp, string Hex) Decode(string bech32String)
     {
-        if (string.IsNullOrWhiteSpace(bech32String))
-            throw new ArgumentException("Input cannot be empty.", nameof(bech32String));
+        var (hrp, data) = DecodeToBytes(bech32String);
+        return (hrp, Convert.ToHexStringLower(data));
+    }
 
+    /// <summary>Decodes any bech32 string to its human-readable part and payload bytes. Throws <see cref="FormatException"/> on a bad checksum, character or padding.</summary>
+    public static (string Hrp, byte[] Data) DecodeToBytes(string bech32String)
+    {
+        ArgumentNullException.ThrowIfNull(bech32String);
         bech32String = bech32String.Trim().ToLowerInvariant();
         int pos = bech32String.LastIndexOf('1');
         if (pos < 1 || pos + 7 > bech32String.Length)
@@ -53,7 +61,28 @@ public static class Nip19
         Array.Copy(values, 0, payload5Bit, 0, payload5Bit.Length);
 
         byte[] bytes = ConvertBits(payload5Bit, 5, 8, false);
-        return (hrp, Convert.ToHexStringLower(bytes));
+        return (hrp, bytes);
+    }
+
+    /// <summary>Decodes an npub/nsec and checks its prefix. Every failure is an <see cref="InvalidKeyException"/> with a specific message.</summary>
+    internal static byte[] DecodeKey(string bech32String, string expectedHrp)
+    {
+        var (hrp, data) = DecodeAsKey(bech32String, expectedHrp);
+        if (hrp != expectedHrp)
+            throw new InvalidKeyException($"Expected an {expectedHrp}, got '{hrp}'.");
+        return data;
+    }
+
+    private static (string Hrp, byte[] Data) DecodeAsKey(string bech32String, string expectedHrp)
+    {
+        try
+        {
+            return DecodeToBytes(bech32String);
+        }
+        catch (FormatException ex)
+        {
+            throw new InvalidKeyException($"Not a valid {expectedHrp}: {ex.Message}", ex);
+        }
     }
 
     public static string Encode(string hrp, byte[] data)

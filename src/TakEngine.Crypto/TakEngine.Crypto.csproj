@@ -1,13 +1,15 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- secp256k1 identity, BIP-340, NIP-44 v2, NIP-19 (docs/decisions/0001, 0002). Pure: no I/O, clock or RNG.
+       Bump NBitcoin.Secp256k1 only with the full vector suite in tests/TakEngine.Crypto.Tests green. -->
 
   <ItemGroup>
     <ProjectReference Include="..\TakEngine.Abstractions\TakEngine.Abstractions.csproj" />
-    <ProjectReference Include="..\TakEngine.Crypto\TakEngine.Crypto.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.7.0" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
+    <PackageReference Include="NBitcoin.Secp256k1" Version="4.0.3" />
   </ItemGroup>
 
   <PropertyGroup>
