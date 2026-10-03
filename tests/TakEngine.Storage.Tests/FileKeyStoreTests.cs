@@ -103,4 +103,68 @@ public sealed class FileKeyStoreTests : IDisposable
 
         Assert.False(File.Exists(IdentityPath));
     }
+
+    [Fact]
+    public async Task SaveNewSecret_WithACancelledToken_LeavesNoTempFileAndNoIdentity()
+    {
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => new FileKeyStore(_dir).SaveNewSecretAsync(Convert.FromHexString(SpecNsecHex), cts.Token));
+
+        Assert.Empty(Directory.GetFiles(_dir, "*.tmp"));
+        Assert.False(File.Exists(IdentityPath));
+    }
+
+    [Fact]
+    public async Task SaveNewSecret_WhenTheFileCannotBeMovedIntoPlace_ReportsAWriteFailure_AndLeavesNoTempFile()
+    {
+        Directory.CreateDirectory(IdentityPath); // a directory where the file belongs: File.Exists is false, the move fails
+
+        var ex = await Assert.ThrowsAsync<KeyStoreException>(
+            () => new FileKeyStore(_dir).SaveNewSecretAsync(Convert.FromHexString(SpecNsecHex)));
+
+        Assert.Contains("could not be written", ex.Message);
+        Assert.DoesNotContain("never overwritten", ex.Message); // not the "identity already exists" report
+        Assert.Contains(IdentityPath, ex.Message);
+        Assert.NotNull(ex.InnerException);
+        Assert.DoesNotContain(SpecNsecHex, ex.ToString());
+        Assert.Empty(Directory.GetFiles(_dir, "*.tmp"));
+        Assert.True(Directory.Exists(IdentityPath));
+    }
+
+    [Fact]
+    public async Task SaveNewSecret_CreatesTheKeyFileReadableByTheOwnerOnly_OnUnix()
+    {
+        await new FileKeyStore(_dir).SaveNewSecretAsync(Convert.FromHexString(SpecNsecHex));
+
+        // Windows has no Unix mode bits (and UnixCreateMode throws there), so the assertion only applies elsewhere.
+        if (!OperatingSystem.IsWindows())
+            Assert.Equal(UnixFileMode.UserRead | UnixFileMode.UserWrite, File.GetUnixFileMode(IdentityPath));
+    }
+
+    [Fact]
+    public async Task UnreadableKeyFile_IsReportedAsAKeyStoreException_AndIsNotOverwritten()
+    {
+        Directory.CreateDirectory(_dir);
+        await File.WriteAllTextAsync(IdentityPath, "{\"v\":1,\"nsec\":\"nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5\"}");
+        byte[] before = await File.ReadAllBytesAsync(IdentityPath);
+
+        using (new FileStream(IdentityPath, FileMode.Open, FileAccess.Read, FileShare.None)) // exclusive lock: reading now fails with an IOException
+        {
+            var loadError = await Assert.ThrowsAsync<KeyStoreException>(() => new FileKeyStore(_dir).LoadSecretAsync());
+            var bootstrapError = await Assert.ThrowsAsync<KeyStoreException>(
+                () => IdentityBootstrap.LoadOrCreateAsync(new FileKeyStore(_dir), FixedRandom(SpecNsecHex)));
+
+            Assert.Contains(IdentityPath, loadError.Message);
+            Assert.Contains("could not be read", loadError.Message);
+            Assert.IsAssignableFrom<IOException>(loadError.InnerException);
+            Assert.DoesNotContain(SpecNsecHex, loadError.ToString());
+            Assert.Contains(IdentityPath, bootstrapError.Message);
+        }
+
+        Assert.Equal(before, await File.ReadAllBytesAsync(IdentityPath));
+        Assert.Single(Directory.GetFiles(_dir));
+    }
 }
