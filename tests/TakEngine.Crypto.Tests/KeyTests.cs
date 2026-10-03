@@ -173,6 +173,29 @@ public class KeyTests
     }
 
     [Fact]
+    public void PublicKey_EqualityOperators_CompareByValue_AndAreNullSafe()
+    {
+        const string hex = "f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9";
+        PublicKey a = PublicKey.FromHex(hex);
+        PublicKey sameValue = PublicKey.FromHex(hex.ToUpperInvariant());
+        PublicKey other = SecretKey.FromHex("b7e151628aed2a6abf7158809cf4f3c762e7160f38b4da56a784d9045190cfef").PublicKey;
+        PublicKey? none = null;
+        PublicKey? alsoNone = null;
+
+        Assert.False(ReferenceEquals(a, sameValue));
+        Assert.True(a == sameValue);
+        Assert.False(a != sameValue);
+        Assert.True(a != other);
+        Assert.False(a == other);
+        Assert.True(none == alsoNone);
+        Assert.False(none != alsoNone);
+        Assert.True(a != none);
+        Assert.False(a == none);
+        Assert.True(none != a);
+        Assert.False(none == a);
+    }
+
+    [Fact]
     public void SecretKey_ToBytesAndToHex_RoundTrip_AndToStringHidesTheSecret()
     {
         const string hex = "b7e151628aed2a6abf7158809cf4f3c762e7160f38b4da56a784d9045190cfef";

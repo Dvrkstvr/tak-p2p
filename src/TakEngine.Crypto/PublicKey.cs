@@ -101,5 +101,10 @@ public sealed class PublicKey : IEquatable<PublicKey>
 
     public override int GetHashCode() => BitConverter.ToInt32(_bytes, 0);
 
+    /// <summary>Value equality, null-safe: two instances for the same key are <c>==</c> (reference comparison would say otherwise).</summary>
+    public static bool operator ==(PublicKey? left, PublicKey? right) => left is null ? right is null : left.Equals(right);
+
+    public static bool operator !=(PublicKey? left, PublicKey? right) => !(left == right);
+
     public override string ToString() => ToHex();
 }
