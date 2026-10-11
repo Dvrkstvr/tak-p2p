@@ -245,9 +245,6 @@ public sealed class TakGameSession : ITakGameSession
         if (!ActionDigest.Verify(action))
             return Violation("Invalid cryptographic signature on remote action.");
 
-        if (!string.Equals(action.PrevStateHash, _currentStateHash, StringComparison.Ordinal))
-            return Violation($"Hash chain mismatch. Expected: {_currentStateHash}, Received: {action.PrevStateHash}");
-
         return action.ActionType switch
         {
             GameActionType.Move => ApplyRemoteMove(action),
@@ -258,6 +255,9 @@ public sealed class TakGameSession : ITakGameSession
 
     private CommandResult ApplyRemoteMove(SignedGameAction action)
     {
+        if (!string.Equals(action.PrevStateHash, _currentStateHash, StringComparison.Ordinal))
+            return Violation($"Hash chain mismatch. Expected: {_currentStateHash}, Received: {action.PrevStateHash}");
+
         if (action.Turn != _appliedTurn + 1)
             return Violation($"Wrong turn number. Expected: {_appliedTurn + 1}, Received: {action.Turn}");
 
@@ -303,8 +303,10 @@ public sealed class TakGameSession : ITakGameSession
 
     private CommandResult ApplyRemoteResign(SignedGameAction action)
     {
-        if (action.Turn != _appliedTurn)
-            return Violation($"Wrong turn number on RESIGN. Expected: {_appliedTurn}, Received: {action.Turn}");
+        // scope.md "Resign": not conditioned on the hash chain, so a resign sent while the resigner's last move is still in
+        // flight lands too; the resigner's appliedTurn may be one ahead of ours.
+        if (action.Turn < 0 || action.Turn > _appliedTurn + 1)
+            return Violation($"RESIGN at turn {action.Turn} is ahead of this game (applied {_appliedTurn}).");
         if (action.ActionData.Count != 0)
             return Violation("A RESIGN action carries no data.");
 

@@ -118,6 +118,32 @@ public class RemoteSessionTests
     }
 
     [Fact]
+    public void Resign_SentWhileTheResignersMoveIsInFlight_StillLands()
+    {
+        var pair = new RemoteSessionPair();
+        pair.Play(["e5", "a1"]);
+        RemoteSessionPair.Submit(pair.Alice, "b1"); // ply 3 never reaches Bob
+        Assert.True(pair.Alice.Resign().IsSuccess);
+        SignedGameAction resign = pair.Emitted[^1];
+        Assert.Equal(3, resign.Turn);
+        Assert.NotEqual(pair.Bob.CurrentStateHash, resign.PrevStateHash);
+
+        Assert.True(pair.Bob.ProcessRemoteAction(resign).IsSuccess);
+        Assert.Equal(PlayerColor.Black, pair.Bob.Result!.Winner);
+    }
+
+    [Fact]
+    public void Resign_FromTooFarAhead_IsAViolation()
+    {
+        var pair = new RemoteSessionPair();
+        var resign = ActionDigest.Sign(pair.Keys.Alice, SignedGameAction.Unsigned(GameActionType.Resign, RemoteSessionPair.Game.Value, 2,
+            pair.Keys.Alice.PublicKey.ToHex(), pair.Bob.CurrentStateHash), new byte[32]);
+
+        AssertRejectedWithoutChange(pair.Bob, resign);
+        Assert.Null(pair.Bob.Result);
+    }
+
+    [Fact]
     public void Restore_ContinuesTheSameChain()
     {
         var pair = new RemoteSessionPair();
