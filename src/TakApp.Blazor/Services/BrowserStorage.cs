@@ -44,16 +44,30 @@ public sealed class BrowserStorage
         string? privKey = await GetItemAsync("tak_p2p_privkey");
         string? pubKey = await GetItemAsync("tak_p2p_pubkey");
 
-        if (!string.IsNullOrEmpty(privKey) && !string.IsNullOrEmpty(pubKey))
+        if (!string.IsNullOrEmpty(privKey) && !string.IsNullOrEmpty(pubKey) && IsMatchingKeypair(privKey, pubKey))
         {
             return (privKey, pubKey);
         }
 
-        var (generatedPriv, generatedPub) = CryptoSigner.GenerateKeyPair();
-        await SetItemAsync("tak_p2p_privkey", generatedPriv);
-        await SetItemAsync("tak_p2p_pubkey", generatedPub);
+        // Earlier builds stored the two keys swapped and showed the private key as the "npub", so a stored
+        // pair that doesn't match is treated as exposed and replaced with a fresh identity.
+        KeyPair generated = CryptoSigner.GenerateKeyPair();
+        await SetItemAsync("tak_p2p_privkey", generated.PrivateKeyHex);
+        await SetItemAsync("tak_p2p_pubkey", generated.PublicKeyHex);
 
-        return (generatedPriv, generatedPub);
+        return (generated.PrivateKeyHex, generated.PublicKeyHex);
+    }
+
+    private static bool IsMatchingKeypair(string privKeyHex, string pubKeyHex)
+    {
+        try
+        {
+            return string.Equals(CryptoSigner.GetPublicKeyHex(privKeyHex), pubKeyHex, StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public async Task SetKeypairAsync(string privKeyHex, string pubKeyHex)
