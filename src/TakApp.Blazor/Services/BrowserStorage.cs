@@ -59,7 +59,7 @@ public sealed class BrowserStorage
         }
 
         SecretKey created = SecretKey.Generate(() => RandomNumberGenerator.GetBytes(SecretKey.Length));
-        await SetItemAsync(IdentityKey, IdentityDocument.Serialize(created));
+        await WriteIdentityAsync(IdentityDocument.Serialize(created));
         return (created.ToHex(), created.PublicKey.ToHex());
     }
 
@@ -67,6 +67,12 @@ public sealed class BrowserStorage
     private async Task<string?> ReadIdentityAsync()
     {
         return await _js.InvokeAsync<string?>("localStorage.getItem", IdentityKey);
+    }
+
+    // Unlike SetItemAsync, a failed write must throw: returning a key that was never stored would give every later call a new npub.
+    private async Task WriteIdentityAsync(string document)
+    {
+        await _js.InvokeVoidAsync("localStorage.setItem", IdentityKey, document);
     }
 
     /// <summary>Replaces the identity with an imported nsec or 64-char hex secret; throws <see cref="InvalidKeyException"/> if invalid.</summary>
@@ -77,7 +83,7 @@ public sealed class BrowserStorage
             ? SecretKey.FromNsec(input)
             : SecretKey.FromHex(input);
 
-        await SetItemAsync(IdentityKey, IdentityDocument.Serialize(key));
+        await WriteIdentityAsync(IdentityDocument.Serialize(key));
         return (key.ToHex(), key.PublicKey.ToHex());
     }
 

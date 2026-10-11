@@ -9,7 +9,8 @@ public static class IdentityBootstrap
     /// <summary>
     /// Returns the stored key; on first run generates one from <paramref name="random32"/> (the head passes
     /// <c>() =&gt; RandomNumberGenerator.GetBytes(32)</c>) and saves it. An unreadable store throws
-    /// <see cref="KeyStoreException"/> and nothing is generated or written.
+    /// <see cref="KeyStoreException"/> and nothing is generated or written. If another process saves an identity first
+    /// (first-run race), that identity is loaded and returned.
     /// </summary>
     public static async Task<SecretKey> LoadOrCreateAsync(IKeyStore store, Func<byte[]> random32, CancellationToken cancellationToken = default)
     {
@@ -21,7 +22,18 @@ public static class IdentityBootstrap
             return SecretKey.FromBytes(stored);
 
         SecretKey created = SecretKey.Generate(random32);
-        await store.SaveNewSecretAsync(created.ToBytes(), cancellationToken).ConfigureAwait(false);
-        return created;
+        try
+        {
+            await store.SaveNewSecretAsync(created.ToBytes(), cancellationToken).ConfigureAwait(false);
+            return created;
+        }
+        catch (KeyStoreException)
+        {
+            // Another process may have saved its identity between our load and save; that one wins, and we use it.
+            byte[]? raced = await store.LoadSecretAsync(cancellationToken).ConfigureAwait(false);
+            if (raced is null)
+                throw;
+            return SecretKey.FromBytes(raced);
+        }
     }
 }

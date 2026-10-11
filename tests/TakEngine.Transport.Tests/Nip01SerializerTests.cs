@@ -85,6 +85,17 @@ public class Nip01SerializerTests
     }
 
     [Fact]
+    public void Serialize_EscapesLoneSurrogatesLikeJsonStringify()
+    {
+        // Expected output is node's JSON.stringify([0,"ab",1,1,[["t","x\ud83d"]],"a\udc00b\ud83d\ude00"]): lone surrogates
+        // become lowercase \uXXXX escapes, a valid pair stays a raw character. UTF-8 encoding would otherwise turn a lone
+        // surrogate into U+FFFD and give a different id than the JS client that signed the event.
+        Assert.Equal(
+            "[0,\"ab\",1,1,[[\"t\",\"x\\ud83d\"]],\"a\\udc00b\ud83d\ude00\"]",
+            Nip01Serializer.Serialize("ab", 1, 1, [["t", "x\ud83d"]], "a\udc00b\ud83d\ude00"));
+    }
+
+    [Fact]
     public void Serialize_RejectsNullTagsAndTagValues()
     {
         List<List<string>> nullValue = [["p", null!]];

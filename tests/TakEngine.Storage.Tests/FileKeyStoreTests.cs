@@ -167,4 +167,22 @@ public sealed class FileKeyStoreTests : IDisposable
         Assert.Equal(before, await File.ReadAllBytesAsync(IdentityPath));
         Assert.Single(Directory.GetFiles(_dir));
     }
+
+    [Fact]
+    public async Task FirstRunRace_LoadsTheIdentityTheOtherProcessSaved()
+    {
+        const string otherHex = "0000000000000000000000000000000000000000000000000000000000000003";
+
+        // Another process saves its identity after this one found none but before this one saves.
+        SecretKey loaded = await IdentityBootstrap.LoadOrCreateAsync(new FileKeyStore(_dir), () =>
+        {
+            new FileKeyStore(_dir).SaveNewSecretAsync(Convert.FromHexString(otherHex)).GetAwaiter().GetResult();
+            return Convert.FromHexString(SpecNsecHex);
+        });
+
+        Assert.Equal(otherHex, loaded.ToHex());
+        Assert.Equal(otherHex, (await IdentityBootstrap.LoadOrCreateAsync(
+            new FileKeyStore(_dir), () => throw new InvalidOperationException("must not generate"))).ToHex());
+        Assert.Single(Directory.GetFiles(_dir));
+    }
 }

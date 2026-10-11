@@ -65,8 +65,9 @@ public static class Nip01Serializer
     private static void AppendString(StringBuilder sb, string value)
     {
         sb.Append('"');
-        foreach (char c in value)
+        for (int i = 0; i < value.Length; i++)
         {
+            char c = value[i];
             switch (c)
             {
                 case '"': sb.Append("\\\""); break;
@@ -77,10 +78,19 @@ public static class Nip01Serializer
                 case '\b': sb.Append("\\b"); break;
                 case '\f': sb.Append("\\f"); break;
                 default:
-                    if (c < ' ')
+                    if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+                    {
+                        sb.Append(c).Append(value[++i]); // a valid pair is one character, written raw
+                    }
+                    else if (c < ' ' || char.IsSurrogate(c))
+                    {
+                        // Control characters, and lone surrogates (UTF-8 can't encode them; JSON.stringify escapes them).
                         sb.Append("\\u").Append(((int)c).ToString("x4", CultureInfo.InvariantCulture));
+                    }
                     else
+                    {
                         sb.Append(c);
+                    }
                     break;
             }
         }

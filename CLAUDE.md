@@ -43,7 +43,7 @@ dotnet test TakGame.Ci.slnf --no-build --filter "Category!=LiveRelay"
    WebSockets only via `IRelaySocket` (real: `ClientWebSocket`, no `Options` set).
 5. **One key per player (D-011).** One secp256k1 key is the npub identity, signs events (BIP-340), derives NIP-44 v2 keys,
    and signs game actions. Test crypto between two independent peers; never decrypt with the sender's own keys.
-   Until F-031/F-015 land, `CryptoSigner` (Ed25519) and `Nip44Encryption` (SHA-256 stand-in, not ECDH) are wrong by design.
+   Implemented in `TakEngine.Crypto` (`SecretKey`/`PublicKey`, `Schnorr`, `Nip44`, `Nip19`); the old Ed25519 and fake NIP-44 code is deleted.
 6. **Wire format** (architecture.md, docs/decisions/0003-0004): kind 3825, tags exactly `p` + `g`, NIP-44 v2 content with
    `pv` judged first. NIP-01 ids come only from the hand-written `Nip01Serializer`, never System.Text.Json.
    Changing the format or the `ActionDigest` layout needs a new `pv` and a decision record.

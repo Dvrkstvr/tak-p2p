@@ -20,7 +20,7 @@ The web client runs in your browser without installing anything:
 **URL:** [https://dvrkstvr.github.io/tak-p2p/](https://dvrkstvr.github.io/tak-p2p/)
 
 * **Local play:** pass-and-play on one device, or play against the built-in AI. In-browser play has not been verified end to end yet.
-* **No accounts:** an identity keypair is generated and stored locally in your browser. It is currently Ed25519 and will become a secp256k1 Nostr key.
+* **No accounts:** an identity keypair is generated and stored locally in your browser. It is a secp256k1 Nostr key (npub/nsec).
 * **Invites (not working yet):** the client can create an invite link (`/?invite=TAK1_...`) or QR code, but opening one starts a local game rather than connecting to the other player.
 * **Responsive UI:** touch and mouse controls with vector SVG rendering.
 
@@ -66,7 +66,7 @@ Tak P2P is engineered with a strict **Separation of Concerns**—the determinist
 
 ### Detailed Device Breakdown: What Exists vs. What is Missing
 
-"Built" means the code exists and compiles; it has not yet been verified in a running app (see [pipeline/features.json](pipeline/features.json)). On every platform, **online play between two devices is missing**. Moves are never sent over relays, joining an invite starts a local game, and encryption between peers is not yet real NIP-44.
+"Built" means the code exists and compiles; it has not yet been verified in a running app (see [pipeline/features.json](pipeline/features.json)). On every platform, **online play between two devices is missing**. Moves are never sent over relays, and joining an invite starts a local game. The crypto underneath (BIP-340 signatures, NIP-44 v2 encryption, NIP-01 event ids) is real and tested against the official vectors, but nothing uses it for a game yet.
 
 #### 1. 🌐 Web Client (Desktop & Mobile Browsers)
 * **Method of Play:** Web application running client-side in the browser via WebAssembly (Blazor WASM).
@@ -92,7 +92,7 @@ Tak P2P is engineered with a strict **Separation of Concerns**—the determinist
   * Avalonia MVVM desktop application with board view, reserves, and PTN history. Its "remote" mode simulates both players in one process.
   * Spectre.Console terminal client (`TakApp.Cli`) with local play and play against the AI.
   * SQLite game storage with instant restore to any turn, used by the CLI.
-  * SHA-256 state hash chain and Ed25519 move signatures (engine level, unit-tested).
+  * SHA-256 state hash chain and BIP-340 (secp256k1) move signatures (engine level, unit-tested).
 * **⏳ Missing / Next:**
   * Online games over relays (see above).
   * MSIX / installer package, turn notifications, and an auto-updater.
