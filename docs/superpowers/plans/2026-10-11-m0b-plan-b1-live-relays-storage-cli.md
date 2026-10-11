@@ -144,27 +144,28 @@ Plans A1-A3 apply. In addition:
 
 ### Task 6: F-036: CLI `host` / `join` / `resume`
 
-**Files:** `src/TakApp.Cli/` split into `Commands/{Host,Join,Resume}Command.cs`, `GameLoop.cs`, `PlainOutput.cs`, `RichOutput.cs`, `Profile.cs`; `tests/TakApp.Cli.Tests/` (new, in sln/slnx/Ci.slnf).
+**Files:** `src/TakApp.Cli/Online/` (`OnlineArgs`, `OnlineCommand` for host/join/resume, `PlainOutput`, `RichOutput`, `Profile`); `tests/TakApp.Cli.Tests/` (new, in sln/slnx/Ci.slnf). The legacy `SqliteGameStorage` moved to Storage.Local first, so Core no longer pulls SQLite into Blazor.
 
-- [ ] Red, `PlainOutputTests`: each line format in playbook.md:
+- [x] Red, `PlainOutputTests`: each line format in playbook.md:
   - `INVITE`, `RELAY`, `SENT`, `APPLIED`, `REJECTED`, `WAITING`, `FINAL`
   - plus `NOTICE <text>` and `FLAG turn <n> <reason>`, added to playbook.md in the same commit.
-- [ ] Red, `ProfileTests`:
+- [x] Red, `ProfileTests`:
   - `--profile` and `--data-dir` resolve to `LocalApplicationData/tak-p2p/<profile>`.
   - The first run creates the key, and later runs reuse it.
   - A corrupt key file prints its error and exits 2 without touching the file.
-- [ ] Red, `TwoProcessTests` (CI, loopback only):
+- [x] Red, `TwoProcessTests` (CI, loopback only):
   - Start TakRelay.Local, then `host --plain`, then `join <invite> --plain`.
   - Feed the scripted 5x5 road win on stdin.
   - Both processes print the same `FINAL` line.
   - Kill the joiner mid-game, rerun the same command, and `APPLIED` resumes.
-- [ ] Red, failure exits:
+- [x] Red, failure exits:
   - A bad invite prints the invite spec's message and exits 2 with no relay traffic.
   - An unreachable relay list prints `RELAY <url> backoff …` and keeps retrying until Ctrl-C.
   - A taken invite prints "game already taken" on the host side, and the guest keeps waiting with a status line. (The guest never learns why; scope.md accepts this.)
-- [ ] Remove the simulated join, so `grep -i "simulation\|Connecting\.\.\." src/TakApp.Cli` is empty. The local game still starts from the menu.
-- [ ] Rich (non-plain) mode shows the same events in Spectre.Console with no new screens beyond status lines (D-006).
-- [ ] Commit `M0 F-036: CLI host, join and resume with the --plain contract`.
+- [x] Remove the simulated join, so `grep -i "simulation\|Connecting\.\.\." src/TakApp.Cli` is empty. The local game still starts from the menu.
+- [x] Rich (non-plain) mode shows the same events in Spectre.Console with no new screens beyond status lines (D-006).
+- [x] A finished game waits (up to 15 s) until a relay has taken its last event before the process exits; the two-process test caught the winning move being lost when the host exited at once.
+- [x] Commit `M0 F-036: CLI host, join and resume with the --plain contract`.
 
 ### Task 7: live runs (by hand, approved), evidence, close-out
 

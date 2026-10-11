@@ -3,7 +3,9 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Spectre.Console;
+using System.Threading;
 using TakApp.Cli.Input;
+using TakApp.Cli.Online;
 using TakApp.Cli.Rendering;
 using TakEngine.Abstractions;
 using TakEngine.Core.AI;
@@ -13,7 +15,7 @@ using TakEngine.Core.Serialization;
 using TakEngine.Core.Storage;
 using TakEngine.Storage.Local.Legacy;
 using TakEngine.Crypto;
-using TakEngine.Transport.Matchmaking;
+using TakEngine.Transport.Relay;
 
 namespace TakApp.Cli;
 
@@ -21,9 +23,11 @@ public static class Program
 {
     private static readonly string DbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tak.db");
 
-    public static async Task Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
+        if (args.Length > 0)
+            return await RunOnlineAsync(args);
 
         var storage = new SqliteGameStorage($"Data Source={DbPath}");
         await storage.InitializeAsync();
@@ -36,17 +40,16 @@ public static class Program
             AnsiConsole.MarkupLine("[bold cyan]MAIN MENU[/]");
             AnsiConsole.MarkupLine("[[1]] Local Match (Pass & Play)");
             AnsiConsole.MarkupLine("[[2]] Practice vs AI Bot (Offline)");
-            AnsiConsole.MarkupLine("[[3]] Quick Play Match (Nostr P2P)");
-            AnsiConsole.MarkupLine("[[4]] Create Direct Invite Code");
-            AnsiConsole.MarkupLine("[[5]] Join via Direct Invite Code");
-            AnsiConsole.MarkupLine("[[6]] Exit");
+            AnsiConsole.MarkupLine("[[3]] Exit");
+            AnsiConsole.WriteLine();
+            AnsiConsole.MarkupLine("[grey]Online play: start the program with [bold]host[/] to create an invite, or [bold]join <invite>[/] to answer one.[/]");
             AnsiConsole.WriteLine();
 
-            AnsiConsole.Markup("Select option [[1-6]]: ");
+            AnsiConsole.Markup("Select option [[1-3]]: ");
             string? choice = Console.ReadLine()?.Trim();
             if (choice == null)
             {
-                return;
+                return 0;
             }
 
             switch (choice)
@@ -58,19 +61,10 @@ public static class Program
                     await PlayVsAiMatchAsync(storage);
                     break;
                 case "3":
-                    await PlayQuickPlayAsync(storage);
-                    break;
-                case "4":
-                    CreateInviteCode();
-                    break;
-                case "5":
-                    await JoinInviteCodeAsync(storage);
-                    break;
-                case "6":
                 case "exit":
                 case "q":
                     AnsiConsole.MarkupLine("[grey]Goodbye![/]");
-                    return;
+                    return 0;
                 default:
                     AnsiConsole.MarkupLine("[red]Invalid option. Press Enter to continue.[/]");
                     Console.ReadLine();
@@ -330,73 +324,24 @@ public static class Program
         Console.ReadLine();
     }
 
-    private static async Task PlayQuickPlayAsync(SqliteGameStorage storage)
+    private static async Task<int> RunOnlineAsync(string[] args)
     {
-        SafeClear();
-        RenderHeader();
-        AnsiConsole.MarkupLine("[bold cyan]Quick Play Matchmaking[/]");
-        AnsiConsole.MarkupLine("Connecting to public Nostr relays: [grey]wss://relay.damus.io, wss://nos.lol, wss://relay.primal.net[/]...");
-
-        var keyPair = SecretKey.Generate(() => RandomNumberGenerator.GetBytes(SecretKey.Length));
-        var proposal = QuickPlayMatchmaker.CreateChallenge(BoardSize.Five, keyPair.PublicKey.ToHex());
-        var broadcast = QuickPlayMatchmaker.CreateBroadcastEvent(keyPair, BoardSize.Five, ["wss://relay.damus.io"], DateTimeOffset.UtcNow.ToUnixTimeSeconds(), RandomNumberGenerator.GetBytes(Schnorr.AuxLength));
-
-        AnsiConsole.MarkupLine($"[green]✓[/] Matchmaking ticket created with ephemeral key [grey]{keyPair.PublicKey.ToHex()[..12]}...[/]");
-        AnsiConsole.MarkupLine($"[yellow]Broadcast Kind: 20001 (TTL: 60s)[/] looking for opponent on 5x5 pool...");
-
-        // Simulate match setup for demonstration
-        AnsiConsole.MarkupLine("Starting match simulation. Press Enter to begin local peer session...");
-        Console.ReadLine();
-        await PlayLocalMatchAsync(storage);
-    }
-
-    private static void CreateInviteCode()
-    {
-        SafeClear();
-        RenderHeader();
-        AnsiConsole.MarkupLine("[bold cyan]Generate Direct Invite Code / QR[/]");
-
-        var keyPair = SecretKey.Generate(() => RandomNumberGenerator.GetBytes(SecretKey.Length));
-        var gameId = Guid.NewGuid();
-        // Not playable yet: `host` (F-036) keeps the nonce and runs the handshake; this menu entry only shows the format.
-        var invite = new InviteCode(gameId, keyPair.PublicKey.ToHex(), BoardSize.Five, 0, ["wss://relay.damus.io"],
-            ColorSeed.Commit(RandomNumberGenerator.GetBytes(ColorSeed.NonceLength)));
-
-        AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine("[bold yellow]Shareable Link (URI):[/]");
-        AnsiConsole.MarkupLine($"[underline cyan]{invite.ToUri()}[/]");
-        AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine("[bold yellow]Compact Code (QR Token):[/]");
-        AnsiConsole.MarkupLine($"[bold lime]{invite.ToCompactCode()}[/]");
-        AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine("Press Enter to return to main menu...");
-        Console.ReadLine();
-    }
-
-    private static async Task JoinInviteCodeAsync(SqliteGameStorage storage)
-    {
-        SafeClear();
-        RenderHeader();
-        AnsiConsole.MarkupLine("[bold cyan]Join Match via Invite Code[/]");
-        AnsiConsole.Markup("Paste Invite URI or TAK2_ Code: ");
-        string? input = Console.ReadLine()?.Trim();
-
-        if (string.IsNullOrEmpty(input))
-            return;
-
-        try
+        OnlineArgs? parsed = OnlineArgs.Parse(args, out string? error);
+        if (parsed is null)
         {
-            var invite = InviteCode.Parse(input);
-            AnsiConsole.MarkupLine($"[green]✓ Code verified![/] Game ID: [grey]{invite.GameId}[/], Board Size: [bold yellow]{invite.BoardSize}[/]");
-            AnsiConsole.MarkupLine("Connecting to host peer...");
-            await Task.Delay(500);
-            await PlayLocalMatchAsync(storage);
+            await Console.Error.WriteLineAsync(error);
+            return 2;
         }
-        catch (Exception ex)
+        using var stop = new CancellationTokenSource();
+        Console.CancelKeyPress += (_, e) =>
         {
-            AnsiConsole.MarkupLine($"[red]Error parsing invite code: {ex.Message}[/]");
-            AnsiConsole.MarkupLine("Press Enter to continue...");
-            Console.ReadLine();
-        }
+            e.Cancel = true;
+            stop.Cancel();
+        };
+        var env = new CliEnvironment(new ClientWebSocketRelaySocketFactory(), TimeProvider.System,
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create),
+            () => RandomNumberGenerator.GetBytes(32));
+        IGameOutput output = parsed.Plain ? new PlainOutput(Console.Out) : new RichOutput();
+        return await OnlineCommand.RunAsync(parsed, Console.In, output, Console.Error, env, stop.Token);
     }
 }

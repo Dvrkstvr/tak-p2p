@@ -64,6 +64,9 @@ public sealed class LocalRelayHost : IAsyncDisposable
 
     public IReadOnlyList<Uri> Urls { get; private set; } = [];
 
+    /// <summary>Fires when the host is told to stop (SIGTERM, Ctrl+C).</summary>
+    public CancellationToken Stopping => _app.Lifetime.ApplicationStopping;
+
     public static async Task<LocalRelayHost> StartAsync(LocalRelayOptions options, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(options);

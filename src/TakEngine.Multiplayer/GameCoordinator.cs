@@ -79,6 +79,11 @@ internal sealed class GameCoordinator : IAsyncDisposable
     public int DroppedEvents =>
         Volatile.Read(ref _dropped) + (_pool is { } pool ? pool.Links.Sum(l => pool.InvalidEventsDropped(l.Url)) : 0);
 
+    public IReadOnlyList<RelayLink> RelayLinks => _pool?.Links ?? [];
+
+    public IReadOnlyDictionary<Uri, RelayPublishState> PublishDetail(string eventId) =>
+        _pool?.PerRelay(eventId) ?? new Dictionary<Uri, RelayPublishState>();
+
     public OwnLink OwnLink => _pool is null ? OwnLink.Offline : LinkStatus.Own(_pool.Links.Select(l => l.State));
 
     public OpponentLink OpponentLink => LinkStatus.Opponent(_lastHeardFromOpponent, _time.GetUtcNow());

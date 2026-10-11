@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\TakEngine.Abstractions\TakEngine.Abstractions.csproj" />
     <ProjectReference Include="..\TakEngine.Core\TakEngine.Core.csproj" />
+    <ProjectReference Include="..\TakEngine.Multiplayer\TakEngine.Multiplayer.csproj" />
     <ProjectReference Include="..\TakEngine.Storage.Local\TakEngine.Storage.Local.csproj" />
     <ProjectReference Include="..\TakEngine.Transport\TakEngine.Transport.csproj" />
   </ItemGroup>

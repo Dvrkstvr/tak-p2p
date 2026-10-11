@@ -99,6 +99,12 @@ public sealed class MultiplayerGame : IAsyncDisposable
 
     public OwnLink OwnLink => _coordinator.OwnLink;
 
+    /// <summary>Each relay's connection state right now (empty while the game has no network, e.g. a finished game).</summary>
+    public IReadOnlyList<RelayLink> RelayLinks => _coordinator.RelayLinks;
+
+    /// <summary>Per relay, what happened to one of our events: Pending, Sent or Refused with the relay's reason (F-034, F-036).</summary>
+    public IReadOnlyDictionary<Uri, RelayPublishState> PublishDetail(string eventId) => _coordinator.PublishDetail(eventId);
+
     public OpponentLink OpponentLink => _coordinator.OpponentLink;
 
     /// <summary>The handshake finished: colours are settled and play can start.</summary>
