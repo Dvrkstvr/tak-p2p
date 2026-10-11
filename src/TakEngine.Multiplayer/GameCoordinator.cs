@@ -55,6 +55,7 @@ internal sealed class GameCoordinator : IAsyncDisposable
     private DateTimeOffset? _lastHeardFromOpponent;
     private (OwnLink, OpponentLink)? _lastLinks;
     private int _dropped;
+    private readonly Dictionary<string, int> _flagsBy = new(StringComparer.Ordinal);
     private bool _broken;
 
     public GameCoordinator(MultiplayerOptions options, MultiplayerGame owner)
@@ -74,7 +75,9 @@ internal sealed class GameCoordinator : IAsyncDisposable
 
     public string StateHash => _session?.CurrentStateHash ?? _final?.StateHash ?? StateHasher.ComputeGenesisHash(_record.Size);
 
-    public int DroppedEvents => Volatile.Read(ref _dropped);
+    /// <summary>Rows 1-2: events whose id or signature the pool refused, plus valid events from someone who isn't the opponent.</summary>
+    public int DroppedEvents =>
+        Volatile.Read(ref _dropped) + (_pool is { } pool ? pool.Links.Sum(l => pool.InvalidEventsDropped(l.Url)) : 0);
 
     public OwnLink OwnLink => _pool is null ? OwnLink.Offline : LinkStatus.Own(_pool.Links.Select(l => l.State));
 
@@ -121,6 +124,8 @@ internal sealed class GameCoordinator : IAsyncDisposable
         _record = stored.Record;
         _publishedTurn = stored.Progress.PublishedTurn;
         _maxCreatedAt = stored.Progress.MaxCreatedAt;
+        foreach (FlagEntry flag in stored.Flags)
+            _flagsBy[flag.Author] = _flagsBy.GetValueOrDefault(flag.Author) + 1;
         if (_record.Role == NetRole.Host)
         {
             _host = HostHandshake.Restore(_record);
@@ -168,6 +173,9 @@ internal sealed class GameCoordinator : IAsyncDisposable
         return true;
     }
 
+    /// <summary>After this many flags against the opponent, a notice suggests resigning (scope.md; nothing auto-forfeits).</summary>
+    private const int FlagsBeforeResignHint = 3;
+
     /// <summary>How long a cold rebuild waits for relay history before working with what arrived.</summary>
     private static readonly TimeSpan RebuildWait = TimeSpan.FromSeconds(15);
 
@@ -182,27 +190,7 @@ internal sealed class GameCoordinator : IAsyncDisposable
             return error;
         if (await _store.LoadAsync(invite!.GameId).ConfigureAwait(false) is not null)
             return "This game is already stored on this device: resume it instead.";
-        bool host = string.Equals(invite.HostPubKey, Me.ToHex(), StringComparison.OrdinalIgnoreCase);
-        PublicKey? opponent = host ? null : PublicKey.FromHex(invite.HostPubKey.ToLowerInvariant());
-        var relays = invite.Relays.Concat(_o.DefaultRelays).Distinct(StringComparer.Ordinal).Select(r => new Uri(r)).ToList();
-
-        var history = new List<HistoryEntry>();
-        await using (var pool = new RelayPool(relays, _o.Sockets, _time, Me.ToHex(), budget: _o.Budget))
-        {
-            pool.Start(() => SubscriptionPlan.Build(invite.GameId, Me, opponent, null));
-            DateTimeOffset deadline = _time.GetUtcNow() + RebuildWait;
-            while (_time.GetUtcNow() < deadline && !HistoryComplete(pool.Links))
-                await Task.Delay(TimeSpan.FromMilliseconds(50)).ConfigureAwait(false);
-            while (pool.Events.TryRead(out ReceivedEvent? received))
-            {
-                NostrEvent evt = received.Event;
-                // The author check is the plan's (it knows who played which colour); here only rows 1, 3 and 4 decide.
-                PublicKey? author = received.IsOwn || !PublicKey.TryFromHex(evt.Pubkey, out PublicKey? key) ? null : key;
-                DecodeResult decoded = EnvelopeCodec.Decode(evt, new DecodeContext(_o.Key, invite.GameId, author));
-                if (decoded.IsAccepted)
-                    history.Add(new HistoryEntry(decoded.Action!, evt.Id, new RelayMessage.Publish(evt).Format()));
-            }
-        }
+        IReadOnlyList<HistoryEntry> history = await RelayHistory.FetchAsync(_o, invite, RebuildWait).ConfigureAwait(false);
 
         RebuildResult rebuilt = RebuildPlan.Build(invite, Me, history);
         if (rebuilt.Error is not null)
@@ -228,11 +216,6 @@ internal sealed class GameCoordinator : IAsyncDisposable
         await ResumeAsync(record.GameId).ConfigureAwait(false);
         return null;
     }
-
-    /// <summary>Every relay has sent its stored history (EOSE), refused reads, or failed to connect at least once; and one answered.</summary>
-    private static bool HistoryComplete(IReadOnlyList<RelayLink> links) =>
-        links.Any(l => l.State == RelayLinkState.CaughtUp)
-        && links.All(l => l.State == RelayLinkState.CaughtUp || l.ReadImpossible || l.Failures > 0);
 
     private void StartNetwork()
     {
@@ -500,6 +483,12 @@ internal sealed class GameCoordinator : IAsyncDisposable
         var flag = new FlagEntry(turn, reason, eventId, author, _time.GetUtcNow());
         await _store.AddFlagAsync(_record.GameId, flag).ConfigureAwait(false);
         _owner.RaiseFlagged(flag);
+        int count = _flagsBy[author] = _flagsBy.GetValueOrDefault(author) + 1;
+        if (count == FlagsBeforeResignHint && author == _record.OpponentPubKey)
+        {
+            _owner.RaiseNotice($"Your opponent has sent {count} rejected messages in this game. Your game is unchanged; if you no longer "
+                + "trust it, you can resign. Nothing is forfeited automatically.");
+        }
     }
 
     // ---- commands ----

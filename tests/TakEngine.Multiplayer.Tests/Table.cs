@@ -40,6 +40,9 @@ internal sealed class Table : IAsyncDisposable
 
     public int Seed { get; }
 
+    /// <summary>Where a <c>sqlite</c> table keeps <c>host.db</c> and <c>guest.db</c>.</summary>
+    public string? StoreDir => _dir;
+
     public FakeTimeProvider Time { get; } = new(new DateTimeOffset(2026, 10, 11, 12, 0, 0, TimeSpan.Zero));
 
     public InMemoryRelay R1 { get; }

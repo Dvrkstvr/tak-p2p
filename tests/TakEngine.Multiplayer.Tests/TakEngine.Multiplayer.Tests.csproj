@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\TakEngine.Multiplayer\TakEngine.Multiplayer.csproj" />
     <ProjectReference Include="..\..\src\TakEngine.Storage.Local\TakEngine.Storage.Local.csproj" />
+    <ProjectReference Include="..\..\tools\TakTestPeer\TakTestPeer.csproj" />
     <ProjectReference Include="..\TakEngine.Testing\TakEngine.Testing.csproj" />
   </ItemGroup>
 

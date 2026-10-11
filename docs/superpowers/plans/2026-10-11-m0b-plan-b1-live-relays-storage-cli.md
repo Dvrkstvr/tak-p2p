@@ -120,18 +120,19 @@ Plans A1-A3 apply. In addition:
 
 **Files:** tests `TamperMatrixTests.cs`; `tools/TakTestPeer/` (new console project, in sln/slnx/Ci.slnf, references Testing).
 
-- [ ] Red: one test per scope.md row, over the fake relay, during a game in progress. For each row:
+- [x] Red: one test per scope.md row, over the fake relay, during a game in progress. For each row:
   - The board and hash are unchanged.
   - Rows 1-2 bump `DroppedEvents` and raise no flag.
   - Rows 3-7 raise `Flagged` with the scope.md reason, which persists across a restart (SQLite store).
   - A following valid move from the real opponent is accepted.
   - After 3 flags from the same peer, `Notice` suggests resigning, and nothing is forfeited.
-- [ ] Deliberate-break check: remove the coordinator's drop for one row and see its test go red; then revert. Note the result in the commit body.
-- [ ] `TakTestPeer forge --relays <csv> --invite <code> --as-key <nsec file> --turn <n> --ptn <move> [--kind illegal|fork|equivocate|undecryptable]`:
+- [x] Deliberate-break check: remove the coordinator's drop for one row and see its test go red; then revert. Note the result in the commit body.
+- [x] `TakTestPeer forge --relays <csv> --invite <code> --as-key <nsec file> --ptn <move> [--turn <n>] [--kind illegal|fork|equivocate|undecryptable]`:
+  - Rebuilds the game from the relays as the key's player (`RelayHistory` + `RebuildPlan`), so the forged move chains to the real hash; `--turn` defaults to the next one.
   - Builds the event with the same `EnvelopeCodec` and publishes it once.
   - Prints the event id.
   - Tested against the fake relay.
-- [ ] Commit `M0 F-038: tamper matrix over the fake relay and TakTestPeer`.
+- [x] Commit `M0 F-038: tamper matrix over the fake relay and TakTestPeer`.
 
 ### Task 5: `tools/TakRelay.Local`
 
