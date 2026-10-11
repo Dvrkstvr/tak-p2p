@@ -27,6 +27,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\TakEngine.Abstractions\TakEngine.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\TakEngine.Transport\TakEngine.Transport.csproj" />
+    <ProjectReference Include="..\TakEngine.Testing\TakEngine.Testing.csproj" />
   </ItemGroup>
 
 </Project>

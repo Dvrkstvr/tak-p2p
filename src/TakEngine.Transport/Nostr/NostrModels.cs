@@ -53,6 +53,10 @@ public sealed class NostrFilter
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string>? TagE { get; set; }
 
+    [JsonPropertyName("#g")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? TagG { get; set; }
+
     [JsonPropertyName("#t")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string>? TagT { get; set; }

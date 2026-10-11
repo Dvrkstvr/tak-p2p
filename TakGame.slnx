@@ -16,6 +16,7 @@
     <Project Path="tests/TakEngine.Core.Tests/TakEngine.Core.Tests.csproj" />
     <Project Path="tests/TakEngine.Crypto.Tests/TakEngine.Crypto.Tests.csproj" />
     <Project Path="tests/TakEngine.Storage.Tests/TakEngine.Storage.Tests.csproj" />
+    <Project Path="tests/TakEngine.Testing/TakEngine.Testing.csproj" />
     <Project Path="tests/TakEngine.Transport.Tests/TakEngine.Transport.Tests.csproj" />
   </Folder>
 </Solution>
