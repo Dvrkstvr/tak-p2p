@@ -46,7 +46,7 @@ Transport does not reference Core and Core does not reference Transport (seen in
 | F-031 identity | Crypto (`SecretKey`, `PublicKey`, Nip19), Abstractions (`IKeyStore`), Storage.Local (`FileKeyStore`), compile fixes in Core/Blazor/Avalonia/CLI |
 | F-032 NIP-01 id + BIP-340 | Transport (`Nip01Serializer`, `NostrEvents`), Crypto (Schnorr) |
 | F-015 NIP-44 two-peer | Crypto (`Nip44`) |
-| F-033 signed envelope + chain | Core (`ActionDigest`, `TakGameSession`, `StateHasher`), Abstractions (`SignedGameAction`), Transport (`EnvelopeCodec`) |
+| F-033 signed envelope + chain | Crypto (`ActionDigest`, D-041), Core (`TakGameSession`, `StateHasher`), Abstractions (`SignedGameAction`), Transport (`EnvelopeCodec`) |
 | F-034 relay client | Transport (`RelayLink`, `PublishTracker`, `PublishBudget`, `SubscriptionPlan`, `RelayConnection`, `RelayPool`, `IRelaySocket`), Testing (`InMemoryRelay`) |
 | F-035 turn exchange | Multiplayer (`TurnExchange`, `IncomingClassifier`, `GameCoordinator`), Abstractions (`IGameStore`) |
 | F-017 invite handshake | Multiplayer (`HostHandshake`, `GuestHandshake`), Transport (`InviteCode`, `ColorResolver`, `EnvelopeCodec`) |
