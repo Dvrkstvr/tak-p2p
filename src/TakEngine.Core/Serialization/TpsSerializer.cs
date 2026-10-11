@@ -74,7 +74,10 @@ public static class TpsSerializer
         return sb.ToString();
     }
 
-    public static GameBoard Deserialize(string tps)
+    /// <summary>
+    /// Builds a board from a TPS string. TPS carries no komi, so the game's komi (in half flats) is passed in.
+    /// </summary>
+    public static GameBoard Deserialize(string tps, int komiHalves = 0)
     {
         if (string.IsNullOrWhiteSpace(tps))
             throw new ArgumentException("TPS string cannot be null or empty.", nameof(tps));
@@ -89,11 +92,11 @@ public static class TpsSerializer
 
         string[] rows = boardPart.Split('/');
         int size = rows.Length;
-        if (size is not (4 or 5 or 6))
+        if (size is < 3 or > 8)
             throw new FormatException($"Unsupported board size {size} in TPS string.");
 
         var boardSize = (BoardSize)size;
-        var board = new GameBoard(boardSize);
+        var board = new GameBoard(boardSize, komiHalves);
 
         PlayerColor activePlayer = playerPart == "1" ? PlayerColor.White : PlayerColor.Black;
         int turnNumber = int.Parse(turnPart);
@@ -192,13 +195,7 @@ public static class TpsSerializer
         int blackStonesUsed,
         int blackCapstonesUsed)
     {
-        (int startingStones, int startingCapstones) = size switch
-        {
-            BoardSize.Four => (15, 0),
-            BoardSize.Five => (21, 1),
-            BoardSize.Six => (30, 1),
-            _ => (0, 0)
-        };
+        (int startingStones, int startingCapstones) = GameBoard.StartingReserves(size);
 
         var whiteReserves = new PlayerReserves(
             Math.Max(0, startingStones - whiteStonesUsed),

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using TakEngine.Abstractions;
@@ -18,97 +20,79 @@ public static class PtnParser
         @"^\[(?<key>\w+)\s+""(?<value>[^""]*)""\]",
         RegexOptions.Compiled);
 
+    // Placement: optional piece prefix + square. Slide: optional lift count + square + direction + optional drop counts.
+    private static readonly Regex PlaceRegex = new(@"^(?<type>[FSC])?(?<square>[a-h][1-8])$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    private static readonly Regex SlideRegex = new(
+        @"^(?<lift>[1-8])?(?<square>[a-h][1-8])(?<dir>[+\-<>])(?<drops>[1-8]*)$",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+    /// <summary>
+    /// Parses one PTN move. Tak marks (<c>'</c>, <c>''</c>, <c>"</c>) and annotations (<c>!</c>, <c>?</c>, <c>*</c>, <c>#</c>)
+    /// are stripped. Anything else that is not a well-formed move (unknown piece prefix, a lift count that differs from the
+    /// sum of the drops, a zero count) throws <see cref="FormatException"/>.
+    /// </summary>
     public static TakMove ParseMove(string moveStr)
     {
         if (string.IsNullOrWhiteSpace(moveStr))
             throw new ArgumentException("Move string cannot be empty.", nameof(moveStr));
 
-        // Trim annotations and trailing whitespace (*, ?, !, etc.)
-        string clean = moveStr.Trim().TrimEnd('*', '!', '?', '#');
+        string clean = moveStr.Trim().TrimEnd('*', '!', '?', '#', '\'', '"');
 
-        // Check for slide move: contains direction character '+', '-', '>', or '<'
-        int dirIndex = clean.IndexOfAny(['+', '-', '>', '<']);
-        if (dirIndex >= 0)
+        Match place = PlaceRegex.Match(clean);
+        if (place.Success)
         {
-            return ParseSlideMove(clean, dirIndex);
+            PieceType type = place.Groups["type"].Success
+                ? char.ToUpperInvariant(place.Groups["type"].Value[0]) switch
+                {
+                    'S' => PieceType.Standing,
+                    'C' => PieceType.Capstone,
+                    _ => PieceType.Flat
+                }
+                : PieceType.Flat;
+            return new PlaceMove(Coord.FromAlgebraic(place.Groups["square"].Value), type);
         }
 
-        // Placement move
-        return ParsePlaceMove(clean);
-    }
+        Match slide = SlideRegex.Match(clean);
+        if (!slide.Success)
+            throw new FormatException($"Not a valid PTN move: '{moveStr}'.");
 
-    private static PlaceMove ParsePlaceMove(string s)
-    {
-        PieceType type = PieceType.Flat;
-        string coordStr = s;
-
-        if (s.Length >= 3 && char.IsLetter(s[1]))
-        {
-            char prefix = char.ToUpperInvariant(s[0]);
-            type = prefix switch
-            {
-                'S' => PieceType.Standing,
-                'C' => PieceType.Capstone,
-                'F' => PieceType.Flat,
-                _ => PieceType.Flat
-            };
-            coordStr = s[1..];
-        }
-
-        var coord = Coord.FromAlgebraic(coordStr);
-        return new PlaceMove(coord, type);
-    }
-
-    private static SlideMove ParseSlideMove(string s, int dirIndex)
-    {
-        char dirChar = s[dirIndex];
-        var direction = dirChar switch
+        int lift = slide.Groups["lift"].Success ? slide.Groups["lift"].Value[0] - '0' : 1;
+        var direction = slide.Groups["dir"].Value[0] switch
         {
             '+' => Direction.North,
             '-' => Direction.South,
             '>' => Direction.East,
-            '<' => Direction.West,
-            _ => throw new FormatException($"Invalid direction character: {dirChar}")
+            _ => Direction.West
         };
 
-        string beforeDir = s[..dirIndex];
-        string afterDir = s[(dirIndex + 1)..];
+        string dropDigits = slide.Groups["drops"].Value;
+        int[] drops = dropDigits.Length == 0 ? [lift] : dropDigits.Select(c => c - '0').ToArray();
+        if (drops.Sum() != lift)
+            throw new FormatException($"Drops in '{moveStr}' add up to {drops.Sum()}, but the lift count is {lift}.");
 
-        int lift = 1;
-        string coordStr;
-
-        if (char.IsDigit(beforeDir[0]))
-        {
-            lift = beforeDir[0] - '0';
-            coordStr = beforeDir[1..];
-        }
-        else
-        {
-            coordStr = beforeDir;
-        }
-
-        var origin = Coord.FromAlgebraic(coordStr);
-
-        var drops = new List<int>();
-        if (string.IsNullOrEmpty(afterDir))
-        {
-            drops.Add(lift);
-        }
-        else
-        {
-            foreach (char c in afterDir)
-            {
-                if (char.IsDigit(c))
-                {
-                    drops.Add(c - '0');
-                }
-            }
-        }
-
-        return new SlideMove(origin, direction, lift, drops.ToArray());
+        return new SlideMove(Coord.FromAlgebraic(slide.Groups["square"].Value), direction, lift, drops);
     }
 
     public static string FormatMove(TakMove move) => move.ToPtn();
+
+    /// <summary>Parses a PTN <c>Komi</c> header ("2", "2.5") into half flats; anything but a whole or half number throws.</summary>
+    public static int ParseKomiHalves(string value)
+    {
+        Match m = Regex.Match(value?.Trim() ?? "", @"^(?<whole>\d{1,2})(?:\.(?<frac>[05]))?$");
+        if (!m.Success)
+            throw new FormatException($"Komi '{value}' is not a whole or half number of flats.");
+
+        int halves = 2 * int.Parse(m.Groups["whole"].Value, CultureInfo.InvariantCulture) + (m.Groups["frac"].Value == "5" ? 1 : 0);
+        if (halves > GameBoard.MaxKomiHalves)
+            throw new FormatException($"Komi '{value}' is larger than {GameBoard.MaxKomiHalves / 2} flats.");
+        return halves;
+    }
+
+    /// <summary>Formats half flats as a PTN <c>Komi</c> value: 4 -> "2", 5 -> "2.5".</summary>
+    public static string FormatKomi(int komiHalves) =>
+        komiHalves % 2 == 0
+            ? (komiHalves / 2).ToString(CultureInfo.InvariantCulture)
+            : (komiHalves / 2).ToString(CultureInfo.InvariantCulture) + ".5";
 
     public static PtnGame ParseGame(string ptnText)
     {
@@ -157,7 +141,7 @@ public static class PtnParser
                 continue;
 
             // Check for game results
-            if (token is "R-0" or "0-R" or "F-0" or "0-F" or "1-0" or "0-1" or "1/2-1/2")
+            if (token is "R-0" or "0-R" or "F-0" or "0-F" or "1-0" or "0-1" or "1/2-1/2" or "0-0")
             {
                 result = token;
                 continue;
@@ -189,6 +173,8 @@ public static class PtnParser
             ["Clock"] = "0",
             ["Result"] = board.Result != null ? FormatResult(board.Result) : "*"
         };
+        if (board.KomiHalves > 0)
+            headers["Komi"] = FormatKomi(board.KomiHalves);
 
         if (customHeaders != null)
         {

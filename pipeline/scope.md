@@ -135,19 +135,19 @@ The client never publishes more than 4 events in any 10 s window and retries `ra
 Every received event is checked for `id` and `sig` before it is decrypted (NIP-44 spec, spike R-002/R-003 item 5).
 
 ### Invite create and accept handshake (F-017, F-044, F-047)
-Roles: Host H, Guest G. The invite carries game id, H's pubkey, board size, relay hints and a random colour seed (host-generated; an invite without a seed is rejected).
+Roles: Host H, Guest G. The invite carries game id, H's pubkey, board size, komi, relay hints and a commitment to the host's colour nonce (D-038; an invite without one is rejected). JOIN carries the guest's nonce; ACCEPT reveals the host's nonce and repeats size and komi; seed = SHA-256(tag || host_nonce || guest_nonce).
 Host states: `Idle` -> `Inviting` -> `Locked(G)` -> `InGame` | `Cancelled`.
-- Idle -> Inviting: user chooses size, host creates game id + seed, persists the game record (key, game id, seed, size), subscribes on `#g=gid, #p=H`, shows the invite.
-- Inviting -> Locked(G): a valid JOIN (id, sig, decrypts, game id matches, author != H) from pubkey P. H locks to P, resolves colours with
+- Idle -> Inviting: user chooses size and komi, host creates game id + host nonce, persists the game record (key, game id, host nonce, size, komi), subscribes on `#g=gid, #p=H`, shows the invite.
+- Inviting -> Locked(G): a valid JOIN (id, sig, decrypts, game id matches, author != H) from pubkey P. H locks to P and P's nonce, resolves colours with
   `ColorResolver.ResolveColors(seed, H, G)` (AGENTS invariant 1), publishes ACCEPT (carries the resolved colours so a mismatch is visible), moves to InGame.
 - Locked: a JOIN from another pubkey is ignored and surfaced ("ignored join from npub1...: game already taken"). A repeated JOIN from P (its retry) re-sends ACCEPT (idempotent).
 - Host restart while Inviting or Locked: reload the record and resubscribe; nothing is lost; Cancelled invites stay dead.
 - Cancel (Ctrl-C / "Cancel invite"): before Locked, nothing is published; the invite simply never gets an ACCEPT (guest sees `Waiting` forever until its own timeout). After
   Locked, cancel means resign (see Resign spec). No timeout on the host side in M0; M2 shows "waiting for opponent since ..." and lets the user cancel.
 Guest states: `Idle` -> `InviteParsed` -> `Joining` -> `InGame` | `Failed`.
-- Idle -> InviteParsed: a malformed or truncated invite, size not 4/5/6, missing seed or host key, or host key == own key -> `Failed` with a specific message and no network traffic.
+- Idle -> InviteParsed: a malformed or truncated invite, size not 3..8, komi outside 0..20 half flats, missing seed commitment or host key, or host key == own key -> `Failed` with a specific message and no network traffic.
 - InviteParsed -> Joining: connect to the relay set (invite hints plus defaults); publish JOIN; republish at 5 s, 15 s, 45 s, then every 60 s; show per-relay state.
-- Joining -> InGame: ACCEPT arrives from H's pubkey (id, sig, game id) and its colours equal the guest's own `ResolveColors` result. ACCEPT from any other pubkey is dropped and flagged.
+- Joining -> InGame: ACCEPT arrives from H's pubkey (id, sig, game id), its host nonce matches the invite's commitment, its size and komi equal the invite's, and its colours equal the guest's own `ResolveColors` result. ACCEPT from any other pubkey is dropped and flagged.
   Colour mismatch -> `Failed` ("host and guest disagree on colours"), nothing played.
 - Joining, all relays unreachable: stay in Joining with "offline, retrying". Guest cancel -> `Idle`; nothing more is published, but a JOIN that already reached the host still locks the game to this guest
   (no un-join message in v1). The host's way out is cancel/resign, so a cancelled guest can strand the invite; accepted for v1 and listed under the bearer-invite gap below.

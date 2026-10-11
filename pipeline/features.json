@@ -161,9 +161,10 @@
       "milestone": "M0",
       "behaviour": "Direct invite: host creates an invite, guest opens it, the JOIN/ACCEPT handshake resolves colours, and both land in the same live game",
       "acceptance": [
-        "Fake relay: host creates invite (with seed), guest joins, both resolve opposite colours from ColorResolver(seed, host, guest), white's first move shows on both",
+        "Fake relay: host creates invite (with seed commitment, size and komi), guest joins with its nonce, host reveals its nonce in ACCEPT, both resolve opposite colours from ColorResolver(seed, host, guest) with seed = SHA-256(tag || host_nonce || guest_nonce) (D-038), white's first move shows on both",
+        "Failure: an ACCEPT whose host nonce does not match the invite's commitment, or whose size or komi differs from the invite, is dropped and the guest fails with a specific message",
         "Edge: a repeated JOIN from the same guest gets ACCEPT again and does not start a second game",
-        "Failure: a second guest with a different key is ignored and surfaced; an ACCEPT from a non-host key is dropped and flagged; a malformed invite, missing seed, size 7 or self-invite fails with a specific message and no network traffic",
+        "Failure: a second guest with a different key is ignored and surfaced; an ACCEPT from a non-host key is dropped and flagged; a malformed invite, missing seed commitment, size 9, komi out of range or self-invite fails with a specific message and no network traffic",
         "Edge: host restarted before the guest joins still accepts the JOIN (invite persisted)"
       ],
       "passes": false,
@@ -638,6 +639,34 @@
       ],
       "passes": false,
       "evidence": null
+    },
+    {
+      "id": "F-057",
+      "milestone": "M0",
+      "behaviour": "Engine edge cases that resume and tamper rejection depend on are correct (D-035)",
+      "acceptance": [
+        "GameBoard.FromSnapshot: Playing after turn 1, FirstTurnPlacement only on turn 1, a finished game keeps its result and refuses moves",
+        "A slide whose lift count differs from the sum of its drops is rejected and changes nothing",
+        "PtnParser.ParseMove strips tak marks and annotations; rejects unknown prefixes, zero counts, garbage and lift/drop mismatches with FormatException; ParseGame knows 0-0",
+        "TakGameSession rejects a peer's move that is not in canonical PTN, raises a violation and leaves board and hash unchanged; the hash uses the session's own copy of the opponent key",
+        "Medium bot picks a move whose exhaustive depth-2 score is the best (alpha-beta bounds no longer overflow)"
+      ],
+      "passes": false,
+      "evidence": "Seen running 2026-10-11 (dotnet 10.0.112): RulesEdgeCaseTests (17 cases) and BotSearchTests (8 seeded positions, 3x3 to 5x5) red before the fix (14 and 3 failing), green after. Ready for the verifier."
+    },
+    {
+      "id": "F-058",
+      "milestone": "M0",
+      "behaviour": "Every standard board size (3x3 to 8x8) and komi are supported by the engine (D-036, D-037)",
+      "acceptance": [
+        "Reserves 3:10/0, 4:15/0, 5:21/1, 6:30/1, 7:40/2, 8:50/2; carry limit = size",
+        "TPS round-trips 3x3, 7x7 and 8x8; a road on 8x8 wins",
+        "Flat count adds komi (half flats) to Black: integer komi can draw, half komi cannot; komi outside 0..20 half flats is rejected",
+        "Komi survives snapshot, clone and TPS restore (passed in), sessions take it, PTN Komi header parses and formats",
+        "Each head exposes the new sizes and komi when it is wired to multiplayer (F-036 CLI, M1/M2 Blazor, M6 desktop)"
+      ],
+      "passes": false,
+      "evidence": "Engine part seen running 2026-10-11: BoardSizeAndKomiTests; deliberate break (komi not added, 7x7 one capstone) turned 5 of them red, reverted. Heads not wired yet (F-036, M1/M2, M6)."
     }
   ]
 }

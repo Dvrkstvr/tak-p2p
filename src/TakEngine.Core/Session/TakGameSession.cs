@@ -42,27 +42,29 @@ public sealed class TakGameSession : ITakGameSession
         PlayerColor localColor,
         bool isRemote,
         SecretKey? localKey = null,
-        PublicKey? opponentPubKey = null)
+        PublicKey? opponentPubKey = null,
+        int komiHalves = 0)
     {
         Id = id;
         LocalColor = localColor;
         _isRemote = isRemote;
         _localKey = localKey;
         _opponentPubKey = opponentPubKey;
-        _board = new GameBoard(size);
+        _board = new GameBoard(size, komiHalves);
         _currentStateHash = StateHasher.ComputeGenesisHash(size);
     }
 
     /// <summary>
     /// Creates a local pass-and-play session where both players share the screen.
     /// </summary>
-    public static TakGameSession CreateLocal(BoardSize size = BoardSize.Five)
+    public static TakGameSession CreateLocal(BoardSize size = BoardSize.Five, int komiHalves = 0)
     {
         return new TakGameSession(
             GameId.New(),
             size,
             PlayerColor.White,
-            isRemote: false);
+            isRemote: false,
+            komiHalves: komiHalves);
     }
 
     /// <summary>
@@ -74,7 +76,8 @@ public sealed class TakGameSession : ITakGameSession
         BoardSize size,
         PlayerColor localColor,
         SecretKey localKey,
-        PublicKey opponentPubKey)
+        PublicKey opponentPubKey,
+        int komiHalves = 0)
     {
         ArgumentNullException.ThrowIfNull(localKey);
         ArgumentNullException.ThrowIfNull(opponentPubKey);
@@ -84,7 +87,8 @@ public sealed class TakGameSession : ITakGameSession
             localColor,
             isRemote: true,
             localKey: localKey,
-            opponentPubKey: opponentPubKey);
+            opponentPubKey: opponentPubKey,
+            komiHalves: komiHalves);
     }
 
     public IReadOnlyList<TakMove> GetLegalMovesForSquare(Coord coord)
@@ -217,6 +221,14 @@ public sealed class TakGameSession : ITakGameSession
             return CommandResult.Fail(protoEx.Message);
         }
 
+        // The chain hashes the PTN string, so a second spelling of the same move ("Fa1" for "a1") would split the peers' hashes.
+        if (!string.Equals(move.ToPtn(), ptnMove, StringComparison.Ordinal))
+        {
+            var protoEx = new ProtocolViolationException($"Remote PTN move '{ptnMove}' is not in canonical form '{move.ToPtn()}'.");
+            OnProtocolViolationDetected?.Invoke(protoEx);
+            return CommandResult.Fail(protoEx.Message);
+        }
+
         var execResult = _board.Execute(move);
         if (!execResult.IsSuccess)
         {
@@ -228,7 +240,7 @@ public sealed class TakGameSession : ITakGameSession
         // Update state hash chain
         var snapshot = _board.ToSnapshot();
         string tps = TpsSerializer.Serialize(_board);
-        _currentStateHash = StateHasher.ComputeStateHash(_currentStateHash, _board.TurnNumber, playerPubKey, ptnMove, tps);
+        _currentStateHash = StateHasher.ComputeStateHash(_currentStateHash, _board.TurnNumber, _opponentPubKey?.ToHex() ?? playerPubKey, ptnMove, tps);
 
         OnMoveExecuted?.Invoke(snapshot, move);
 

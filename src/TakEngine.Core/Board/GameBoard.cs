@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TakEngine.Abstractions;
 using TakEngine.Core.Rules;
 
@@ -20,9 +21,19 @@ public sealed class GameBoard
     public PlayerReserves WhiteReserves { get; private set; }
     public PlayerReserves BlackReserves { get; private set; }
 
-    public GameBoard(BoardSize size)
+    /// <summary>Largest komi accepted, in half flats (10 flats).</summary>
+    public const int MaxKomiHalves = 20;
+
+    /// <summary>Komi in half flats, added to Black's flat count when the game ends on flats (5 = 2.5 flats).</summary>
+    public int KomiHalves { get; }
+
+    public GameBoard(BoardSize size, int komiHalves = 0)
     {
+        if (komiHalves is < 0 or > MaxKomiHalves)
+            throw new ArgumentOutOfRangeException(nameof(komiHalves), $"Komi must be between 0 and {MaxKomiHalves} half flats.");
+
         Size = size;
+        KomiHalves = komiHalves;
         _sizeInt = (int)size;
         _grid = new PieceStack[_sizeInt, _sizeInt];
 
@@ -34,17 +45,22 @@ public sealed class GameBoard
             }
         }
 
-        (int stones, int capstones) = size switch
-        {
-            BoardSize.Four => (15, 0),
-            BoardSize.Five => (21, 1),
-            BoardSize.Six => (30, 1),
-            _ => throw new ArgumentOutOfRangeException(nameof(size), $"Unsupported board size: {size}")
-        };
-
-        WhiteReserves = new PlayerReserves(stones, capstones);
-        BlackReserves = new PlayerReserves(stones, capstones);
+        PlayerReserves start = StartingReserves(size);
+        WhiteReserves = start;
+        BlackReserves = start;
     }
+
+    /// <summary>Each player's pieces at the start of a game, per the standard rules.</summary>
+    public static PlayerReserves StartingReserves(BoardSize size) => size switch
+    {
+        BoardSize.Three => new PlayerReserves(10, 0),
+        BoardSize.Four => new PlayerReserves(15, 0),
+        BoardSize.Five => new PlayerReserves(21, 1),
+        BoardSize.Six => new PlayerReserves(30, 1),
+        BoardSize.Seven => new PlayerReserves(40, 2),
+        BoardSize.Eight => new PlayerReserves(50, 2),
+        _ => throw new ArgumentOutOfRangeException(nameof(size), $"Unsupported board size: {size}")
+    };
 
     public PieceStack GetStack(Coord coord)
     {
@@ -234,8 +250,12 @@ public sealed class GameBoard
         return CommandResult.Success();
     }
 
-    public CommandResult Slide(Coord origin, Direction direction, int liftCount, IReadOnlyList<int> drops) =>
-        Move(origin, direction, drops);
+    public CommandResult Slide(Coord origin, Direction direction, int liftCount, IReadOnlyList<int> drops)
+    {
+        if (drops == null || liftCount != drops.Sum())
+            return CommandResult.Fail($"Lift count {liftCount} does not match the drops.");
+        return Move(origin, direction, drops);
+    }
 
     public CommandResult Execute(TakMove move) => move switch
     {
@@ -340,9 +360,12 @@ public sealed class GameBoard
             }
         }
 
-        if (whiteFlats > blackFlats)
+        // Compared in half flats so a half komi needs no fractions.
+        int white = 2 * whiteFlats;
+        int black = 2 * blackFlats + KomiHalves;
+        if (white > black)
             return new GameResult(false, PlayerColor.White, GameEndReason.FlatCount);
-        if (blackFlats > whiteFlats)
+        if (black > white)
             return new GameResult(false, PlayerColor.Black, GameEndReason.FlatCount);
 
         return new GameResult(true, null, GameEndReason.FlatCount);
@@ -402,12 +425,14 @@ public sealed class GameBoard
             ActivePlayer,
             stacksDict,
             WhiteReserves,
-            BlackReserves);
+            BlackReserves,
+            Result,
+            KomiHalves);
     }
 
     public GameBoard Clone()
     {
-        var clone = new GameBoard(Size)
+        var clone = new GameBoard(Size, KomiHalves)
         {
             TurnNumber = TurnNumber,
             ActivePlayer = ActivePlayer,
@@ -430,11 +455,14 @@ public sealed class GameBoard
 
     public static GameBoard FromSnapshot(TakBoardSnapshot snapshot)
     {
-        var board = new GameBoard(snapshot.Size)
+        var board = new GameBoard(snapshot.Size, snapshot.KomiHalves)
         {
             TurnNumber = snapshot.TurnNumber,
             ActivePlayer = snapshot.ActivePlayer,
-            Phase = snapshot.TurnNumber <= 2 ? GamePhase.FirstTurnPlacement : GamePhase.Playing,
+            Phase = snapshot.Result != null ? GamePhase.Completed
+                : snapshot.TurnNumber == 1 ? GamePhase.FirstTurnPlacement
+                : GamePhase.Playing,
+            Result = snapshot.Result,
             WhiteReserves = snapshot.WhiteReserves,
             BlackReserves = snapshot.BlackReserves
         };

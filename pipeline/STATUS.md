@@ -8,7 +8,7 @@
 - clarity: scope 5/5 · blocking 0 · assumed 9 · deferred 3
 - feasibility: amber · H-open 0 · M-open 3 · spiked 4
 - milestone: M0-A (CI gate, crypto, fake-relay game) · features passing 16/56 · M0 14 new features open · owed checks 4
-- next: A1 reviewed 2026-10-11 (R9). Engine fixes + komi + 3/7/8 sizes into M0 (user 2026-10-11, D-035..D-037), then write plans A2 (envelope + relay) and A3 (exchange + game)
+- next: F-057 done and F-058 engine part done (2026-10-11, awaiting verifier). Write plans A2 (envelope + relay) and A3 (exchange + game, with D-038 commit-reveal seed and komi in the handshake)
 - autopilot: M0-A · round 9/12 · A1 done · stall 0
 
 ## Stages

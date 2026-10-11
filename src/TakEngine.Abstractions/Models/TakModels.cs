@@ -48,7 +48,9 @@ public sealed record TakBoardSnapshot(
     PlayerColor ActivePlayer,
     IReadOnlyDictionary<Coord, StackSnapshot> Stacks,
     PlayerReserves WhiteReserves,
-    PlayerReserves BlackReserves);
+    PlayerReserves BlackReserves,
+    GameResult? Result = null,
+    int KomiHalves = 0);
 
 public abstract record TakMove
 {

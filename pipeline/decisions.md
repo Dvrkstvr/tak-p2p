@@ -214,3 +214,41 @@ These Plan A1 gaps are accepted as written in docs/superpowers/plans/2026-10-02-
 - Tasks fill `evidence` only; the verifier flips `passes`.
 - Watch item for F-037: after A1, CLI move rows carry BIP-340 signatures, so its migration must not label them 'legacy-ed25519'.
 - Owed to the user: enable a required status check on main (proving deploy-blocking live would need a push to main, which D-031 forbids).
+
+## D-035 · 2026-10-11 · stage 7 · by: user
+Engine correctness fixes join M0 as F-057: `GameBoard.FromSnapshot` (phase after turn 1, result kept), slide lift count checked
+against the drops, strict PTN move parsing (tak marks and annotations stripped, unknown prefixes and bad counts rejected, `0-0`
+result), canonical PTN required from a peer, and the bot's alpha-beta bounds (negating `int.MinValue` overflowed). Lifts the
+"M0 does not touch rules" line of `.claude/rules/core-engine.md` for these items only.
+- why: resume (F-037) restores boards from snapshots and the tamper matrix (F-038) relies on strict move parsing; found by the 2026-10-11 audit
+- revisit if: never; these are bugs
+
+## D-036 · 2026-10-11 · stage 7 · by: user
+Komi and the 3x3, 7x7 and 8x8 boards are in v1 (F-058). The engine supports them in M0; each head exposes them when it is wired
+to multiplayer (CLI host `--size/--komi` in F-036, Blazor in M1/M2, desktop in M6), so the UI freeze (D-006) still holds.
+- why: PlayTak offers sizes 3 to 8 and komi; both are cheap engine additions
+- revisit if: a head's UI work at M1/M6 shows the extra sizes don't fit the layout
+
+## D-037 · 2026-10-11 · stage 7 · by: assumed
+Komi is an integer number of half flats (0..20, PTN header `Komi "2.5"` = 5), added to Black's count when a game ends on flats.
+It is a game setting, not part of TPS or the hash chain: the invite carries it, the host's signed ACCEPT repeats it, and the
+guest compares it like the colours (F-017). `TakBoardSnapshot` gains `Result` and `KomiHalves` (trailing, defaulted).
+- why: half flats keep the comparison in integers; keeping komi out of the chain leaves the StateHasher golden vector untouched
+- revisit if: spectators or replays need komi without the game record (then add it to the PTN header they read)
+
+## D-038 · 2026-10-11 · stage 7 · by: assumed
+The colour seed is commit-reveal (F-017). The invite carries `seed_commit = SHA-256("tak/seed/v1\n" || host_nonce)`, not the
+seed; JOIN carries a 32-byte `guest_nonce`; ACCEPT reveals `host_nonce`; both sides compute
+`seed = SHA-256("tak/seed/v1\n" || host_nonce || guest_nonce)` and `ColorResolver.ResolveColors(seed, H, G)`. The guest checks
+the commitment and drops an ACCEPT whose nonce doesn't match. The host locks to the first JOIN's nonce; a retried JOIN gets the
+same ACCEPT.
+- why: with a host-chosen seed the host can regenerate invites until it gets the colour it wants; with a guest-chosen nonce alone
+  the guest could grind it. Commit-reveal leaves neither side able to pick the outcome. Cheap now because F-017 isn't built yet
+- revisit if: the invite has to fit somewhere the extra 32 bytes don't (QR size), then shorten the commitment to 16 bytes
+
+## D-039 · 2026-10-11 · stage 7 · by: user
+The live site's key swap (Blazor stored the Ed25519 public and private keys in each other's slots, showed the private key as the
+npub and sent it to relays as a profile pubkey) is hotfixed on `main` by PR #1, separately from this branch: swapped pairs are
+replaced, profile publishing and the pairing link are off. The branch already stores a secp256k1 identity under a new key.
+- why: the leak is live; the branch won't reach main before M0 ends
+- revisit if: merging this branch into main: take the branch's BrowserStorage and keep the pairing link removed (F-055)

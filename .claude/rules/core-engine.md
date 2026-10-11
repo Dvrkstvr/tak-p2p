@@ -14,4 +14,5 @@ paths:
 - Abstractions holds records and seam interfaces only (`IKeyStore`, `IGameStore`); no logic.
 - Core must stay browser-wasm-safe. `SqliteGameStorage` moves to `TakEngine.Storage.Local` (architecture.md); don't add new SQLite
   or file-system code to Core.
-- Adopted tests for rules/roads/PTN/TPS (F-001..F-003) stay green unchanged; M0 does not touch rules.
+- Adopted tests for rules/roads/PTN/TPS (F-001..F-003) stay green unchanged. M0 touches rules only for F-057 (bug fixes) and
+  F-058 (sizes 3-8, komi as half flats on `GameBoard`; not in TPS or the hash chain), per D-035..D-037.
