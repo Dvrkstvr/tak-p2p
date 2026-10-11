@@ -4,11 +4,11 @@
 
 ## Now
 - track: deep · approach: spec-first (+ prototype-first: relay round-trip spikes)
-- stage: 7 Build — M0-A built on branch m0a-crypto-fake-relay-game (subagent-driven; plans A1 CI+crypto, A2 envelope+relay, A3 exchange+game)
+- stage: 7 Build — M0-A built on branch m0a-crypto-fake-relay-game; M0-B (plan B1) built on claude/project-thread-jtojtm (PR #3) except its live runs
 - clarity: scope 5/5 · blocking 0 · assumed 9 · deferred 3
 - feasibility: amber · H-open 0 · M-open 3 · spiked 4
-- milestone: M0-A (CI gate, crypto, fake-relay game) · features passing 22/58 · M0 14/24 passing · owed checks 4
-- next: M0-A done (Plans A1-A3: F-033, F-035, F-017 pass; F-034 and F-016 fake-relay rows done, LiveRelay rows owed to M0-B). M0-A review fixes in (D-043 invite proof). Write and execute the M0-B plan (F-014, F-036, F-037, F-038, then LiveRelay runs within the 150-event budget; also share one PublishBudget per process so a restart can't burst past 4/10 s) after the user's check-in
+- milestone: M0-B (live relays, storage, CLI) · features passing 22/58 · M0 14/24 passing · owed checks 4
+- next: M0-B offline rows done (F-036 CLI host/join/resume over two processes, F-037 restart + cold rebuild, F-038 tamper matrix + TakTestPeer; SQLite store; TakRelay.Local; legacy SQLite out of Core). Owed: the LiveRelay runs (F-014, F-034, F-016, F-036, F-037, F-038 live rows; user approved, ≤150 events, D-032), blocked because this cloud environment's network policy refuses nos.lol and relay.damus.io; then F-039 on the user's two machines
 - autopilot: M0-A · round 10/12 · A1 done, F-057/F-058 built · stall 0
 
 ## Stages

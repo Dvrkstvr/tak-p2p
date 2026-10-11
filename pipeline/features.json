@@ -395,7 +395,7 @@
         "grep of src/TakApp.Cli shows no 'simulation' / 'Connecting...' placeholder text and the local game still starts from the menu"
       ],
       "passes": false,
-      "evidence": null
+      "evidence": "Loopback rows seen running 2026-10-11 (Plan B1 task 6): TakApp.Cli.Tests TwoProcessTests, two real CLI processes (host --plain, join <invite> --plain, own --data-dir each) over tools/TakRelay.Local play the scripted 5x5 road win and print the same FINAL line; PlainOutputTests pin every --plain line; OnlineCommandTests: bad invite exits 2 with no relay traffic, unreachable relays print RELAY <url> backoff and keep retrying, a taken invite gives the host 'game already taken' while the second guest keeps waiting, corrupt key file exits 2 untouched. grep of src/TakApp.Cli for simulation/Connecting... is empty and the menu still starts a local game (printf '3' run, exit 0). Live row (nos.lol + damus, two terminals) owed: this container's network policy refuses the public relays."
     },
     {
       "id": "F-037",
@@ -408,7 +408,7 @@
         "Failure: a missing turn (relay lacks it) leaves the game in 'waiting for move n+1', never skips it; a rebuilt hash that differs from the surviving side's shows a fork warning"
       ],
       "passes": false,
-      "evidence": null
+      "evidence": "Fake-relay and loopback rows seen running 2026-10-11 (Plan B1 tasks 2, 3, 6): Multiplayer.Tests RestartTests (B crashes after turn 4, A plays 5, B resumes from InMemory and SQLite stores and the game ends at equal hashes; cold rebuild for guest and host from relay history labelled 'rebuilt from relays'; a move missing from every relay fails the rebuild with 'move n not found on any relay' and stores nothing), RebuildPlanTests (fork and illegal move fail as 'fork: ...'), TwoProcessTests (joiner process killed mid-game and resumed by rerunning its command). Storage.Tests: SQLite store contract, v0 fixture migration, newer version opens read-only. Live row (killed CLI over nos.lol + damus) owed: public relays unreachable from this container."
     },
     {
       "id": "F-038",
@@ -421,7 +421,7 @@
         "Failure of the check itself: the test suite goes red if the drop is removed (deliberate-break check)"
       ],
       "passes": false,
-      "evidence": null
+      "evidence": "Fake-relay rows seen running 2026-10-11 (Plan B1 task 4): Multiplayer.Tests TamperMatrixTests, one case per row (bad sig, stranger, undecryptable, bad envelope signature, fork, illegal move, wrong turn owner, equivocation) during a game: board and hash unchanged, rows 1-2 counted only, rows 3-7 flagged with the scope.md reason and still stored after a restart (SQLite), the opponent's next real move is accepted; three flags raise a notice suggesting resign and nothing is forfeited. Deliberate-break check: removing the prev-hash check turns the fork row red, letting row 4 through the classifier turns the bad-envelope row red. tools/TakTestPeer forges illegal and equivocating moves over the fake relays and the receiver flags them. Live row (TakTestPeer against nos.lol + damus) owed: public relays unreachable from this container."
     },
     {
       "id": "F-039",
