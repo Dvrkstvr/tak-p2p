@@ -4,11 +4,11 @@
 
 ## Now
 - track: deep · approach: spec-first (+ prototype-first: relay round-trip spikes)
-- stage: 7 Build — M0-A in progress on branch m0a-crypto-fake-relay-game (subagent-driven; plans A1 CI+crypto, A2 envelope+relay, A3 exchange+game)
+- stage: 7 Build — M0-A built on branch m0a-crypto-fake-relay-game (subagent-driven; plans A1 CI+crypto, A2 envelope+relay, A3 exchange+game)
 - clarity: scope 5/5 · blocking 0 · assumed 9 · deferred 3
 - feasibility: amber · H-open 0 · M-open 3 · spiked 4
-- milestone: M0-A (CI gate, crypto, fake-relay game) · features passing 20/58 · M0 12/24 passing · owed checks 4
-- next: Plan A2 done (F-033 passing; F-034 fake-relay rows done, LiveRelay row owed to M0-B). Execute Plan A3 (docs/superpowers/plans/2026-10-11-m0a-plan-a3-exchange-and-game.md: F-035, F-017, F-016) → `/pipeline:run`
+- milestone: M0-A (CI gate, crypto, fake-relay game) · features passing 22/58 · M0 14/24 passing · owed checks 4
+- next: M0-A done (Plans A1-A3: F-033, F-035, F-017 pass; F-034 and F-016 fake-relay rows done, LiveRelay rows owed to M0-B). Write and execute the M0-B plan (F-014, F-036, F-037, F-038, then LiveRelay runs within the 150-event budget) after the user's check-in
 - autopilot: M0-A · round 10/12 · A1 done, F-057/F-058 built · stall 0
 
 ## Stages

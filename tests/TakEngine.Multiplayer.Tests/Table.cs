@@ -69,17 +69,26 @@ internal sealed class Table : IAsyncDisposable
     }
 
     /// <summary>Host + guest, both InGame.</summary>
-    public async Task<(MultiplayerGame Host, MultiplayerGame Guest)> Connect(BoardSize size = BoardSize.Five, int komi = 0)
+    public async Task<(MultiplayerGame Host, MultiplayerGame Guest)> Connect(BoardSize size = BoardSize.Five, int komi = 0, Action? nudge = null)
     {
         MultiplayerGame host = await Host(size, komi);
         MultiplayerGame guest = await Join(host);
-        await Eventually(() => host.Record.State == HandshakeState.InGame && guest.Record.State == HandshakeState.InGame, "both in game");
+        await Eventually(() => host.Record.State == HandshakeState.InGame && guest.Record.State == HandshakeState.InGame, "both in game", nudge: nudge);
         return (host, guest);
     }
 
-    /// <summary>Plays <paramref name="ptns"/> from ply <paramref name="from"/>, each move by whoever owns the turn, waiting for both sides.</summary>
-    public async Task Play(MultiplayerGame a, MultiplayerGame b, IEnumerable<string> ptns, int from = 1)
+    /// <summary>
+    /// Plays <paramref name="ptns"/> from ply <paramref name="from"/>, each move by whoever owns the turn, waiting for both sides.
+    /// While a move is in flight the fake clock moves on (the publish budget allows 4 events per 10 s per player).
+    /// </summary>
+    public async Task Play(MultiplayerGame a, MultiplayerGame b, IEnumerable<string> ptns, int from = 1, Action? nudge = null)
     {
+        int calls = 0;
+        nudge = (nudge ?? (() => { })) + (() =>
+        {
+            if (++calls % 10 == 0)
+                Time.Advance(TimeSpan.FromSeconds(1));
+        });
         int ply = from;
         foreach (string ptn in ptns)
         {
@@ -87,17 +96,21 @@ internal sealed class Table : IAsyncDisposable
             CommandResult result = await mover.SubmitAsync(ptn);
             Assert.True(result.IsSuccess, $"ply {ply} '{ptn}': {result.ErrorMessage} (seed {Seed})");
             int expected = ply;
-            await Eventually(() => other.AppliedTurn == expected || other.Result is not null, $"ply {ply} to arrive (seed {Seed})");
+            await Eventually(() => other.AppliedTurn == expected || other.Result is not null, $"ply {ply} to arrive (seed {Seed})", nudge: nudge);
             ply++;
         }
     }
 
     /// <summary>Waits in real time (async hand-offs only; protocol time is the fake clock) until <paramref name="condition"/> holds.</summary>
-    public static async Task Eventually(Func<bool> condition, string what, int timeoutMs = 5000)
+    /// <param name="nudge">Run between checks (e.g. flush a relay's reorder window).</param>
+    public static async Task Eventually(Func<bool> condition, string what, int timeoutMs = 5000, Action? nudge = null)
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
         while (!condition() && sw.ElapsedMilliseconds < timeoutMs)
+        {
             await Task.Delay(5);
+            nudge?.Invoke();
+        }
         Assert.True(condition(), "timed out waiting for: " + what);
     }
 

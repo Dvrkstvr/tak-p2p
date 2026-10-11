@@ -207,10 +207,9 @@ public sealed class GameCoordinatorTests : IAsyncDisposable
         MultiplayerGame host = await _t.Host();
         await host.DisposeAsync(); // the host is away
         MultiplayerGame guest = await _t.Join(host);
-        await Task.Delay(50);
         string joinId = (await _t.GuestStore.LoadAsync(guest.GameId))!.Outbox.Single().EventId;
         int Sends() => _t.R1.ReceivedFrames.Count(f => f.Contains(joinId) && f.StartsWith("[\"EVENT\""));
-        Assert.Equal(1, Sends());
+        await Table.Eventually(() => Sends() == 1, "the first JOIN");
 
         await _t.Advance(TimeSpan.FromSeconds(5));
         await Table.Eventually(() => Sends() == 2, "republished at 5 s");

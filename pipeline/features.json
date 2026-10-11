@@ -154,7 +154,7 @@
         "Failure: a move that is illegal on the board is refused locally and nothing is published"
       ],
       "passes": false,
-      "evidence": null
+      "evidence": "Fake-relay rows seen running 2026-10-11 (Plan A3 task 6): HeadlessGameTests, two MultiplayerGames with their own keys and InMemoryGameStores over two InMemoryRelays: ScriptedFiveByFive_RoadWin_EqualResultAndFinalHash (both Completed, same White road result, same final hash, plies 1-9 stored, no flags); SameGame_WithDuplicatesAndReordering (DuplicateDeliveries(2) + ReorderLive(3), seeds 11/23/2026) same hash and no flags; SevenBySeven_WithKomi_RoadWin and ThreeByThree_FullBoard_KomiDecidesTheFlatWin (komi 0 White wins 5-4, komi 5 Black wins) prove F-058 through the network path; IllegalMove_RefusedLocally_NothingPublished (relay store unchanged). Still owed: the LiveRelay row (two OS processes over nos.lol + damus), M0-B."
     },
     {
       "id": "F-017",
@@ -167,8 +167,8 @@
         "Failure: a second guest with a different key is ignored and surfaced; an ACCEPT from a non-host key is dropped and flagged; a malformed invite, missing seed commitment, size 9, komi out of range or self-invite fails with a specific message and no network traffic",
         "Edge: host restarted before the guest joins still accepts the JOIN (invite persisted)"
       ],
-      "passes": false,
-      "evidence": null
+      "passes": true,
+      "evidence": "Seen running 2026-10-11 (Plan A3 tasks 1, 4, 5): Transport.Tests ColorSeedTests (seed_commit and seed equal to Python-generated color-seed-vectors.json with ColorResolver, both colours covered; commitment verifies only its nonce) and InviteCodeTests (TAK2_/URI/web URL round trips with size, komi, seed_commit; specific refusals for missing or non-hex commitment, size 2/9, komi -1/21, bad host key, non-wss relay, damaged code; TAK1_ refused as an older version; self-invite refused by the guest). Multiplayer.Tests HandshakeTests: host locks the first JOIN and ACCEPTs {white, black, host_nonce, size, komi}; RepeatedJoin_WithNewNonce_GetsTheSameAccept; second guest ignored and surfaced; Accept_WithNonceNotMatchingCommit_IsDroppedAndFails (checked before colours); size/komi mismatch and colour mismatch fail; non-host ACCEPT dropped and flagged; JOIN schedule 5/15/45/+60 s; host restart while inviting or locked loses nothing. GameCoordinatorTests over InMemoryRelay: both land InGame with opposite colours and White's first move shows on both; BadInvite_FailsWithNoStoreWriteAndNoTraffic; OwnInvite_Fails; HostRestartedBeforeTheGuestJoins_StillAcceptsTheJoin; SecondGuest_IsIgnoredAndSurfaced (needs D-042); GuestJoin_IsRepublishedOnSchedule; AcceptArrivingAfterTheFirstMove_StillPlaysThatMove. Stryker on Handshake/*.cs 96.85 % (survivors: null guards reached later anyway, one equivalent schedule boundary)."
     },
     {
       "id": "F-018",
@@ -381,8 +381,8 @@
         "Restart after publish-but-before-save republishes the same turn and the peer ignores the duplicate",
         "Own-key echoes from the relay are ignored; moves entered while all relays are down are sent on reconnect"
       ],
-      "passes": false,
-      "evidence": null
+      "passes": true,
+      "evidence": "Seen running 2026-10-11 (Plan A3 tasks 2, 3, 5): Multiplayer.Tests TurnExchangeTests row by row (own echo, n+1 applied, later turns buffered then applied in order, 64-entry cap dropping the furthest, a gap open 20 s asks for catch-up and again every 20 s, duplicate and re-signed duplicate ignored, conflicting move flagged with first seen winning, wrong turn owner, hash chain mismatch, illegal move with the engine reason, events after Completed ignored, RESIGN up to one turn ahead and a RESIGN ahead of missing moves waits); TurnExchangePropertyTests: all 720 orders of a 6-ply game with every event twice, and 3 x 200 seeded random orders of the scripted road win with duplicates, end at the same hash with no flags (seed printed on failure). GameCoordinatorTests: IllegalLocalMove_PublishesNothing, MovesEnteredOffline_AreSentOnReconnect, PublishThenCrashBeforeSave_RepublishesTheSameTurn_PeerIgnoresTheDuplicate (FailNextWrite on MarkOutboxSent), MoveNoRelayAccepted_IsSentAfterARestart. FakeStoreTests for InMemoryGameStore/InMemoryKeyStore. Stryker TurnExchange + IncomingClassifier + LinkStatus 99.03 % (one equivalent mutant). Deliberate break: without the outbox write the three restart/ordering tests go red; reverted."
     },
     {
       "id": "F-036",
