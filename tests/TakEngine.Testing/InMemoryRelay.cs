@@ -1,3 +1,5 @@
+using System.Net.WebSockets;
+using System.Text;
 using System.Threading.Channels;
 using TakEngine.Transport.Nostr;
 using TakEngine.Transport.Relay;
@@ -205,6 +207,68 @@ public sealed class InMemoryRelay
             if (_storedIds.Add(evt.Id))
                 _stored.Add(evt);
             return true;
+        }
+    }
+
+    /// <summary>
+    /// Serves this relay to one real WebSocket (tools/TakRelay.Local) until either side closes it: text frames in are handled like a
+    /// fake socket's, frames out are sent in order. A connect refused by a knob (partition, upgrade rejects) closes the socket at once.
+    /// </summary>
+    public async Task ServeAsync(WebSocket socket, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(socket);
+        Link link;
+        try
+        {
+            link = Accept();
+        }
+        catch (RelayConnectException)
+        {
+            await socket.CloseAsync(WebSocketCloseStatus.EndpointUnavailable, "unavailable", cancellationToken).ConfigureAwait(false);
+            return;
+        }
+        using var stop = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        Task sending = SendLoopAsync(socket, link, stop.Token);
+        try
+        {
+            var buffer = new byte[16 * 1024];
+            var message = new MemoryStream();
+            while (socket.State == WebSocketState.Open)
+            {
+                WebSocketReceiveResult result = await socket.ReceiveAsync(buffer, stop.Token).ConfigureAwait(false);
+                if (result.MessageType == WebSocketMessageType.Close)
+                    break;
+                message.Write(buffer, 0, result.Count);
+                if (!result.EndOfMessage)
+                    continue;
+                string frame = Encoding.UTF8.GetString(message.GetBuffer(), 0, (int)message.Length);
+                message.SetLength(0);
+                if (!link.Receive(frame))
+                    break;
+            }
+        }
+        catch (Exception ex) when (ex is WebSocketException or OperationCanceledException)
+        {
+        }
+        finally
+        {
+            link.Close();
+            await stop.CancelAsync().ConfigureAwait(false);
+            await sending.ConfigureAwait(false);
+        }
+    }
+
+    private static async Task SendLoopAsync(WebSocket socket, Link link, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await foreach (string frame in link.Outbound.ReadAllAsync(cancellationToken).ConfigureAwait(false))
+                await socket.SendAsync(Encoding.UTF8.GetBytes(frame), WebSocketMessageType.Text, true, cancellationToken).ConfigureAwait(false);
+            if (socket.State == WebSocketState.Open)
+                await socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "closed", cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is WebSocketException or OperationCanceledException)
+        {
         }
     }
 

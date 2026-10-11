@@ -18,7 +18,8 @@
       "tests/TakEngine.Storage.Tests/TakEngine.Storage.Tests.csproj",
       "tests/TakEngine.Testing/TakEngine.Testing.csproj",
       "tests/TakEngine.Transport.Tests/TakEngine.Transport.Tests.csproj",
-      "tools/TakTestPeer/TakTestPeer.csproj"
+      "tools/TakTestPeer/TakTestPeer.csproj",
+      "tools/TakRelay.Local/TakRelay.Local.csproj"
     ]
   }
 }

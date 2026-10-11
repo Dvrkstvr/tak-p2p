@@ -138,9 +138,9 @@ Plans A1-A3 apply. In addition:
 
 **Files:** `tools/TakRelay.Local/` (web project, in sln/slnx/Ci.slnf); tests in `tests/TakEngine.Transport.Tests/LocalRelayTests.cs`.
 
-- [ ] Red: a `RelayPool` using the real `ClientWebSocketRelaySocket` against the tool on a free localhost port publishes, subscribes and gets OK true. Two pools see each other's events. This stays in CI, because it uses only loopback.
-- [ ] `InMemoryRelay` gains an adapter for external sockets (a `Link` fed by a WebSocket loop). The knobs stay usable from the tool's command line (`--rate-limit-like-damus`).
-- [ ] Commit `M0: TakRelay.Local serves the fake relay over WebSockets`.
+- [x] Red: a `RelayPool` using the real `ClientWebSocketRelaySocket` against the tool on a free localhost port publishes, subscribes and gets OK true. Two pools see each other's events. This stays in CI, because it uses only loopback.
+- [x] `InMemoryRelay.ServeAsync(WebSocket)` feeds a `Link` from a real socket (BCL only, so Testing needs no ASP.NET). The tool serves one relay per name at `ws://127.0.0.1:port/name` (`--port`, `--relays r1,r2`, `--rate-limit-like-damus`, `--auth-for-reads r2`).
+- [x] Commit `M0: TakRelay.Local serves the fake relay over WebSockets`.
 
 ### Task 6: F-036: CLI `host` / `join` / `resume`
 

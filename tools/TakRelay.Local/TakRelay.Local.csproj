@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- Dev tool: serves InMemoryRelay (with its fault knobs) over real WebSockets on localhost, for CLI runs and loopback tests
+       with no public relay. Never ships. -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\tests\TakEngine.Testing\TakEngine.Testing.csproj" />
+  </ItemGroup>
+
+</Project>
