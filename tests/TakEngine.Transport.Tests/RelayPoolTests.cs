@@ -294,4 +294,40 @@ public sealed class RelayPoolTests : IAsyncDisposable
         await Eventually(() => _pool.MaxCreatedAt == real.CreatedAt, "real one delivered");
         Assert.Equal(real.Content, Assert.Single(Drain()).Event.Content);
     }
+
+    [Fact]
+    public async Task Republish_SendsTheSameEventAgain_EvenAfterItWasAccepted()
+    {
+        Start();
+        await Subscribed();
+        NostrEvent e = Evt(Me);
+        _pool.Publish(e);
+        await Eventually(() => _pool.PerRelay(e.Id).Values.All(s => s.Status == RelayPublishStatus.Sent), "sent to both");
+
+        _pool.Publish(e); // a plain publish of a tracked event is a no-op
+        _pool.Republish(e);
+
+        await Eventually(() => _r1.ReceivedFrames.Count(f => f.Contains(e.Id) && f.StartsWith("[\"EVENT\"")) == 2, "r1 got it twice");
+        await Eventually(() => _pool.Outcome(e.Id) == PublishOutcome.Sent, "sent again");
+        Assert.Equal(2, _r2.ReceivedFrames.Count(f => f.Contains(e.Id) && f.StartsWith("[\"EVENT\"")));
+        Assert.Single(_r1.StoredEvents, s => s.Id == e.Id);
+    }
+
+    [Fact]
+    public async Task Resubscribe_SendsTheReqAgain_AndDeliversStoredEventsItMissed()
+    {
+        Start();
+        await Subscribed();
+        NostrEvent missed = Evt(Opponent);
+        _r1.Seed(missed); // stored without a live delivery: like an event this client missed while away
+        await Task.Delay(20);
+        Assert.Empty(Drain());
+        int reqs = _r1.ReceivedFrames.Count(f => f.StartsWith("[\"REQ\""));
+
+        await _pool.ResubscribeAsync();
+
+        await Eventually(() => _r1.ReceivedFrames.Count(f => f.StartsWith("[\"REQ\"")) == reqs + 1, "a second REQ");
+        var received = new List<ReceivedEvent>();
+        await Eventually(() => { received.AddRange(Drain()); return received.Any(r => r.Event.Id == missed.Id); }, "the missed event");
+    }
 }

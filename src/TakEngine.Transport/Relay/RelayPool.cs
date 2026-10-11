@@ -84,6 +84,31 @@ public sealed class RelayPool : IAsyncDisposable
         _wake.Release();
     }
 
+    /// <summary>
+    /// Sends a stored event again, verbatim (same id), to every relay, even ones that accepted it before: a JOIN on its republish
+    /// schedule, an ACCEPT for a retried JOIN, our last move after a restart. Receivers treat it as a duplicate.
+    /// </summary>
+    public void Republish(NostrEvent evt)
+    {
+        lock (_gate)
+        {
+            _tracker.Retrack(evt.Id, _connections.Select(c => c.Url));
+            foreach (RelayConnection c in _connections)
+                _inFlight.Remove((evt.Id, c.Url));
+            if (!_outgoing.Any(e => e.Id == evt.Id))
+                _outgoing.Add(evt);
+            MarkSeenLocked(evt.Id);
+        }
+        _wake.Release();
+    }
+
+    /// <summary>Sends the subscription again on every connected relay (catch-up after a gap, or the filter changed).</summary>
+    public async Task ResubscribeAsync()
+    {
+        foreach (RelayConnection c in _connections)
+            await c.ResubscribeAsync().ConfigureAwait(false);
+    }
+
     public PublishOutcome Outcome(string eventId)
     {
         lock (_gate) return _tracker.Outcome(eventId);

@@ -64,6 +64,15 @@ public sealed class RelayConnection : IAsyncDisposable
         }
     }
 
+    /// <summary>Sends the current subscription again on a live socket (a catch-up, or a changed filter). NIP-01: a REQ with the same
+    /// id replaces the old one, and the relay answers with stored events again.</summary>
+    public async Task<bool> ResubscribeAsync()
+    {
+        if (!Link.CanWrite || _subscription() is not { } req)
+            return false;
+        return await SendAsync(req.Format()).ConfigureAwait(false);
+    }
+
     private async Task RunAsync(CancellationToken ct)
     {
         while (!ct.IsCancellationRequested)

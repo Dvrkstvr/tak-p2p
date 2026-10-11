@@ -135,6 +135,23 @@ public class PublishTrackerTests
     }
 
     [Fact]
+    public void Retrack_StartsAnEventOverAsPending()
+    {
+        var tracker = new PublishTracker();
+        tracker.Track("e", [R1, R2]);
+        tracker.OnOk("e", R1, true, "", T0);
+        tracker.OnOk("e", R2, false, "blocked: y", T0);
+        tracker.Track("e", [R1, R2]); // a plain Track keeps the state
+
+        Assert.Equal(PublishOutcome.Sent, tracker.Outcome("e"));
+
+        tracker.Retrack("e", [R1, R2]);
+
+        Assert.Equal(PublishOutcome.Pending, tracker.Outcome("e"));
+        Assert.All(tracker.PerRelay("e").Values, s => Assert.Equal(RelayPublishStatus.Pending, s.Status));
+    }
+
+    [Fact]
     public void Failed_WhenEveryRelayRefuses()
     {
         var tracker = new PublishTracker();

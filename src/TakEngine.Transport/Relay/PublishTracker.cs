@@ -39,6 +39,13 @@ public sealed class PublishTracker
 
     public bool IsTracked(string eventId) => _events.ContainsKey(eventId);
 
+    /// <summary>Starts an event over as Pending on every relay (a deliberate republish of the stored event, same id).</summary>
+    public void Retrack(string eventId, IEnumerable<Uri> relays)
+    {
+        _events.Remove(eventId);
+        Track(eventId, relays);
+    }
+
     public void OnOk(string eventId, Uri relay, bool accepted, string message, DateTimeOffset now)
     {
         if (!_events.TryGetValue(eventId, out var relays) || !relays.TryGetValue(relay, out RelayPublishState? current))
