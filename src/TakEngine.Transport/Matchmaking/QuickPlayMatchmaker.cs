@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using TakEngine.Abstractions;
+using TakEngine.Crypto;
 using TakEngine.Transport.Nostr;
 
 namespace TakEngine.Transport.Matchmaking;
@@ -16,38 +17,33 @@ public sealed class QuickPlayMatchmaker
     public const string QuickPlayTag = "tak_quickplay";
     public const string ClientVersion = "1.0";
 
+    /// <summary>
+    /// A signed Quick Play broadcast with a 60 s expiration tag, built with <see cref="NostrEvents.Sign"/>. Quick Play stays unwired
+    /// until M4. Pure: time and aux are arguments.
+    /// </summary>
     public static NostrEvent CreateBroadcastEvent(
-        string ephemeralPubKey,
+        SecretKey ephemeralKey,
         BoardSize boardSize,
-        IReadOnlyList<string> supportedRelays)
+        IReadOnlyList<string> supportedRelays,
+        long createdAt,
+        ReadOnlySpan<byte> aux32)
     {
-        long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        long expiration = now + BroadcastTtlSeconds;
-
+        ArgumentNullException.ThrowIfNull(ephemeralKey);
+        string ephemeralPubKey = ephemeralKey.PublicKey.ToHex();
         var payload = new QuickPlayBroadcastPayload(
             EphemeralPubKey: ephemeralPubKey,
             Relays: supportedRelays,
             ClientVersion: ClientVersion);
 
         string content = JsonSerializer.Serialize(payload);
-
-        var evt = new NostrEvent
-        {
-            Pubkey = ephemeralPubKey,
-            CreatedAt = now,
-            Kind = EphemeralQuickPlayKind,
-            Tags =
-            [
-                ["t", QuickPlayTag],
-                ["board_size", ((int)boardSize).ToString()],
-                ["client_version", ClientVersion],
-                ["expiration", expiration.ToString()]
-            ],
-            Content = content
-        };
-
-        evt.Id = Nip01Serializer.ComputeId(evt);
-        return evt;
+        string[][] tags =
+        [
+            ["t", QuickPlayTag],
+            ["board_size", ((int)boardSize).ToString(System.Globalization.CultureInfo.InvariantCulture)],
+            ["client_version", ClientVersion],
+            ["expiration", (createdAt + BroadcastTtlSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture)],
+        ];
+        return NostrEvents.Sign(ephemeralKey, createdAt, EphemeralQuickPlayKind, tags, content, aux32);
     }
 
     public static bool TryParseBroadcastEvent(

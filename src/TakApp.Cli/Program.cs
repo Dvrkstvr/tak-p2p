@@ -338,7 +338,7 @@ public static class Program
 
         var keyPair = SecretKey.Generate(() => RandomNumberGenerator.GetBytes(SecretKey.Length));
         var proposal = QuickPlayMatchmaker.CreateChallenge(BoardSize.Five, keyPair.PublicKey.ToHex());
-        var broadcast = QuickPlayMatchmaker.CreateBroadcastEvent(keyPair.PublicKey.ToHex(), BoardSize.Five, ["wss://relay.damus.io"]);
+        var broadcast = QuickPlayMatchmaker.CreateBroadcastEvent(keyPair, BoardSize.Five, ["wss://relay.damus.io"], DateTimeOffset.UtcNow.ToUnixTimeSeconds(), RandomNumberGenerator.GetBytes(Schnorr.AuxLength));
 
         AnsiConsole.MarkupLine($"[green]✓[/] Matchmaking ticket created with ephemeral key [grey]{keyPair.PublicKey.ToHex()[..12]}...[/]");
         AnsiConsole.MarkupLine($"[yellow]Broadcast Kind: 20001 (TTL: 60s)[/] looking for opponent on 5x5 pool...");

@@ -352,8 +352,8 @@
         "The hash chain matches a fixed known sequence (golden vector), so a refactor cannot silently change it",
         "Edge: first-turn colour swap move round trips"
       ],
-      "passes": false,
-      "evidence": null
+      "passes": true,
+      "evidence": "Seen running 2026-10-11 (Plan A2 tasks 1-3, CI ci.yml green on each push of branch claude/project-thread-jtojtm, e.g. run 38155862524): Crypto.Tests ActionDigestTests (digest + BIP-340 signature equal to Python-generated action-digest-vectors.json for JOIN, ACCEPT, MOVE x3, RESIGN; any field change breaks verification; malformed input returns false). Core.Tests RemoteSessionTests: two sessions with independent keys play ScriptedGames' 5x5 road win to equal final hash; failure rows (wrong author, bad signature, wrong prev hash, wrong turn number, wrong game id, wrong pv, malformed/non-canonical PTN, illegal move, extra data, JOIN, local player's turn) each fail, raise OnProtocolViolationDetected and leave hash, TPS and ply unchanged; first-turn swap round trips; resign; Restore continues the chain; a spectator verifies the players' chain. HashChainGoldenTests pins the D-040 hash sequence (ply 1 cross-checked in Python). Transport.Tests EnvelopeCodecTests: rows 1-4, IncompatibleVersion, NotForUs, own echo, DecodeNeverDecryptsBeforeVerifying (spy). Stryker 5.0.0: EnvelopeCodec.cs 92.31 %, ActionDigest.cs 82.50 % (survivors: null guards, Guid \"D\" format equivalents). Deliberate break: ActionDigest domain v1->v2 turns 6 vector tests red."
     },
     {
       "id": "F-034",
@@ -367,7 +367,7 @@
         "LiveRelay (by hand): the same client works against nos.lol and damus together"
       ],
       "passes": false,
-      "evidence": null
+      "evidence": "Fake-relay rows seen running 2026-10-11 (Plan A2 tasks 4-6): RelayPoolTests over two InMemoryRelays + FakeTimeProvider: Sent when any relay says OK true, Failed when all refuse; rate-limited refused, retried with backoff and never more than 4 EVENT frames in any 10 s; dropped socket reconnects after 1 s backoff and resubscribes with since = max - 30; 503 upgrade retried 1 s, 2 s; CLOSED auth-required marks one relay read-impossible while the other delivers; same event from two relays and across reconnects delivered once; forged copies dropped and counted. RelayLinkTests (backoff 1,2,4,8,16,30,30), PublishTrackerTests, PublishBudgetTests, SubscriptionPlanTests, RelayMessageTests, InMemoryRelayTests. Stryker pure relay logic 95.38 %. Deliberate breaks: subscription evaluated once (no since on resubscribe) -> DroppedSocket_ReconnectsWithBackoff_AndResubscribesWithSince red; dedupe removed -> 4 RelayPool tests red; both reverted. Still owed: the LiveRelay row (nos.lol + damus together), M0-B with F-014."
     },
     {
       "id": "F-035",
