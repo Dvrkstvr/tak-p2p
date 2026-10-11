@@ -24,9 +24,12 @@ public sealed class OnlineCommand
     private readonly Dictionary<string, int> _ownEvents = new(StringComparer.Ordinal);
     private readonly HashSet<string> _reported = new(StringComparer.Ordinal);
     private readonly TaskCompletionSource<int> _done = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly List<Action> _held = [];
     private MultiplayerGame _game = null!;
     private int _printedTurn;
     private string? _lastWaiting;
+    private bool _replayed;
+    private bool _finalPrinted;
 
     private OnlineCommand(IGameOutput output) => _out = output;
 
@@ -41,21 +44,54 @@ public sealed class OnlineCommand
 
         string dir = Profile.Directory(args.DataDir, args.Profile, env.LocalAppData);
         MultiplayerOptions options;
+        FileStream? profileLock = null;
         try
         {
             Directory.CreateDirectory(dir);
+            // One process per profile: two copies of one player could otherwise sign two different moves for the same turn.
+            try
+            {
+                profileLock = new FileStream(Path.Combine(dir, "lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            }
+            catch (IOException)
+            {
+                await error.WriteLineAsync($"This profile ({dir}) is in use by another tak process. Close it, or use another --profile.")
+                    .ConfigureAwait(false);
+                return 2;
+            }
             var key = await IdentityBootstrap.LoadOrCreateAsync(new FileKeyStore(dir), env.Random32, stop).ConfigureAwait(false);
             var store = new SqliteGameStore(Path.Combine(dir, SqliteGameStore.FileName));
             options = new MultiplayerOptions(key, store, env.Sockets, env.Time, args.Relays ?? DefaultRelays, env.Random32);
         }
         catch (Exception ex) when (ex is KeyStoreException or GameStoreException or IOException or UnauthorizedAccessException)
         {
+            if (profileLock is not null)
+                await profileLock.DisposeAsync().ConfigureAwait(false);
             await error.WriteLineAsync(ex.Message).ConfigureAwait(false);
             return 2;
         }
 
-        var command = new OnlineCommand(output);
-        return await command.PlayAsync(args, options, input, error, stop).ConfigureAwait(false);
+        await using (profileLock.ConfigureAwait(false))
+        {
+            var command = new OnlineCommand(output);
+            options = options with
+            {
+                Observe = game =>
+                {
+                    command._game = game;
+                    command.Attach();
+                },
+            };
+            try
+            {
+                return await command.PlayAsync(args, options, input, error, stop).ConfigureAwait(false);
+            }
+            catch (GameStoreException ex)
+            {
+                await error.WriteLineAsync(ex.Message).ConfigureAwait(false);
+                return 2;
+            }
+        }
     }
 
     private async Task<int> PlayAsync(OnlineArgs args, MultiplayerOptions options, TextReader input, TextWriter error, CancellationToken stop)
@@ -66,10 +102,8 @@ public sealed class OnlineCommand
             await error.WriteLineAsync(failure).ConfigureAwait(false);
             return 2;
         }
-        _game = game;
         await using (game.ConfigureAwait(false))
         {
-            Attach();
             if (args.Command == "host" && game.Record.State == HandshakeState.Inviting)
                 _out.Invite(game.Invite.ToCompactCode());
             await ReportStoredAsync(options.Store).ConfigureAwait(false);
@@ -164,15 +198,18 @@ public sealed class OnlineCommand
 
     private void Attach()
     {
-        _game.Started += _ => Prompt();
+        _game.Started += _ => Emit(Prompt);
         _game.ActionApplied += (applied, mine) =>
         {
             if (mine)
             {
                 lock (_gate) _ownEvents[applied.EventId] = applied.Action.Turn;
             }
-            Report(applied, mine);
-            Prompt();
+            Emit(() =>
+            {
+                Report(applied, mine);
+                Prompt();
+            });
         };
         _game.PublishStatus += (eventId, outcome) =>
         {
@@ -182,20 +219,42 @@ public sealed class OnlineCommand
                 if (outcome == PublishOutcome.Pending || !_ownEvents.TryGetValue(eventId, out turn) || !_reported.Add(eventId))
                     return;
             }
-            _out.Sent(turn, _game.PublishDetail(eventId));
+            Emit(() => _out.Sent(turn, _game.PublishDetail(eventId)));
         };
-        _game.Flagged += flag => _out.Flag(flag.Turn, flag.Reason);
-        _game.Notice += _out.Notice;
-        _game.Failed += message =>
+        _game.Flagged += flag => Emit(() => _out.Flag(flag.Turn, flag.Reason));
+        _game.Notice += text => Emit(() => _out.Notice(text));
+        _game.Failed += message => Emit(() =>
         {
             _out.Notice(message);
             _done.TrySetResult(3);
-        };
-        _game.Ended += result =>
+        });
+        _game.Ended += result => Emit(() => Final(result));
+    }
+
+    /// <summary>Live events wait until the stored history has been reported, so the transcript is in turn order.</summary>
+    private void Emit(Action report)
+    {
+        lock (_gate)
         {
-            _out.Final(result, _game.StateHash);
-            _done.TrySetResult(0);
-        };
+            if (!_replayed)
+            {
+                _held.Add(report);
+                return;
+            }
+        }
+        report();
+    }
+
+    private void Final(GameResult result)
+    {
+        lock (_gate)
+        {
+            if (_finalPrinted)
+                return;
+            _finalPrinted = true;
+        }
+        _out.Final(result, _game.StateHash);
+        _done.TrySetResult(0);
     }
 
     /// <summary>On resume, replays what is stored so the transcript is complete; then says whose turn it is.</summary>
@@ -213,17 +272,30 @@ public sealed class OnlineCommand
             Report(applied, mine);
         }
         if (_game.Result is { } result)
-        {
-            _out.Final(result, _game.StateHash);
-            _done.TrySetResult(0);
-            return;
-        }
-        if (_game.Record.State == HandshakeState.Inviting)
+            Final(result);
+        else if (_game.Record.State == HandshakeState.Inviting)
             Waiting("for a guest to join");
         else if (_game.Record.State == HandshakeState.Joining)
             Waiting("for the host to answer");
         else
             Prompt();
+
+        while (true)
+        {
+            List<Action> held;
+            lock (_gate)
+            {
+                if (_held.Count == 0)
+                {
+                    _replayed = true;
+                    return;
+                }
+                held = [.. _held];
+                _held.Clear();
+            }
+            foreach (Action report in held)
+                report();
+        }
     }
 
     private void Report(AppliedAction applied, bool mine)

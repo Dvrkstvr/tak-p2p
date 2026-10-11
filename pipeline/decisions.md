@@ -294,7 +294,9 @@ JOIN whose proof matches its own seed commitment and the JOIN's author; any othe
 Applied multiplayer actions are stored in a new `NetMoves` table (pv, type, turn, author, prev hash, canonical action data,
 signature, event id, TPS and hash after), not in the legacy `Moves` table with new columns as architecture.md "Data" first said.
 The v0 -> v2 step still adds `Moves.SigScheme` and `Moves.EventId` to a legacy file, creates `NetGames`, `NetMoves`, `Outbox`
-and `Flags`, and nothing else; a fresh file gets only the multiplayer tables. One `games.db` per profile data dir.
+and `Flags`, and nothing else; a fresh file gets only the multiplayer tables. One `games.db` per profile data dir. A unique index
+allows one MOVE per turn per game, and `CommitAppliedAsync` refuses a MOVE whose turn isn't the stored turn + 1, so two processes on
+one profile can never both save (and so publish) a move for the same turn; the CLI also locks the profile.
 - why: `Moves` has a foreign key to `Games`, whose `CHECK(BoardSize IN (4,5,6))` can't hold 3x3, 7x7 or 8x8 games (D-037), and
   it has no place for JOIN/ACCEPT/RESIGN or action data; changing that would be a shape change on legacy rows (D-011 says leave them)
 - revisit if: legacy local games are ever shown next to multiplayer ones (then a view over both tables, not a migration)
@@ -303,10 +305,13 @@ and `Flags`, and nothing else; a fresh file gets only the multiplayer tables. On
 A cold rebuild (F-037) needs the invite (game id, host key, seed commitment) and the key; with no invite there is nothing to rebuild.
 The guest recovers its nonce from its own JOIN on the relays, the host its nonce from its own ACCEPT (NIP-44's conversation key is
 symmetric, so each side decrypts its own events). `RebuildPlan` (pure) replays the handshake with the live checks, then every MOVE by
-the two players in turn order through the rules and the hash chain. A turn missing with later turns present fails the rebuild with
-"move n not found on any relay" and stores nothing; a move that doesn't chain or isn't legal fails it with "fork: …". A gap at the end
-(the last moves are simply absent) rebuilds up to the gap and the game waits there. The rebuilt record's note is "rebuilt from relays".
+the two players in turn order through the rules and the hash chain. Every relay must have sent its whole history (EOSE) or refused
+reads; otherwise the rebuild is refused ("Not every relay sent its history in time"). A missing turn followed by a later move of ours
+fails the rebuild with "move n not found on any relay"; later moves that are only the opponent's don't (one signed far-future move must
+not block every rebuild), and the game waits at the gap. A move that doesn't chain or isn't legal fails it with "fork: …". The rebuilt
+game is saved in one transaction (`IGameStore.SaveRebuiltGameAsync`) or not at all. The record's note is "rebuilt from relays".
 - why: in a two-player alternating game, later moves after a gap include one of our own, so continuing from the gap would mean signing
-  a second, different move for a turn we already played (equivocation). With live state the gap can't open at all: the opponent can't
+  a second, different move for a turn we already played (equivocation). The same risk is why a partial history (a relay that dropped
+  mid-history, or never answered) and a half-saved rebuild are refused rather than used. With live state the gap can't open at all: the opponent can't
   play n+2 before we answered n+1, so scope.md's "move n+1 not found" surfaces only here
 - revisit if: games get more than two players, or a "please resend turn n" message is added to the wire format (new `pv`)

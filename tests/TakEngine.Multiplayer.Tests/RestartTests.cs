@@ -100,6 +100,26 @@ public class RestartTests
     }
 
     [Fact]
+    public async Task Rebuild_WithARelayThatNeverSentItsHistory_IsRefused_AndStoresNothing()
+    {
+        await using var t = new Table(seed: 11);
+        var (host, guest) = await t.Connect();
+        await t.Play(host, guest, Script.Take(4));
+        await guest.DisposeAsync();
+        t.R2.Partition(); // the move that decides where the game stands could be on this one
+
+        var fresh = new InMemoryGameStore();
+        Task<JoinOutcome> rebuilding = MultiplayerGame.RebuildAsync(t.Options(t.GuestOptions.Key, fresh), host.Invite.ToCompactCode());
+        await Table.Eventually(() => rebuilding.IsCompleted, "rebuild gives up", nudge: () => t.Time.Advance(TimeSpan.FromMilliseconds(100)));
+        JoinOutcome outcome = await rebuilding;
+
+        Assert.Null(outcome.Game);
+        Assert.Contains("Not every relay sent its history", outcome.Error, StringComparison.Ordinal);
+        Assert.Contains(t.R2.Url.ToString().TrimEnd('/'), outcome.Error, StringComparison.Ordinal);
+        Assert.Null(await fresh.LoadAsync(guest.GameId));
+    }
+
+    [Fact]
     public async Task Rebuild_OfAGameStillStored_IsRefused()
     {
         await using var t = new Table(seed: 10);

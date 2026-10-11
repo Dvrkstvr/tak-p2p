@@ -72,8 +72,13 @@ public static class TestPeer
 
         string[] relays = relayCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var options = new MultiplayerOptions(key, new InMemoryGameStore(), sockets, time, relays, () => RandomNumberGenerator.GetBytes(32));
-        IReadOnlyList<HistoryEntry> history = await RelayHistory.FetchAsync(options, invite!, HistoryWait).ConfigureAwait(false);
-        RebuildResult game = RebuildPlan.Build(invite!, key.PublicKey, history);
+        RelayHistoryResult fetched = await RelayHistory.FetchAsync(options, invite!, HistoryWait).ConfigureAwait(false);
+        if (fetched.Unanswered.Count > 0)
+        {
+            await error.WriteLineAsync("game: no complete history from " + string.Join(", ", fetched.Unanswered)).ConfigureAwait(false);
+            return 2;
+        }
+        RebuildResult game = RebuildPlan.Build(invite!, key.PublicKey, fetched.History);
         if (game.Error is not null)
         {
             await error.WriteLineAsync("game: " + game.Error).ConfigureAwait(false);

@@ -52,6 +52,7 @@ internal static class Schema
             TpsAfter TEXT NOT NULL,
             StateHashAfter TEXT NOT NULL
         );
+        CREATE UNIQUE INDEX NetMovesOneMovePerTurn ON NetMoves (GameId, Turn) WHERE ActionType = 'MOVE';
         CREATE TABLE Outbox (
             Seq INTEGER PRIMARY KEY AUTOINCREMENT,
             GameId TEXT NOT NULL REFERENCES NetGames(GameId) ON DELETE CASCADE,

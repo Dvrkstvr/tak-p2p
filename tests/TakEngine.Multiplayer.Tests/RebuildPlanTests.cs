@@ -128,6 +128,22 @@ public class RebuildPlanTests
     }
 
     [Fact]
+    public async Task AnOpponentsFarFutureMove_DoesNotBlockTheRebuild_ItWaitsAtTheGap()
+    {
+        Played p = await PlayFour();
+        List<HistoryEntry> h = History(p, p.Guest);
+        int far = Owner(p, 41) == p.Host ? 41 : 42; // a turn of the host's, far past the real game
+        SignedGameAction spam = SignedScript.Sign(p.Host,
+            SignedGameAction.UnsignedMove(p.Invite.GameId, far, p.Host.PublicKey.ToHex(), p.Hash, "c3"));
+        h.Add(new HistoryEntry(spam, "spam", "{}"));
+
+        RebuildResult r = RebuildPlan.Build(p.Invite, p.Guest.PublicKey, h);
+
+        Assert.Null(r.Error);
+        Assert.Equal(4, r.Progress!.AppliedTurn);
+    }
+
+    [Fact]
     public async Task WithoutOurOwnJoin_TheGuestCannotRebuild()
     {
         Played p = await PlayFour();

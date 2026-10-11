@@ -19,6 +19,9 @@ public sealed record MultiplayerOptions(
 {
     /// <summary>The client's publish budget (4 events per 10 s). A head shares one across every game it opens.</summary>
     public PublishBudget Budget { get; init; } = new();
+
+    /// <summary>Called with each new game before it touches the store or the network, so a head can subscribe to every event.</summary>
+    public Action<MultiplayerGame>? Observe { get; init; }
 }
 
 /// <summary>Either a game being joined, or why the invite can't be used (nothing was saved or sent).</summary>
@@ -32,7 +35,11 @@ public sealed class MultiplayerGame : IAsyncDisposable
 {
     private readonly GameCoordinator _coordinator;
 
-    private MultiplayerGame(MultiplayerOptions options) => _coordinator = new GameCoordinator(options, this);
+    private MultiplayerGame(MultiplayerOptions options)
+    {
+        _coordinator = new GameCoordinator(options, this);
+        options.Observe?.Invoke(this);
+    }
 
     /// <summary>Creates an invite and waits for a guest. Throws <see cref="InviteFormatException"/> for a size or komi out of range.</summary>
     public static async Task<MultiplayerGame> HostAsync(MultiplayerOptions options, BoardSize size, int komiHalves, string? nickname = null)

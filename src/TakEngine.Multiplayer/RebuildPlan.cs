@@ -131,7 +131,9 @@ public static class RebuildPlan
             HistoryEntry? entry = moves.FirstOrDefault(m => m.Action.Turn == turn && m.Action.PlayerPubKey == owner && ActionDigest.Verify(m.Action));
             if (entry is null)
             {
-                if (moves.Any(m => m.Action.Turn > turn))
+                // A later move of ours means we played on past the gap: stopping here would have us sign a turn again. Later moves
+                // that are only the opponent's prove nothing (one signed far-future move must not block every rebuild): wait at the gap.
+                if (moves.Any(m => m.Action.Turn > turn && m.Action.PlayerPubKey == meHex && ActionDigest.Verify(m.Action)))
                     return RebuildResult.Fail($"move {turn} not found on any relay, but later moves are: the game can't be rebuilt without guessing.");
                 break;
             }

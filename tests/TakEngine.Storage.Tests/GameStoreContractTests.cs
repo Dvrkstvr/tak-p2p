@@ -69,6 +69,41 @@ public abstract class GameStoreContractTests
     }
 
     [Fact]
+    public async Task ARebuiltGame_IsSavedWhole()
+    {
+        IGameStore store = NewStore();
+        var outbox = new[] { new OutboxEntry("join", GameActionType.Join, 0, "{}", Sent: true), new OutboxEntry("m2", GameActionType.Move, 2, "{}", Sent: true) };
+
+        await store.SaveRebuiltGameAsync(Record() with { Note = "rebuilt from relays" }, [Applied(1), Applied(2)], outbox, Progress(2));
+
+        StoredGame loaded = (await Reopen(store).LoadAsync(Game))!;
+        Assert.Equal("rebuilt from relays", loaded.Record.Note);
+        Assert.Equal([1, 2], loaded.Applied.Select(a => a.Action.Turn));
+        Assert.Equal(["join", "m2"], loaded.Outbox.Select(o => o.EventId));
+        Assert.All(loaded.Outbox, o => Assert.True(o.Sent));
+        Assert.Equal(Progress(2), loaded.Progress);
+        await Assert.ThrowsAsync<GameStoreException>(() => store.SaveRebuiltGameAsync(Record(), [], [], Progress(0)));
+    }
+
+    [Fact]
+    public async Task AMoveThatDoesNotFollowTheStoredTurn_IsRefused_AndChangesNothing()
+    {
+        IGameStore store = NewStore();
+        await store.SaveNewGameAsync(Record(), Progress(0));
+        await store.CommitAppliedAsync(Game, Applied(1), Progress(1));
+
+        // A second process that also loaded turn 0 signs its own turn 1: it must never be saved (and so never published).
+        await Assert.ThrowsAsync<GameStoreException>(() =>
+            store.CommitAppliedAsync(Game, Applied(1), Progress(1), new OutboxEntry("second", GameActionType.Move, 1, "{}")));
+        await Assert.ThrowsAsync<GameStoreException>(() => store.CommitAppliedAsync(Game, Applied(3), Progress(3)));
+
+        StoredGame loaded = (await Reopen(store).LoadAsync(Game))!;
+        Assert.Single(loaded.Applied);
+        Assert.Empty(loaded.Outbox);
+        Assert.Equal(Progress(1), loaded.Progress);
+    }
+
+    [Fact]
     public async Task SavingAGameTwice_OrWritingAnUnknownGame_Fails_AndUnknownLoadsAreNull()
     {
         IGameStore store = NewStore();

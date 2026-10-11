@@ -16,8 +16,17 @@ public interface IGameStore
     Task UpdateRecordAsync(NetGameRecord record, OutboxEntry? outbox = null, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Saves a game rebuilt from relay history (F-037, D-045) whole, in one transaction: the record, every applied action in turn
+    /// order, the outbox and the progress. Throws if the game id is already stored; a failure leaves nothing behind.
+    /// </summary>
+    Task SaveRebuiltGameAsync(NetGameRecord record, IReadOnlyList<AppliedAction> applied, IReadOnlyList<OutboxEntry> outbox,
+        ExchangeProgress progress, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Appends one applied action and moves the progress to <paramref name="progress"/>, in one transaction. For a local action the
-    /// signed event goes into the outbox in the same transaction (persist before publishing).
+    /// signed event goes into the outbox in the same transaction (persist before publishing). For a MOVE the stored applied turn must
+    /// be the move's turn minus one; otherwise (another process already committed that turn) it throws and changes nothing, so a second,
+    /// different signature for one turn is never saved or published.
     /// </summary>
     Task CommitAppliedAsync(Guid gameId, AppliedAction applied, ExchangeProgress progress, OutboxEntry? outbox = null, CancellationToken cancellationToken = default);
 

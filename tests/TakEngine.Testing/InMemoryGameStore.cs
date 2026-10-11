@@ -46,10 +46,24 @@ public sealed class InMemoryGameStore : IGameStore
                 e.Outbox.Add(outbox);
         });
 
+    public Task SaveRebuiltGameAsync(NetGameRecord record, IReadOnlyList<AppliedAction> applied, IReadOnlyList<OutboxEntry> outbox,
+        ExchangeProgress progress, CancellationToken cancellationToken = default) =>
+        Write(nameof(SaveRebuiltGameAsync), () =>
+        {
+            if (_games.ContainsKey(record.GameId))
+                throw new GameStoreException($"Game {record.GameId} is already stored.");
+            var e = new Entry(record, progress);
+            e.Applied.AddRange(applied);
+            e.Outbox.AddRange(outbox);
+            _games[record.GameId] = e;
+        });
+
     public Task CommitAppliedAsync(Guid gameId, AppliedAction applied, ExchangeProgress progress, OutboxEntry? outbox = null, CancellationToken cancellationToken = default) =>
         Write(nameof(CommitAppliedAsync), () =>
         {
             Entry e = Get(gameId);
+            if (applied.Action.ActionType == GameActionType.Move && e.Progress.AppliedTurn != applied.Action.Turn - 1)
+                throw new GameStoreException($"Turn {applied.Action.Turn} can't follow turn {e.Progress.AppliedTurn}: another process may be playing this game.");
             e.Applied.Add(applied);
             e.Progress = progress;
             if (outbox is not null)

@@ -82,6 +82,40 @@ public sealed class OnlineCommandTests : IDisposable
     }
 
     [Fact]
+    public async Task OneProfile_InTwoProcesses_TheSecondIsRefused()
+    {
+        await using CliRun first = CliRun.Start(_appData, _sockets, Args("alice", "host"));
+        await first.Line("INVITE ");
+
+        await using CliRun second = CliRun.Start(_appData, _sockets, Args("alice", "resume"));
+
+        Assert.Equal(2, await second.Exit);
+        Assert.Contains("in use by another tak process", second.Error.ToString(), StringComparison.Ordinal);
+        Assert.False(first.Exit.IsCompleted);
+    }
+
+    [Fact]
+    public async Task AGamesFileFromANewerVersion_IsAnErrorAndExit2_NotACrash()
+    {
+        string dir = Path.Combine(_appData, "tak-p2p", "newer");
+        Directory.CreateDirectory(dir);
+        string db = Path.Combine(dir, SqliteGameStore.FileName);
+        await new SqliteGameStore(db).ListGamesAsync();
+        using (var c = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={db};Pooling=False"))
+        {
+            c.Open();
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = "PRAGMA user_version = 3;";
+            cmd.ExecuteNonQuery();
+        }
+
+        await using CliRun run = CliRun.Start(_appData, _sockets, Args("newer", "host"));
+
+        Assert.Equal(2, await run.Exit.WaitAsync(TimeSpan.FromSeconds(10)));
+        Assert.Contains("newer version", run.Error.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ATakenInvite_TheHostSaysSo_TheSecondGuestKeepsWaiting()
     {
         await using CliRun host = CliRun.Start(_appData, _sockets, Args("alice", "host"));

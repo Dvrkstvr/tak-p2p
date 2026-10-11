@@ -195,29 +195,28 @@ internal sealed class GameCoordinator : IAsyncDisposable
             return error;
         if (await _store.LoadAsync(invite!.GameId).ConfigureAwait(false) is not null)
             return "This game is already stored on this device: resume it instead.";
-        IReadOnlyList<HistoryEntry> history = await RelayHistory.FetchAsync(_o, invite, RebuildWait).ConfigureAwait(false);
+        RelayHistoryResult fetched = await RelayHistory.FetchAsync(_o, invite, RebuildWait).ConfigureAwait(false);
+        if (fetched.Unanswered.Count > 0)
+        {
+            // Rebuilding from part of the history could stop before a move we already signed, and we would then sign that turn again.
+            return "Not every relay sent its history in time (" + string.Join(", ", fetched.Unanswered)
+                + "), so the game can't be rebuilt safely yet. Try again when they are reachable.";
+        }
 
-        RebuildResult rebuilt = RebuildPlan.Build(invite, Me, history);
+        RebuildResult rebuilt = RebuildPlan.Build(invite, Me, fetched.History);
         if (rebuilt.Error is not null)
             return rebuilt.Error;
 
         NetGameRecord record = rebuilt.Record!;
-        _record = record;
-        await _store.SaveNewGameAsync(record, Genesis()).ConfigureAwait(false);
-        int published = 0;
-        foreach (AppliedAction applied in rebuilt.Applied)
+        try
         {
-            OutboxEntry? own = rebuilt.Outbox.FirstOrDefault(o => o.EventId == applied.EventId);
-            if (own is not null)
-                published = applied.Action.Turn;
-            var progress = new ExchangeProgress(applied.Action.Turn, applied.StateHashAfter, applied.TpsAfter, published, 0);
-            await _store.CommitAppliedAsync(record.GameId, applied, progress, own).ConfigureAwait(false);
+            await _store.SaveRebuiltGameAsync(record, rebuilt.Applied, rebuilt.Outbox, rebuilt.Progress!).ConfigureAwait(false);
         }
-        foreach (OutboxEntry entry in rebuilt.Outbox.Where(o => o.ActionType != GameActionType.Move))
-            await _store.AddOutboxAsync(record.GameId, entry).ConfigureAwait(false);
-        if (rebuilt.Applied.Count == 0)
-            await _store.UpdateProgressAsync(record.GameId, rebuilt.Progress!).ConfigureAwait(false);
-
+        catch (GameStoreException ex)
+        {
+            return "The rebuilt game could not be saved: " + ex.Message;
+        }
+        _record = record;
         await ResumeAsync(record.GameId).ConfigureAwait(false);
         return null;
     }

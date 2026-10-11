@@ -52,22 +52,49 @@ public sealed class SqliteGameStore : IGameStore
                 InsertOutbox(c, tx, record.GameId, outbox);
         });
 
+    public Task SaveRebuiltGameAsync(NetGameRecord record, IReadOnlyList<AppliedAction> applied, IReadOnlyList<OutboxEntry> outbox,
+        ExchangeProgress progress, CancellationToken cancellationToken = default) =>
+        WriteAsync(cancellationToken, (c, tx) =>
+        {
+            if (Scalar(c, tx, "SELECT count(*) FROM NetGames WHERE GameId = $id;", ("$id", Id(record.GameId))) > 0)
+                throw new GameStoreException($"Game {record.GameId} is already stored.");
+            Execute(c, tx, """
+                INSERT INTO NetGames (GameId, Role, MyPubKey, HostPubKey, OpponentPubKey, Size, KomiHalves, SeedCommit, HostNonce, GuestNonce,
+                    Relays, State, MyColor, ResultIsDraw, ResultWinner, ResultReason, Note, AppliedTurn, StateHash, Tps, PublishedTurn, MaxCreatedAt)
+                VALUES ($id, '', '', '', NULL, 0, 0, '', NULL, NULL, '', '', NULL, NULL, NULL, NULL, NULL, 0, '', '', 0, 0);
+                """, ("$id", Id(record.GameId)));
+            WriteRecord(c, tx, record);
+            foreach (AppliedAction a in applied)
+                InsertMove(c, tx, record.GameId, a);
+            foreach (OutboxEntry entry in outbox)
+                InsertOutbox(c, tx, record.GameId, entry);
+            WriteProgress(c, tx, record.GameId, progress);
+        });
+
     public Task CommitAppliedAsync(Guid gameId, AppliedAction applied, ExchangeProgress progress, OutboxEntry? outbox = null, CancellationToken cancellationToken = default) =>
         WriteAsync(cancellationToken, (c, tx) =>
         {
             RequireGame(c, tx, gameId);
-            SignedGameAction a = applied.Action;
-            Execute(c, tx, """
-                INSERT INTO NetMoves (GameId, Pv, ActionType, Turn, PlayerPubKey, PrevStateHash, ActionData, Signature, EventId, TpsAfter, StateHashAfter)
-                VALUES ($game, $pv, $type, $turn, $player, $prev, $data, $sig, $event, $tps, $hash);
-                """,
-                ("$game", Id(gameId)), ("$pv", a.Pv), ("$type", a.ActionType.ToWire()), ("$turn", a.Turn), ("$player", a.PlayerPubKey),
-                ("$prev", a.PrevStateHash), ("$data", ActionDigest.CanonicalActionData(a.ActionData)), ("$sig", a.Signature),
-                ("$event", applied.EventId), ("$tps", applied.TpsAfter), ("$hash", applied.StateHashAfter));
+            long stored = Scalar(c, tx, "SELECT AppliedTurn FROM NetGames WHERE GameId = $id;", ("$id", Id(gameId)));
+            if (applied.Action.ActionType == GameActionType.Move && stored != applied.Action.Turn - 1)
+                throw new GameStoreException($"Turn {applied.Action.Turn} can't follow turn {stored}: another process may be playing this game.");
+            InsertMove(c, tx, gameId, applied);
             WriteProgress(c, tx, gameId, progress);
             if (outbox is not null)
                 InsertOutbox(c, tx, gameId, outbox);
         });
+
+    private static void InsertMove(SqliteConnection c, SqliteTransaction tx, Guid gameId, AppliedAction applied)
+    {
+        SignedGameAction a = applied.Action;
+        Execute(c, tx, """
+                INSERT INTO NetMoves (GameId, Pv, ActionType, Turn, PlayerPubKey, PrevStateHash, ActionData, Signature, EventId, TpsAfter, StateHashAfter)
+                VALUES ($game, $pv, $type, $turn, $player, $prev, $data, $sig, $event, $tps, $hash);
+                """,
+            ("$game", Id(gameId)), ("$pv", a.Pv), ("$type", a.ActionType.ToWire()), ("$turn", a.Turn), ("$player", a.PlayerPubKey),
+            ("$prev", a.PrevStateHash), ("$data", ActionDigest.CanonicalActionData(a.ActionData)), ("$sig", a.Signature),
+            ("$event", applied.EventId), ("$tps", applied.TpsAfter), ("$hash", applied.StateHashAfter));
+    }
 
     public Task UpdateProgressAsync(Guid gameId, ExchangeProgress progress, CancellationToken cancellationToken = default) =>
         WriteAsync(cancellationToken, (c, tx) => WriteProgress(c, tx, gameId, progress));

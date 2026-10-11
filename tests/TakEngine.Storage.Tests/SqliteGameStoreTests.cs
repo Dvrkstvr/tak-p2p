@@ -118,6 +118,20 @@ public sealed class SqliteGameStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task RebuiltGame_FailingHalfWay_KeepsNothing()
+    {
+        var store = new SqliteGameStore(Db);
+        await store.ListGamesAsync(); // creates the schema
+        Exec("CREATE TRIGGER boom BEFORE INSERT ON Outbox BEGIN SELECT RAISE(ABORT, 'disk full'); END;");
+
+        await Assert.ThrowsAsync<GameStoreException>(() => store.SaveRebuiltGameAsync(Record(), [Applied(1), Applied(2)],
+            [new OutboxEntry("m2", GameActionType.Move, 2, "{}", Sent: true)], Progress(2)));
+
+        Assert.Null(await store.LoadAsync(Game));
+        Assert.Empty(Rows("SELECT * FROM NetMoves"));
+    }
+
+    [Fact]
     public async Task RecordWithOutbox_FailingHalfWay_KeepsNothing()
     {
         var store = new SqliteGameStore(Db);
