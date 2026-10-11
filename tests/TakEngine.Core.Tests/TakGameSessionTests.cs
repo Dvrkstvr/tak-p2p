@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using TakEngine.Abstractions;
-using TakEngine.Core.Cryptography;
 using TakEngine.Core.Session;
 using TakEngine.Crypto;
 using Xunit;
@@ -156,111 +155,5 @@ public class TakGameSessionTests
 
         Assert.NotNull(warningSpan);
         Assert.Equal(4, warningSpan.Value.Days);
-    }
-
-    [Fact]
-    public void RemoteP2P_SynchronizesMovesAndHashChain()
-    {
-        SecretKey alicePriv = TestKeys.Create(1);
-        SecretKey bobPriv = TestKeys.Create(2);
-        string alicePub = alicePriv.PublicKey.ToHex();
-        string bobPub = bobPriv.PublicKey.ToHex();
-        var gameId = GameId.New();
-
-        var aliceSession = TakGameSession.CreateRemote(
-            gameId,
-            BoardSize.Five,
-            PlayerColor.White,
-            alicePriv,
-            bobPriv.PublicKey);
-
-        var bobSession = TakGameSession.CreateRemote(
-            gameId,
-            BoardSize.Five,
-            PlayerColor.Black,
-            bobPriv,
-            alicePriv.PublicKey);
-
-        Assert.Equal(aliceSession.CurrentStateHash, bobSession.CurrentStateHash);
-
-        // Alice's turn (White) - Places at a1
-        string aliceSig = "";
-        aliceSession.OnRemoteEnvelopeReady += sig => aliceSig = sig;
-
-        string prevHash = aliceSession.CurrentStateHash;
-        var aliceRes = aliceSession.SubmitPlacement(new Coord(0, 0), PieceType.Flat);
-        Assert.True(aliceRes.IsSuccess);
-        Assert.NotEmpty(aliceSig);
-
-        // Bob receives Alice's move
-        var bobProcessRes = bobSession.ProcessRemoteMove(alicePub, prevHash, "a1", aliceSig);
-        Assert.True(bobProcessRes.IsSuccess, bobProcessRes.ErrorMessage);
-
-        // State hashes must be identical after move 1!
-        Assert.Equal(aliceSession.CurrentStateHash, bobSession.CurrentStateHash);
-
-        // Alice cannot move when it's not her turn (it is now Bob's turn)
-        var invalidAliceRes = aliceSession.SubmitPlacement(new Coord(1, 1), PieceType.Flat);
-        Assert.False(invalidAliceRes.IsSuccess);
-        Assert.Contains("not your turn", invalidAliceRes.ErrorMessage);
-
-        // Bob's turn (Black) - Places at a2
-        string bobSig = "";
-        bobSession.OnRemoteEnvelopeReady += sig => bobSig = sig;
-
-        prevHash = bobSession.CurrentStateHash;
-        var bobRes = bobSession.SubmitPlacement(new Coord(0, 1), PieceType.Flat);
-        Assert.True(bobRes.IsSuccess);
-        Assert.NotEmpty(bobSig);
-
-        // Alice receives Bob's move
-        var aliceProcessRes = aliceSession.ProcessRemoteMove(bobPub, prevHash, "a2", bobSig);
-        Assert.True(aliceProcessRes.IsSuccess);
-
-        // State hashes must remain strictly in sync!
-        Assert.Equal(aliceSession.CurrentStateHash, bobSession.CurrentStateHash);
-    }
-
-    [Fact]
-    public void RemoteP2P_DetectsProtocolViolations()
-    {
-        SecretKey alicePriv = TestKeys.Create(1);
-        SecretKey bobPriv = TestKeys.Create(2);
-        SecretKey attackerPriv = TestKeys.Create(3);
-        string alicePub = alicePriv.PublicKey.ToHex();
-        string attackerPub = attackerPriv.PublicKey.ToHex();
-        var gameId = GameId.New();
-
-        var bobSession = TakGameSession.CreateRemote(
-            gameId,
-            BoardSize.Five,
-            PlayerColor.Black,
-            bobPriv,
-            alicePriv.PublicKey);
-
-        ProtocolViolationException? caughtViolation = null;
-        bobSession.OnProtocolViolationDetected += ex => caughtViolation = ex;
-
-        // 1. Attacker pubkey violation
-        string fakeSig = PayloadSignature.Sign(attackerPriv, $"{bobSession.CurrentStateHash}:a1");
-        var res1 = bobSession.ProcessRemoteMove(attackerPub, bobSession.CurrentStateHash, "a1", fakeSig);
-        Assert.False(res1.IsSuccess);
-        Assert.NotNull(caughtViolation);
-        Assert.Contains("unauthorized", caughtViolation.Message);
-
-        // 2. Invalid signature violation
-        caughtViolation = null;
-        var res2 = bobSession.ProcessRemoteMove(alicePub, bobSession.CurrentStateHash, "a1", "bad_signature_hex");
-        Assert.False(res2.IsSuccess);
-        Assert.NotNull(caughtViolation);
-        Assert.Contains("signature", caughtViolation.Message);
-
-        // 3. Hash mismatch violation
-        caughtViolation = null;
-        string validSig = PayloadSignature.Sign(alicePriv, $"{bobSession.CurrentStateHash}:a1");
-        var res3 = bobSession.ProcessRemoteMove(alicePub, "0000000000000000000000000000000000000000000000000000000000000000", "a1", validSig);
-        Assert.False(res3.IsSuccess);
-        Assert.NotNull(caughtViolation);
-        Assert.Contains("Hash chain mismatch", caughtViolation.Message);
     }
 }

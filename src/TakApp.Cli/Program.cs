@@ -166,7 +166,7 @@ public static class Program
                 lastMoveStr = cmd.Move.ToPtn();
                 string tpsSnapshot = TpsSerializer.Serialize(board);
                 string stateHash = StateHasher.ComputeStateHash(prevStateHash, moveIndex, keyPair.PublicKey.ToHex(), lastMoveStr, tpsSnapshot);
-                string signature = PayloadSignature.Sign(keyPair, stateHash);
+                string signature = ActionDigest.Sign(keyPair, SignedGameAction.UnsignedMove(gameId, moveIndex, keyPair.PublicKey.ToHex(), prevStateHash, lastMoveStr), RandomNumberGenerator.GetBytes(Schnorr.AuxLength)).Signature;
 
                 var moveEntity = new MoveEntity(
                     GameId: gameId,
@@ -292,7 +292,7 @@ public static class Program
                 lastMoveStr = move.ToPtn();
                 string tpsSnapshot = TpsSerializer.Serialize(board);
                 string stateHash = StateHasher.ComputeStateHash(prevStateHash, moveIndex, keyPair.PublicKey.ToHex(), lastMoveStr, tpsSnapshot);
-                string signature = PayloadSignature.Sign(keyPair, stateHash);
+                string signature = ActionDigest.Sign(keyPair, SignedGameAction.UnsignedMove(gameId, moveIndex, keyPair.PublicKey.ToHex(), prevStateHash, lastMoveStr), RandomNumberGenerator.GetBytes(Schnorr.AuxLength)).Signature;
 
                 var moveEntity = new MoveEntity(
                     GameId: gameId,

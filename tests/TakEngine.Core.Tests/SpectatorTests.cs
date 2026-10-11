@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using TakEngine.Abstractions;
-using TakEngine.Core.Cryptography;
 using TakEngine.Core.Serialization;
 using TakEngine.Core.Session;
 using TakEngine.Crypto;
@@ -18,8 +17,8 @@ public class SpectatorTests
         var gameId = Guid.NewGuid();
         var now = new DateTime(2026, 9, 12, 10, 0, 0, DateTimeKind.Utc);
 
-        var env1 = new BroadcastEnvelope(gameId, 1, "pub1", "hash0", now, "a1", "sig1");
-        var env2 = new BroadcastEnvelope(gameId, 2, "pub2", "hash1", now.AddSeconds(10), "e5", "sig2");
+        var env1 = Unverified(gameId, 1, now, "a1");
+        var env2 = Unverified(gameId, 2, now.AddSeconds(10), "e5");
 
         // Enqueue with 120s and 60s delays
         queue.Enqueue(env1, TimeSpan.FromSeconds(120), now);
@@ -53,9 +52,9 @@ public class SpectatorTests
         var game2 = Guid.NewGuid();
         var now = DateTime.UtcNow;
 
-        queue.Enqueue(new BroadcastEnvelope(game1, 1, "p1", "h0", now, "a1", "s1"), TimeSpan.FromMinutes(1));
-        queue.Enqueue(new BroadcastEnvelope(game1, 2, "p2", "h1", now, "b2", "s2"), TimeSpan.FromMinutes(2));
-        queue.Enqueue(new BroadcastEnvelope(game2, 1, "p3", "h0", now, "c3", "s3"), TimeSpan.FromMinutes(1));
+        queue.Enqueue(Unverified(game1, 1, now, "a1"), TimeSpan.FromMinutes(1));
+        queue.Enqueue(Unverified(game1, 2, now, "b2"), TimeSpan.FromMinutes(2));
+        queue.Enqueue(Unverified(game2, 1, now, "c3"), TimeSpan.FromMinutes(1));
 
         Assert.Equal(3, queue.Count);
 
@@ -97,7 +96,7 @@ public class SpectatorTests
         Assert.Equal(PlayerColor.Black, session.CurrentTurnColor);
 
         // Turn 1: Black places flat
-        var env2 = CreateSignedEnvelope(gameId, 1, blackKeys, session.LastStateHash, "e5", DateTime.UtcNow);
+        var env2 = CreateSignedEnvelope(gameId, 2, blackKeys, session.LastStateHash, "e5", DateTime.UtcNow);
         bool ok2 = session.IngestEnvelope(env2);
         Assert.True(ok2);
         Assert.Equal(2, moveEvents.Count);
@@ -129,15 +128,10 @@ public class SpectatorTests
         ProtocolViolationException? caughtViolation = null;
         session.OnStateDesyncDetected += ex => caughtViolation = ex;
 
-        // Attacker creates envelope with invalid signature
-        var env = new BroadcastEnvelope(
-            gameId,
-            1,
-            whiteKeys.PublicKey.ToHex(),
-            session.LastStateHash,
-            DateTime.UtcNow,
-            "a1",
-            "deadbeefbadsignature00112233");
+        // Attacker relays White's move with a signature over a different move
+        var genuine = CreateSignedEnvelope(gameId, 1, whiteKeys, session.LastStateHash, "a1", DateTime.UtcNow);
+        var other = CreateSignedEnvelope(gameId, 1, whiteKeys, session.LastStateHash, "a2", DateTime.UtcNow);
+        var env = genuine with { Action = genuine.Action with { Signature = other.Action.Signature } };
 
         bool ok = session.IngestEnvelope(env);
         Assert.False(ok);
@@ -229,18 +223,10 @@ public class SpectatorTests
         string ptnMove,
         DateTime timestamp)
     {
-        var dummy = new BroadcastEnvelope(
-            gameId,
-            turnIndex,
-            keys.PublicKey.ToHex(),
-            prevStateHash,
-            timestamp,
-            ptnMove,
-            "");
-
-        string payload = dummy.GetSigningPayload();
-        string signature = PayloadSignature.Sign(keys, payload);
-
-        return dummy with { Signature = signature };
+        var action = SignedGameAction.UnsignedMove(gameId, turnIndex, keys.PublicKey.ToHex(), prevStateHash, ptnMove);
+        return new BroadcastEnvelope(ActionDigest.Sign(keys, action, new byte[32]), timestamp);
     }
+
+    private static BroadcastEnvelope Unverified(Guid gameId, int turnIndex, DateTime timestamp, string ptnMove) =>
+        new(SignedGameAction.UnsignedMove(gameId, turnIndex, "pub", "hash", ptnMove), timestamp);
 }
