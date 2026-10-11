@@ -289,3 +289,12 @@ JOIN whose proof matches its own seed commitment and the JOIN's author; any othe
   (same reasoning as D-040)
 - revisit if: invites ever travel somewhere public (then the bearer-invite gap in scope.md needs a real fix, e.g. a host-signed
   one-guest invite)
+
+## D-044 · 2026-10-11 · stage 7 · by: assumed
+Applied multiplayer actions are stored in a new `NetMoves` table (pv, type, turn, author, prev hash, canonical action data,
+signature, event id, TPS and hash after), not in the legacy `Moves` table with new columns as architecture.md "Data" first said.
+The v0 -> v2 step still adds `Moves.SigScheme` and `Moves.EventId` to a legacy file, creates `NetGames`, `NetMoves`, `Outbox`
+and `Flags`, and nothing else; a fresh file gets only the multiplayer tables. One `games.db` per profile data dir.
+- why: `Moves` has a foreign key to `Games`, whose `CHECK(BoardSize IN (4,5,6))` can't hold 3x3, 7x7 or 8x8 games (D-037), and
+  it has no place for JOIN/ACCEPT/RESIGN or action data; changing that would be a shape change on legacy rows (D-011 says leave them)
+- revisit if: legacy local games are ever shown next to multiplayer ones (then a view over both tables, not a migration)

@@ -89,8 +89,8 @@ Plans A1-A3 apply. In addition:
 
 **Files:** Storage.Local `SqliteGameStore.cs`, `Schema.cs`, csproj (+ Microsoft.Data.Sqlite); tests `SqliteGameStoreTests.cs`, `Fixtures/v0.db` with `Fixtures/make_v0_fixture.py`.
 
-- [ ] Commit the fixture: a v0 db built with the pre-M0 `CREATE TABLE` text copied from `Core/Storage/SqliteGameStorage.cs`, holding one legacy game and two moves.
-- [ ] Red tests:
+- [x] Commit the fixture: a v0 db built with the pre-M0 `CREATE TABLE` text copied from `Core/Storage/SqliteGameStorage.cs`, holding one legacy game and two moves.
+- [x] Red tests:
   - The `FakeStoreTests` contract, run against SQLite too (one shared abstract test class, two subclasses).
   - Migrating v0 to v2 keeps the legacy rows byte for byte. It adds `Moves.SigScheme = 'legacy-ed25519'` and `Moves.EventId`, creates `NetGames`, `NetMoves`, `Outbox` and `Flags`, and sets `user_version = 2`.
   - Opening a v2 db again is a no-op.
@@ -98,10 +98,10 @@ Plans A1-A3 apply. In addition:
   - `CommitAppliedAsync` with a failing second statement (a test trigger) leaves no move, no progress change and no outbox row.
   - `UpdateRecordAsync(record, outbox)` behaves the same way.
   - Data survives closing and reopening the db file.
-- [ ] Implement it:
+- [x] Implement it:
   - One `SqliteConnection` per call. `BEGIN IMMEDIATE`, so two processes on one file serialise.
   - Records are stored as columns, not JSON, except `Relays` (a JSON array with `"v"`).
-- [ ] Record D-044. Commit `M0 F-037: SqliteGameStore with v0 to v2 migration`.
+- [x] Record D-044. Commit `M0 F-037: SqliteGameStore with v0 to v2 migration`.
 
 ### Task 3: F-037 (part 2): restart, cold rebuild, missing turn
 

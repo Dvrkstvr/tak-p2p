@@ -123,15 +123,15 @@ ActionDigest = SHA-256(UTF-8("tak/action/v1\n" + pv + "\n" + action_type + "\n" 
 | Secret key (32-byte scalar) | CLI/desktop: `<data-dir>/identity.json` = `{"v":1,"nsec":"nsec1…"}`; browser (M1+): localStorage `tak.identity.v1` | `v` | never (only the pubkey, in events) |
 | Game record: role, my/opponent pubkey, game id, seed, size, relays, handshake state, result | `SqliteGameStore` table `NetGames` | db `PRAGMA user_version` | no (game id + pubkeys are visible as event metadata) |
 | Progress `{appliedTurn, currentHash, publishedTurn, maxCreatedAt}` | `NetGames`, written in the same transaction as the applied move | same | no |
-| Applied actions (turn, pubkey, ptn, tps, hash, prev, signature, event id, `SigScheme`) | existing `Moves` table + new columns | same | yes, as encrypted events |
+| Applied actions (pv, type, turn, pubkey, prev, action data, signature, event id, tps, hash) | `NetMoves` (D-044; legacy `Moves` only gains `SigScheme`, `EventId`) | same | yes, as encrypted events |
 | Outbox (signed event JSON, attempts, next attempt) | `Outbox` | same | yes when sent |
 | Flag log (turn, reason, event id, author, seen at) | `Flags` | same | no |
 - `<data-dir>` = `--data-dir`, else `LocalApplicationData/tak-p2p/<profile>` with `--profile` (default `default`).
   Two profiles on one machine are two players (the verify method needs this). The old `tak.db` next to the CLI binary is
   not read by multiplayer code.
 - **Migration rule.** `user_version` 0 = the pre-M0 schema (Games, Moves). M0 ships version 2 via one forward step in one
-  transaction: add `Moves.SigScheme TEXT NOT NULL DEFAULT 'legacy-ed25519'` and `Moves.EventId TEXT NULL`, create
-  `NetGames`, `Outbox`, `Flags`. Additive change = new numbered step + bump + a test that migrates a committed v0 fixture
+  transaction: add `Moves.SigScheme TEXT NOT NULL DEFAULT 'legacy-ed25519'` and `Moves.EventId TEXT NULL` (when the legacy
+  tables exist), create `NetGames`, `NetMoves`, `Outbox`, `Flags`. The file is `<data-dir>/games.db` (`SqliteGameStore`). Additive change = new numbered step + bump + a test that migrates a committed v0 fixture
   db. Shape change (rename, drop, re-encode) = a decision record, a step that reads the raw old rows, and a test named
   for its trap. Never down-migrate. A db with a higher `user_version` than the build knows is opened read-only with an
   error ("written by a newer version"), never rewritten. JSON blobs (identity file, browser keys) carry `v` with the same rule.
