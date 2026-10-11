@@ -88,7 +88,7 @@ public sealed class PublishTracker
             relays[relay] = s with { RetryAt = null };
     }
 
-    /// <summary>The earliest pending retry, so the shell knows when to wake up.</summary>
-    public DateTimeOffset? NextRetryAt() =>
-        _events.Values.SelectMany(r => r.Values).Where(s => s.RetryAt is not null).Min(s => s.RetryAt);
+    /// <summary>The earliest pending retry (strictly later than <paramref name="after"/> when given), so the shell knows when to wake up.</summary>
+    public DateTimeOffset? NextRetryAt(DateTimeOffset? after = null) =>
+        _events.Values.SelectMany(r => r.Values).Where(s => s.RetryAt is { } at && (after is null || at > after)).Min(s => s.RetryAt);
 }

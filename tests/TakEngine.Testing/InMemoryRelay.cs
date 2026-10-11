@@ -20,6 +20,7 @@ public sealed class InMemoryRelay
     private readonly List<(Func<NostrEvent, bool> Predicate, string Reason)> _refusals = [];
     private readonly HashSet<string> _withheld = new(StringComparer.Ordinal);
     private readonly List<string> _receivedFrames = [];
+    private readonly List<(DateTimeOffset At, string Frame)> _frameLog = [];
     private int _upgradeRejectStatus;
     private int _upgradeRejectsLeft;
     private bool _partitioned;
@@ -45,6 +46,12 @@ public sealed class InMemoryRelay
     public IReadOnlyList<string> ReceivedFrames
     {
         get { lock (_gate) return _receivedFrames.ToList(); }
+    }
+
+    /// <summary>Client frames with the relay clock's time of arrival (rate tests count EVENTs per window).</summary>
+    public IReadOnlyList<(DateTimeOffset At, string Frame)> FrameLog
+    {
+        get { lock (_gate) return _frameLog.ToList(); }
     }
 
     public int FramesSent { get; private set; }
@@ -164,6 +171,16 @@ public sealed class InMemoryRelay
         lock (_gate) _authForReads = required;
     }
 
+    /// <summary>Sends a raw frame to every open socket (junk, forged events, NOTICEs).</summary>
+    public void Inject(string frame)
+    {
+        lock (_gate)
+        {
+            foreach (Link link in _links)
+                link.SendLocked(frame);
+        }
+    }
+
     /// <summary>Stores an event without any client (history for catch-up tests). Invalid events are refused.</summary>
     public bool Seed(NostrEvent evt)
     {
@@ -200,6 +217,7 @@ public sealed class InMemoryRelay
     private void HandleLocked(Link link, string frame)
     {
         _receivedFrames.Add(frame);
+        _frameLog.Add((_time.GetUtcNow(), frame));
         switch (RelayMessage.Parse(frame))
         {
             case RelayMessage.Publish p:
