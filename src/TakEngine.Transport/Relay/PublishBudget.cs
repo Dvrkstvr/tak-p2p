@@ -2,7 +2,8 @@ namespace TakEngine.Transport.Relay;
 
 /// <summary>
 /// At most <see cref="MaxEvents"/> published events in any sliding <see cref="Window"/> per client, retries included
-/// (damus refuses the ~6th event in a burst; CLAUDE.md "Gotchas"). Pure: time is passed in.
+/// (damus refuses the ~6th event in a burst; CLAUDE.md "Gotchas"). Pure: time is passed in. Thread-safe, so one budget can be
+/// shared by every <see cref="RelayPool"/> a process opens: the limit is per client, not per game.
 /// </summary>
 public sealed class PublishBudget
 {
@@ -10,21 +11,28 @@ public sealed class PublishBudget
     public static readonly TimeSpan Window = TimeSpan.FromSeconds(10);
 
     private readonly Queue<DateTimeOffset> _taken = new();
+    private readonly Lock _gate = new();
 
     public bool TryTake(DateTimeOffset now)
     {
-        Expire(now);
-        if (_taken.Count >= MaxEvents)
-            return false;
-        _taken.Enqueue(now);
-        return true;
+        lock (_gate)
+        {
+            Expire(now);
+            if (_taken.Count >= MaxEvents)
+                return false;
+            _taken.Enqueue(now);
+            return true;
+        }
     }
 
     /// <summary>When the next <see cref="TryTake"/> can succeed (now if it already can).</summary>
     public DateTimeOffset NextAvailable(DateTimeOffset now)
     {
-        Expire(now);
-        return _taken.Count < MaxEvents ? now : _taken.Peek() + Window;
+        lock (_gate)
+        {
+            Expire(now);
+            return _taken.Count < MaxEvents ? now : _taken.Peek() + Window;
+        }
     }
 
     private void Expire(DateTimeOffset now)

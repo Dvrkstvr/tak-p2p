@@ -170,7 +170,7 @@ internal sealed class GameCoordinator : IAsyncDisposable
 
     private void StartNetwork()
     {
-        _pool = new RelayPool(_record.Relays.Select(r => new Uri(r)), _o.Sockets, _time, Me.ToHex());
+        _pool = new RelayPool(_record.Relays.Select(r => new Uri(r)), _o.Sockets, _time, Me.ToHex(), budget: _o.Budget);
         _pool.PublishStatusChanged += (id, outcome) => Post(() => OnPublishStatusAsync(id, outcome));
         _loop = Task.Run(RunAsync);
         _reader = Task.Run(ReadAsync);

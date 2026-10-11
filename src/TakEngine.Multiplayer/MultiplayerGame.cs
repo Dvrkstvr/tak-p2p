@@ -15,7 +15,11 @@ public sealed record MultiplayerOptions(
     IRelaySocketFactory Sockets,
     TimeProvider Time,
     IReadOnlyList<string> DefaultRelays,
-    Func<byte[]> Random32);
+    Func<byte[]> Random32)
+{
+    /// <summary>The client's publish budget (4 events per 10 s). A head shares one across every game it opens.</summary>
+    public PublishBudget Budget { get; init; } = new();
+}
 
 /// <summary>Either a game being joined, or why the invite can't be used (nothing was saved or sent).</summary>
 public sealed record JoinOutcome(MultiplayerGame? Game, string? Error);

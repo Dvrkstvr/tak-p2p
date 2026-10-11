@@ -20,7 +20,7 @@ public sealed class RelayPool : IAsyncDisposable
     private readonly string? _ownPubkey;
     private readonly List<RelayConnection> _connections;
     private readonly PublishTracker _tracker = new();
-    private readonly PublishBudget _budget = new();
+    private readonly PublishBudget _budget;
     private readonly List<NostrEvent> _outgoing = [];
     private readonly Dictionary<(string Id, Uri Relay), (int Generation, DateTimeOffset SentAt)> _inFlight = [];
     private readonly HashSet<string> _seen = new(StringComparer.Ordinal);
@@ -35,9 +35,17 @@ public sealed class RelayPool : IAsyncDisposable
     private Task? _pendingWake;
     private long _maxCreatedAt;
 
-    public RelayPool(IEnumerable<Uri> relays, IRelaySocketFactory factory, TimeProvider time, string? ownPubkeyHex = null, int seenCapacity = 4096)
+    /// <param name="budget">Shared by every pool of one client (the 4-per-10-s limit is per client); a fresh one when null.</param>
+    public RelayPool(
+        IEnumerable<Uri> relays,
+        IRelaySocketFactory factory,
+        TimeProvider time,
+        string? ownPubkeyHex = null,
+        int seenCapacity = 4096,
+        PublishBudget? budget = null)
     {
         _time = time;
+        _budget = budget ?? new PublishBudget();
         _ownPubkey = ownPubkeyHex;
         _seenCapacity = seenCapacity;
         _connections = relays.Distinct()

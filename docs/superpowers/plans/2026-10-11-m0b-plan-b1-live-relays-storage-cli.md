@@ -73,17 +73,17 @@ Plans A1-A3 apply. In addition:
 
 **Files:** Transport `PublishBudget.cs` (unchanged API), Multiplayer `MultiplayerOptions.cs`, `GameCoordinator.cs`; tests `Live/LiveRelayTests.cs`, Testing `LiveRelayLog.cs`.
 
-- [ ] Red, fake relay: two `MultiplayerGame`s opened with the same `PublishBudget` never send more than 4 events in 10 s between them. A restart reusing the budget doesn't burst.
-- [ ] `MultiplayerOptions.Budget`, with a default of `new PublishBudget()`, is passed to `RelayPool` (new optional constructor argument).
-- [ ] `LiveRelayLog`:
+- [x] Red, fake relay: two `MultiplayerGame`s opened with the same `PublishBudget` never send more than 4 events in 10 s between them. A restart reusing the budget doesn't burst.
+- [x] `MultiplayerOptions.Budget`, with a default of `new PublishBudget()`, is passed to `RelayPool` (new optional constructor argument).
+- [x] `LiveRelayLog`:
   - Appends `| when | test | relay | event id | outcome |` rows to `pipeline/evidence/live-relay-log.md`.
   - Keeps a running total.
   - `Reserve(n)` throws when the total would pass 150.
-- [ ] LiveRelay tests (written now, run in Task 7):
+- [x] LiveRelay tests (written now, run in Task 7):
   - `PublishOne_IsAcceptedByEachRelay_AndFetchableById`: one kind-3825 event whose plaintext content has `+ < > & "`, an emoji, DEL and U+0001. Its id comes from `Nip01Serializer`. It reads back OK true from each relay. A second `RelayPool`, with no shared state, fetches it with an `ids` filter and verifies the id and sig.
   - `CorruptedSig_IsRefusedInvalid_NotSent`: one event with a flipped sig bit ends `Failed`, with a per-relay `Refused` whose reason starts `invalid`.
   - `TwoRelaysTogether_PublishSubscribeDedupe` (F-034 live row): two events, each delivered once.
-- [ ] Commit `M0 F-014: live relay tests and one publish budget per process`.
+- [x] Commit `M0 F-014: live relay tests and one publish budget per process`.
 
 ### Task 2: F-037 (part 1): `SqliteGameStore`
 

@@ -109,10 +109,14 @@ public sealed class RelayPoolTests : IAsyncDisposable
         await Eventually(() => _pool.Links[0].State == RelayLinkState.CaughtUp, "r1 caught up");
         var events = Enumerable.Range(0, 10).Select(_ => Evt(Me)).ToList();
 
+        int Sends() => _r1.FrameLog.Count(f => f.Frame.StartsWith("[\"EVENT\"", StringComparison.Ordinal));
+
         foreach (NostrEvent e in events)
             _pool.Publish(e);
         await Eventually(() => events.Any(e => _pool.PerRelay(e.Id)[_r1.Url].Reason?.StartsWith("rate-limited") == true), "a rate-limited refusal");
         Assert.Equal(PublishOutcome.Pending, _pool.Outcome(events[0].Id));
+        await Task.Delay(100);
+        Assert.Equal(4, Sends()); // 10 queued, the budget lets 4 out while the clock stands still
 
         for (int i = 0; i < 120 && !events.All(e => _pool.Outcome(e.Id) == PublishOutcome.Sent); i++)
             await Advance(TimeSpan.FromSeconds(1));
@@ -120,10 +124,10 @@ public sealed class RelayPoolTests : IAsyncDisposable
         Assert.All(events, e => Assert.Equal(PublishOutcome.Sent, _pool.Outcome(e.Id)));
         var sends = _r1.FrameLog.Where(f => f.Frame.StartsWith("[\"EVENT\"", StringComparison.Ordinal)).Select(f => f.At).ToList();
         Assert.Equal(20, sends.Count); // every event twice: the refused attempt and the retry
-        // The relay stamps a frame when it arrives; under load the test's clock can step once between the pump taking budget and
-        // the send, so a frame may carry a stamp up to 1 s late. Any 9 s span still holds at most 4.
-        foreach (DateTimeOffset start in sends)
-            Assert.True(sends.Count(t => t >= start && t < start + TimeSpan.FromSeconds(9)) <= 4, $"more than 4 events in the 9 s from {start:O}");
+        // The sliding window itself is PublishBudget's (RelayLogicTests). Relay-side stamps can't check it: under load the fake
+        // clock steps while a send is still on its way, so the stamp lags the budget's time.
+        // 20 sends at 4 per 10 s span at least 40 s of budget time; allow a lagging first stamp.
+        Assert.True(sends.Max() - sends.Min() >= TimeSpan.FromSeconds(30), "20 sends crammed into less than 30 s");
     }
 
     [Fact]
@@ -376,5 +380,32 @@ public sealed class RelayPoolTests : IAsyncDisposable
         await Task.Delay(50);
 
         Assert.DoesNotContain(_r1.ReceivedFrames.Concat(_r2.ReceivedFrames), f => f.Contains(e.Id));
+    }
+
+    [Fact]
+    public async Task TwoPoolsSharingABudget_StayUnder4EventsPer10s_Together()
+    {
+        // One client, two games (or a restart): the limit is per client, so the pools share one PublishBudget.
+        var budget = new PublishBudget();
+        await using var a = new RelayPool([_r1.Url], new FakeRelaySocketFactory(_r1, _r2), _time, Me.PublicKey.ToHex(), budget: budget);
+        await using var b = new RelayPool([_r1.Url], new FakeRelaySocketFactory(_r1, _r2), _time, Me.PublicKey.ToHex(), budget: budget);
+        a.Start(Subscription);
+        b.Start(Subscription);
+        await Eventually(() => a.Links[0].State == RelayLinkState.CaughtUp && b.Links[0].State == RelayLinkState.CaughtUp, "both caught up");
+        var events = Enumerable.Range(0, 8).Select(_ => Evt(Me)).ToList();
+
+        int Sends() => _r1.FrameLog.Count(f => f.Frame.StartsWith("[\"EVENT\"", StringComparison.Ordinal));
+
+        foreach (var (e, i) in events.Select((e, i) => (e, i)))
+            (i % 2 == 0 ? a : b).Publish(e);
+
+        await Eventually(() => Sends() == 4, "the first 4, from both pools");
+        await Task.Delay(100);
+        Assert.Equal(4, Sends()); // the budget is spent for both pools, not 4 each
+        await Advance(TimeSpan.FromSeconds(9));
+        Assert.Equal(4, Sends());
+        await Advance(TimeSpan.FromSeconds(1));
+        await Eventually(() => Sends() == 8, "the rest once the window has passed");
+        Assert.All(events, e => Assert.NotEqual(PublishOutcome.Failed, (events.IndexOf(e) % 2 == 0 ? a : b).Outcome(e.Id)));
     }
 }
