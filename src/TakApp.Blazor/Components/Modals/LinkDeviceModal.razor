@@ -32,10 +32,6 @@
 
             <!-- Tab Selector -->
             <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--bg-card-border); padding-bottom: 0.75rem; overflow-x: auto;">
-                <button class="btn-tak btn-sm @(ActiveTab == "pair" ? "btn-purple" : "btn-ghost")"
-                        @onclick='() => ActiveTab = "pair"'>
-                    📱 Link Another Device
-                </button>
                 <button class="btn-tak btn-sm @(ActiveTab == "import" ? "btn-purple" : "btn-ghost")"
                         @onclick='() => ActiveTab = "import"'>
                     🔑 Connect Existing Key
@@ -46,49 +42,7 @@
                 </button>
             </div>
 
-            @if (ActiveTab == "pair")
-            {
-                <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
-                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
-                        Scan this pairing QR code with your mobile camera. Your phone will immediately link to your Nostr identity and sync all ongoing matches.
-                    </p>
-
-                    @if (ShowPairingQr)
-                    {
-                        <div style="background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(168, 85, 247, 0.4); padding: 1.25rem; border-radius: 1rem; box-shadow: 0 0 25px rgba(168, 85, 247, 0.2); margin-bottom: 1rem; display: inline-flex; justify-content: center; align-items: center;">
-                            <div style="width: 200px; height: 200px; display: flex; align-items: center; justify-content: center;">
-                                @((MarkupString)PairingQrSvg)
-                            </div>
-                        </div>
-
-                        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-                            <button class="btn-tak btn-ghost btn-sm" @onclick="() => ShowPairingQr = false">
-                                🙈 Hide QR (Privacy)
-                            </button>
-                            <button class="btn-tak btn-primary btn-sm" @onclick="CopyPairingUrl">
-                                📋 @(CopiedPairingUrl ? "Link Copied!" : "Copy Pairing Link")
-                            </button>
-                        </div>
-                    }
-                    else
-                    {
-                        <div style="padding: 2.5rem; border: 1px dashed rgba(168, 85, 247, 0.4); border-radius: 1rem; margin-bottom: 1.25rem; width: 100%; max-width: 320px; background: rgba(0,0,0,0.2);">
-                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🔒</div>
-                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
-                                Pairing QR hidden to protect your private key from shoulder surfing.
-                            </div>
-                            <button class="btn-tak btn-purple" @onclick="() => ShowPairingQr = true">
-                                👁️ Reveal Pairing QR
-                            </button>
-                        </div>
-                    }
-
-                    <div style="font-size: 0.78rem; color: #a1a1aa; max-width: 440px;">
-                        💡 <em>Once linked, both devices share your sovereign Nostr keypair. You can take turns from desktop or mobile interchangeably!</em>
-                    </div>
-                </div>
-            }
-            else if (ActiveTab == "import")
+            @if (ActiveTab == "import")
             {
                 <div style="display: flex; flex-direction: column;">
                     <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
@@ -155,16 +109,12 @@
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback OnIdentityChanged { get; set; }
 
-    private string ActiveTab { get; set; } = "pair";
+    private string ActiveTab { get; set; } = "backup";
     private string FormattedNpub { get; set; } = "";
     private string FullNpub { get; set; } = "";
     private string FullNsec { get; set; } = "";
     private string PrivateKeyHex { get; set; } = "";
     private string PublicKeyHex { get; set; } = "";
-
-    private bool ShowPairingQr { get; set; } = false;
-    private string PairingQrSvg { get; set; } = "";
-    private string PairingUrl { get; set; } = "";
 
     private string InputPrivateKey { get; set; } = "";
     private string? ImportError { get; set; }
@@ -173,7 +123,6 @@
     private bool RevealNsec { get; set; } = false;
     private bool CopiedNpub { get; set; } = false;
     private bool CopiedNsec { get; set; } = false;
-    private bool CopiedPairingUrl { get; set; } = false;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -201,10 +150,6 @@
             FullNsec = privHex;
             FormattedNpub = $"{pubHex[..8]}...{pubHex[^6..]}";
         }
-
-        string baseUri = Nav.BaseUri.TrimEnd('/');
-        PairingUrl = $"{baseUri}/?link_identity={privHex}";
-        PairingQrSvg = QrCodeSvgHelper.GenerateSvg(PairingUrl, "#c084fc", 2);
     }
 
     private async Task CopyNpub()
@@ -218,13 +163,6 @@
     {
         await JS.InvokeVoidAsync("navigator.clipboard.writeText", FullNsec);
         CopiedNsec = true;
-        StateHasChanged();
-    }
-
-    private async Task CopyPairingUrl()
-    {
-        await JS.InvokeVoidAsync("navigator.clipboard.writeText", PairingUrl);
-        CopiedPairingUrl = true;
         StateHasChanged();
     }
 
@@ -259,13 +197,11 @@
 
     private async Task Close()
     {
-        ShowPairingQr = false;
         RevealNsec = false;
         ImportError = null;
         ImportSuccess = false;
         CopiedNpub = false;
         CopiedNsec = false;
-        CopiedPairingUrl = false;
 
         if (OnClose.HasDelegate)
         {

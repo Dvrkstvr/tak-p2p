@@ -83,12 +83,6 @@
                            style="width: 100%; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); background: rgba(0,0,0,0.35); border: 1px solid var(--bg-card-border); color: #f1f5f9; font-size: 0.85rem;" />
                 </div>
 
-                <div style="display: flex; align-items: center; gap: 0.6rem; margin-top: 0.3rem; background: rgba(0,0,0,0.25); padding: 0.6rem 0.8rem; border-radius: var(--radius-sm); border: 1px solid var(--bg-card-border);">
-                    <input type="checkbox" id="broadcastNostr" @bind="BroadcastToRelays" style="cursor: pointer; width: 16px; height: 16px;" />
-                    <label for="broadcastNostr" style="font-size: 0.82rem; color: #cbd5e1; cursor: pointer;">
-                        Broadcast <strong>NIP-01 Kind 0</strong> event to Nostr relays
-                    </label>
-                </div>
             </div>
 
             @if (!string.IsNullOrEmpty(StatusMessage))
@@ -116,7 +110,6 @@
     private string InputDisplayName { get; set; } = "";
     private string InputAbout { get; set; } = "";
     private string InputPicture { get; set; } = "";
-    private bool BroadcastToRelays { get; set; } = true;
 
     private string FormattedNpub { get; set; } = "";
     private string? StatusMessage { get; set; }
@@ -177,27 +170,8 @@
 
             await Storage.SetProfileAsync(profile);
 
-            if (BroadcastToRelays)
-            {
-                try
-                {
-                    var (privHex, pubHex) = await Storage.GetOrCreateKeypairAsync();
-                    await using var transport = new NostrTransportClient(pubHex, privHex);
-                    await transport.ConnectAllAsync();
-                    int sentCount = await transport.PublishProfileAsync(profile);
-                    StatusMessage = sentCount > 0
-                        ? $"Profile saved & published to {sentCount} Nostr relay(s)!"
-                        : "Profile saved locally.";
-                }
-                catch
-                {
-                    StatusMessage = "Profile saved locally (relays unavailable).";
-                }
-            }
-            else
-            {
-                StatusMessage = "Profile saved successfully!";
-            }
+            // Relay publishing is off until profiles are signed with real Nostr (secp256k1) keys.
+            StatusMessage = "Profile saved successfully!";
 
             if (OnProfileSaved.HasDelegate)
             {
