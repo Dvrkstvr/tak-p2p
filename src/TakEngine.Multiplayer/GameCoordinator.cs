@@ -168,6 +168,72 @@ internal sealed class GameCoordinator : IAsyncDisposable
         return true;
     }
 
+    /// <summary>How long a cold rebuild waits for relay history before working with what arrived.</summary>
+    private static readonly TimeSpan RebuildWait = TimeSpan.FromSeconds(15);
+
+    /// <summary>
+    /// Cold rebuild (F-037, D-045): our key and the invite, no stored state. Reads this game's whole history from the relays (no
+    /// <c>since</c>), rebuilds it with <see cref="RebuildPlan"/>, stores it, then carries on as a resume. Null when it worked,
+    /// else why not (nothing is stored then).
+    /// </summary>
+    public async Task<string?> RebuildAsync(string inviteText)
+    {
+        if (!InviteCode.TryParse(inviteText, out InviteCode? invite, out string? error))
+            return error;
+        if (await _store.LoadAsync(invite!.GameId).ConfigureAwait(false) is not null)
+            return "This game is already stored on this device: resume it instead.";
+        bool host = string.Equals(invite.HostPubKey, Me.ToHex(), StringComparison.OrdinalIgnoreCase);
+        PublicKey? opponent = host ? null : PublicKey.FromHex(invite.HostPubKey.ToLowerInvariant());
+        var relays = invite.Relays.Concat(_o.DefaultRelays).Distinct(StringComparer.Ordinal).Select(r => new Uri(r)).ToList();
+
+        var history = new List<HistoryEntry>();
+        await using (var pool = new RelayPool(relays, _o.Sockets, _time, Me.ToHex(), budget: _o.Budget))
+        {
+            pool.Start(() => SubscriptionPlan.Build(invite.GameId, Me, opponent, null));
+            DateTimeOffset deadline = _time.GetUtcNow() + RebuildWait;
+            while (_time.GetUtcNow() < deadline && !HistoryComplete(pool.Links))
+                await Task.Delay(TimeSpan.FromMilliseconds(50)).ConfigureAwait(false);
+            while (pool.Events.TryRead(out ReceivedEvent? received))
+            {
+                NostrEvent evt = received.Event;
+                // The author check is the plan's (it knows who played which colour); here only rows 1, 3 and 4 decide.
+                PublicKey? author = received.IsOwn || !PublicKey.TryFromHex(evt.Pubkey, out PublicKey? key) ? null : key;
+                DecodeResult decoded = EnvelopeCodec.Decode(evt, new DecodeContext(_o.Key, invite.GameId, author));
+                if (decoded.IsAccepted)
+                    history.Add(new HistoryEntry(decoded.Action!, evt.Id, new RelayMessage.Publish(evt).Format()));
+            }
+        }
+
+        RebuildResult rebuilt = RebuildPlan.Build(invite, Me, history);
+        if (rebuilt.Error is not null)
+            return rebuilt.Error;
+
+        NetGameRecord record = rebuilt.Record!;
+        _record = record;
+        await _store.SaveNewGameAsync(record, Genesis()).ConfigureAwait(false);
+        int published = 0;
+        foreach (AppliedAction applied in rebuilt.Applied)
+        {
+            OutboxEntry? own = rebuilt.Outbox.FirstOrDefault(o => o.EventId == applied.EventId);
+            if (own is not null)
+                published = applied.Action.Turn;
+            var progress = new ExchangeProgress(applied.Action.Turn, applied.StateHashAfter, applied.TpsAfter, published, 0);
+            await _store.CommitAppliedAsync(record.GameId, applied, progress, own).ConfigureAwait(false);
+        }
+        foreach (OutboxEntry entry in rebuilt.Outbox.Where(o => o.ActionType != GameActionType.Move))
+            await _store.AddOutboxAsync(record.GameId, entry).ConfigureAwait(false);
+        if (rebuilt.Applied.Count == 0)
+            await _store.UpdateProgressAsync(record.GameId, rebuilt.Progress!).ConfigureAwait(false);
+
+        await ResumeAsync(record.GameId).ConfigureAwait(false);
+        return null;
+    }
+
+    /// <summary>Every relay has sent its stored history (EOSE), refused reads, or failed to connect at least once; and one answered.</summary>
+    private static bool HistoryComplete(IReadOnlyList<RelayLink> links) =>
+        links.Any(l => l.State == RelayLinkState.CaughtUp)
+        && links.All(l => l.State == RelayLinkState.CaughtUp || l.ReadImpossible || l.Failures > 0);
+
     private void StartNetwork()
     {
         _pool = new RelayPool(_record.Relays.Select(r => new Uri(r)), _o.Sockets, _time, Me.ToHex(), budget: _o.Budget);

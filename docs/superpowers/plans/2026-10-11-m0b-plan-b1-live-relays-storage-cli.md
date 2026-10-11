@@ -54,7 +54,7 @@ Plans A1-A3 apply. In addition:
 | `tests/TakEngine.Transport.Tests/Live/LiveRelayTests.cs`, `tests/TakEngine.Testing/LiveRelayLog.cs` | 1 | F-014 and the F-034 live row; log helper |
 | `src/TakEngine.Transport/Relay/PublishBudget.cs`, `src/TakEngine.Multiplayer/MultiplayerOptions.cs` | 1 | one budget per process |
 | `src/TakEngine.Storage.Local/SqliteGameStore.cs`, `Schema.cs`; `tests/TakEngine.Storage.Tests/SqliteGameStoreTests.cs`, `Fixtures/v0.db` | 2 | `IGameStore` on SQLite, migration v0 to v2 |
-| `src/TakEngine.Multiplayer/{GameCoordinator,MultiplayerGame}.cs`, `RebuildPlan.cs` | 3 | restart from store (exists); cold rebuild; "move n+1 not found" |
+| `src/TakEngine.Multiplayer/{GameCoordinator,MultiplayerGame}.cs`, `RebuildPlan.cs` | 3 | restart from store (exists); cold rebuild |
 | `tests/TakEngine.Multiplayer.Tests/{RestartTests,TamperMatrixTests}.cs`; `tools/TakTestPeer/` | 4 | F-037 and F-038 over the fake relay; forging tool |
 | `tools/TakRelay.Local/` | 5 | `InMemoryRelay` over WebSockets on localhost |
 | `src/TakApp.Cli/` (`Program.cs` split into `Commands/`, `PlainOutput.cs`, `RichOutput.cs`), `tests/TakApp.Cli.Tests/` | 6 | F-036 head and `--plain` contract |
@@ -107,14 +107,14 @@ Plans A1-A3 apply. In addition:
 
 **Files:** Multiplayer `GameCoordinator.cs`, `MultiplayerGame.cs`, `RebuildPlan.cs` (pure); tests `RestartTests.cs`, `RebuildPlanTests.cs`.
 
-- [ ] Red, fake relay, run with both stores (`InMemoryGameStore` and `SqliteGameStore` on a temp file):
+- [x] Red, fake relay, run with both stores (`InMemoryGameStore` and `SqliteGameStore` on a temp file):
   - Crash B right after its turn 4. A plays turn 5. Restart B from its store: B shows turn 5 and the game goes on to a road win with equal hashes.
-  - Cold rebuild: `MultiplayerGame.RebuildAsync(options, inviteText)` for the guest, and for the host with its own invite. It reads history with no `since` and recovers the nonce from its own JOIN or ACCEPT, then replays. It raises `Notice("rebuilt from relays")` and ends at the opponent's hash.
-  - A rebuild where one own move is missing from the relays waits at that turn. It never skips it.
-  - A rebuilt hash that disagrees with the opponent's next `prev_state_hash` raises `Failed("fork: …")` and publishes nothing.
-  - Missing turn: relay 1 withholds turn n+1 and relay 2 is partitioned. After the catch-up REQ and 20 s more of fake time, there is a `Notice("move n+1 not found on any relay")` and the game stays at n. Healing relay 2 delivers it.
-- [ ] `RebuildPlan` is pure. It takes the decoded own and opponent actions and the invite, and returns the record to save plus the actions in turn order, or a reason it can't.
-- [ ] Record D-045. Commit `M0 F-037: restart, cold rebuild and missing-turn notice`.
+  - Cold rebuild: `MultiplayerGame.RebuildAsync(options, inviteText)` for the guest, and for the host with its own invite, on a fresh store. It reads history with no `since` and recovers the nonce from its own JOIN or ACCEPT, then replays. The record's note is "rebuilt from relays", it ends at the opponent's hash, and the game plays on to the end.
+  - A move missing from every relay, with later moves present, fails the rebuild with "move n not found on any relay" and stores nothing. It never skips.
+  - A move that doesn't chain, or an illegal one signed by its owner, fails the rebuild with "fork: …". A stranger's move is not part of the game.
+  - Changed from the first draft: no live "move n+1 not found" notice. With stored state the gap can't open in a two-player game (D-045); a wrong next `prev_state_hash` after a rebuild is tamper row 5 (flagged, board unchanged).
+- [x] `RebuildPlan` is pure. It takes the decoded actions and the invite, and returns the record to save plus the actions in turn order, or a reason it can't.
+- [x] Record D-045. Commit `M0 F-037: restart and cold rebuild from relay history`.
 
 ### Task 4: F-038: tamper matrix and the test-peer tool
 

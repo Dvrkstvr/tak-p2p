@@ -298,3 +298,15 @@ and `Flags`, and nothing else; a fresh file gets only the multiplayer tables. On
 - why: `Moves` has a foreign key to `Games`, whose `CHECK(BoardSize IN (4,5,6))` can't hold 3x3, 7x7 or 8x8 games (D-037), and
   it has no place for JOIN/ACCEPT/RESIGN or action data; changing that would be a shape change on legacy rows (D-011 says leave them)
 - revisit if: legacy local games are ever shown next to multiplayer ones (then a view over both tables, not a migration)
+
+## D-045 · 2026-10-11 · stage 7 · by: assumed
+A cold rebuild (F-037) needs the invite (game id, host key, seed commitment) and the key; with no invite there is nothing to rebuild.
+The guest recovers its nonce from its own JOIN on the relays, the host its nonce from its own ACCEPT (NIP-44's conversation key is
+symmetric, so each side decrypts its own events). `RebuildPlan` (pure) replays the handshake with the live checks, then every MOVE by
+the two players in turn order through the rules and the hash chain. A turn missing with later turns present fails the rebuild with
+"move n not found on any relay" and stores nothing; a move that doesn't chain or isn't legal fails it with "fork: …". A gap at the end
+(the last moves are simply absent) rebuilds up to the gap and the game waits there. The rebuilt record's note is "rebuilt from relays".
+- why: in a two-player alternating game, later moves after a gap include one of our own, so continuing from the gap would mean signing
+  a second, different move for a turn we already played (equivocation). With live state the gap can't open at all: the opponent can't
+  play n+2 before we answered n+1, so scope.md's "move n+1 not found" surfaces only here
+- revisit if: games get more than two players, or a "please resend turn n" message is added to the wire format (new `pv`)

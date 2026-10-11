@@ -53,6 +53,21 @@ public sealed class MultiplayerGame : IAsyncDisposable
         return new JoinOutcome(null, error);
     }
 
+    /// <summary>
+    /// Rebuilds a game this device has the key for but lost the state of (F-037, D-045), from the invite and the relays' history,
+    /// then continues it like <see cref="ResumeAsync"/>. The record's note says "rebuilt from relays". An error (no history, a fork,
+    /// a missing move) stores nothing.
+    /// </summary>
+    public static async Task<JoinOutcome> RebuildAsync(MultiplayerOptions options, string inviteText)
+    {
+        var game = new MultiplayerGame(options);
+        string? error = await game._coordinator.RebuildAsync(inviteText).ConfigureAwait(false);
+        if (error is null)
+            return new JoinOutcome(game, null);
+        await game.DisposeAsync().ConfigureAwait(false);
+        return new JoinOutcome(null, error);
+    }
+
     /// <summary>Reopens a stored game after a restart, or null if it isn't stored.</summary>
     public static async Task<MultiplayerGame?> ResumeAsync(MultiplayerOptions options, Guid gameId)
     {

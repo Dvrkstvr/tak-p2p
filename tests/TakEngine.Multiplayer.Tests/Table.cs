@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Time.Testing;
 using TakEngine.Abstractions;
 using TakEngine.Crypto;
+using TakEngine.Storage.Local;
 using TakEngine.Testing;
 
 namespace TakEngine.Multiplayer.Tests;
@@ -14,10 +15,23 @@ internal sealed class Table : IAsyncDisposable
     private readonly Random _random;
     private readonly object _randomGate = new();
     private readonly List<MultiplayerGame> _games = [];
+    private readonly string? _dir;
 
-    public Table(int seed = 1)
+    /// <param name="sqlite">Each player gets a <see cref="SqliteGameStore"/> on a temp file instead of the in-memory fake.</param>
+    public Table(int seed = 1, bool sqlite = false)
     {
         Seed = seed;
+        if (sqlite)
+        {
+            _dir = Directory.CreateTempSubdirectory("tak-table-").FullName;
+            HostDb = new SqliteGameStore(Path.Combine(_dir, "host.db"));
+            GuestDb = new SqliteGameStore(Path.Combine(_dir, "guest.db"));
+        }
+        else
+        {
+            HostDb = new InMemoryGameStore();
+            GuestDb = new InMemoryGameStore();
+        }
         _random = new Random(seed);
         R1 = new InMemoryRelay("wss://r1.test", Time, seed);
         R2 = new InMemoryRelay("wss://r2.test", Time, seed + 1);
@@ -34,13 +48,19 @@ internal sealed class Table : IAsyncDisposable
 
     public FakeRelaySocketFactory Sockets { get; }
 
-    public InMemoryGameStore HostStore { get; } = new();
+    /// <summary>The host's store, whichever kind this table uses.</summary>
+    public IGameStore HostDb { get; }
 
-    public InMemoryGameStore GuestStore { get; } = new();
+    public IGameStore GuestDb { get; }
 
-    public MultiplayerOptions HostOptions => Options(TestKeys.Create("table host"), HostStore);
+    /// <summary>The in-memory host store (its fault knobs); only on a table without <c>sqlite</c>.</summary>
+    public InMemoryGameStore HostStore => (InMemoryGameStore)HostDb;
 
-    public MultiplayerOptions GuestOptions => Options(TestKeys.Create("table guest"), GuestStore);
+    public InMemoryGameStore GuestStore => (InMemoryGameStore)GuestDb;
+
+    public MultiplayerOptions HostOptions => Options(TestKeys.Create("table host"), HostDb);
+
+    public MultiplayerOptions GuestOptions => Options(TestKeys.Create("table guest"), GuestDb);
 
     public MultiplayerOptions Options(SecretKey key, IGameStore store) =>
         new(key, store, Sockets, Time, [R1.Url.ToString(), R2.Url.ToString()], Random32);
@@ -130,5 +150,7 @@ internal sealed class Table : IAsyncDisposable
         lock (_games) games = [.. _games];
         foreach (MultiplayerGame g in games)
             await g.DisposeAsync();
+        if (_dir is not null)
+            Directory.Delete(_dir, recursive: true);
     }
 }
