@@ -186,6 +186,29 @@ public class PublishTrackerTests
     }
 
     [Fact]
+    public void NoAnswer_StaysPending_WithABackedOffRetry_SharedWithRateLimits()
+    {
+        var tracker = new PublishTracker();
+        tracker.Track("e", [R1, R2]);
+
+        tracker.OnNoAnswer("e", R1, T0);
+
+        Assert.Equal(PublishOutcome.Pending, tracker.Outcome("e"));
+        Assert.Equal(new RelayPublishState(RelayPublishStatus.Pending, PublishTracker.NoAnswerReason, T0.AddSeconds(2), 1), tracker.PerRelay("e")[R1]);
+        tracker.OnResent("e", R1);
+        tracker.OnOk("e", R1, false, "rate-limited: x", T0.AddSeconds(10));
+        Assert.Equal(T0.AddSeconds(14), tracker.PerRelay("e")[R1].RetryAt); // the second retry of either kind waits 4 s
+
+        tracker.OnOk("e", R2, false, "blocked: y", T0);
+        tracker.OnNoAnswer("e", R2, T0); // final states don't come back
+        tracker.OnNoAnswer("unknown", R1, T0);
+        Assert.Equal(RelayPublishStatus.Refused, tracker.PerRelay("e")[R2].Status);
+        tracker.OnOk("e", R1, true, "", T0);
+        tracker.OnNoAnswer("e", R1, T0);
+        Assert.Equal(RelayPublishStatus.Sent, tracker.PerRelay("e")[R1].Status);
+    }
+
+    [Fact]
     public void Track_IsIdempotent_AndNextRetryIsTheEarliest()
     {
         var tracker = new PublishTracker();

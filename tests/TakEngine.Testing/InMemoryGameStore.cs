@@ -12,6 +12,7 @@ public sealed class InMemoryGameStore : IGameStore
     private readonly object _gate = new();
     private readonly Dictionary<Guid, Entry> _games = [];
     private Func<string, bool>? _failNext;
+    private Task? _hold;
 
     /// <summary>Number of writes that landed.</summary>
     public int Writes { get; private set; }
@@ -22,6 +23,12 @@ public sealed class InMemoryGameStore : IGameStore
         lock (_gate) _failNext = which ?? (_ => true);
     }
 
+    /// <summary>Writes wait for <paramref name="until"/> before they land (a slow disk); null lets them through again.</summary>
+    public void HoldWrites(Task? until)
+    {
+        lock (_gate) _hold = until;
+    }
+
     public Task SaveNewGameAsync(NetGameRecord record, ExchangeProgress progress, CancellationToken cancellationToken = default) =>
         Write(nameof(SaveNewGameAsync), () =>
         {
@@ -30,8 +37,14 @@ public sealed class InMemoryGameStore : IGameStore
             _games[record.GameId] = new Entry(record, progress);
         });
 
-    public Task UpdateRecordAsync(NetGameRecord record, CancellationToken cancellationToken = default) =>
-        Write(nameof(UpdateRecordAsync), () => Get(record.GameId).Record = record);
+    public Task UpdateRecordAsync(NetGameRecord record, OutboxEntry? outbox = null, CancellationToken cancellationToken = default) =>
+        Write(nameof(UpdateRecordAsync), () =>
+        {
+            Entry e = Get(record.GameId);
+            e.Record = record;
+            if (outbox is not null)
+                e.Outbox.Add(outbox);
+        });
 
     public Task CommitAppliedAsync(Guid gameId, AppliedAction applied, ExchangeProgress progress, OutboxEntry? outbox = null, CancellationToken cancellationToken = default) =>
         Write(nameof(CommitAppliedAsync), () =>
@@ -76,25 +89,21 @@ public sealed class InMemoryGameStore : IGameStore
         lock (_gate) return Task.FromResult<IReadOnlyList<NetGameRecord>>(_games.Values.Select(e => e.Record).ToList());
     }
 
-    private Task Write(string operation, Action apply)
+    private async Task Write(string operation, Action apply)
     {
+        Task? hold;
+        lock (_gate) hold = _hold;
+        if (hold is not null)
+            await hold.ConfigureAwait(false);
         lock (_gate)
         {
             if (_failNext is { } fail && fail(operation))
             {
                 _failNext = null;
-                return Task.FromException(new GameStoreException($"Simulated crash: {operation} was not saved."));
+                throw new GameStoreException($"Simulated crash: {operation} was not saved.");
             }
-            try
-            {
-                apply();
-            }
-            catch (GameStoreException ex)
-            {
-                return Task.FromException(ex);
-            }
+            apply();
             Writes++;
-            return Task.CompletedTask;
         }
     }
 

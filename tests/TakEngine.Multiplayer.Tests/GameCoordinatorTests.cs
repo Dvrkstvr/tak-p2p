@@ -1,5 +1,9 @@
 using TakEngine.Abstractions;
+using TakEngine.Crypto;
 using TakEngine.Testing;
+using TakEngine.Transport.Envelope;
+using TakEngine.Transport.Matchmaking;
+using TakEngine.Transport.Nostr;
 using TakEngine.Transport.Relay;
 
 namespace TakEngine.Multiplayer.Tests;
@@ -43,7 +47,8 @@ public sealed class GameCoordinatorTests : IAsyncDisposable
 
         Assert.True((await white.SubmitAsync("e5")).IsSuccess);
 
-        await Table.Eventually(() => black.AppliedTurn == 1, "black sees ply 1");
+        // The board moves before the event is raised (apply, save, then announce): wait for both.
+        await Table.Eventually(() => black.AppliedTurn == 1 && seen.Count == 1, "black sees ply 1");
         Assert.Equal(white.StateHash, black.StateHash);
         Assert.Equal(["e5:False"], seen);
     }
@@ -298,5 +303,173 @@ public sealed class GameCoordinatorTests : IAsyncDisposable
             return;
         }
         Assert.Fail("no seed in 100..139 made the host White");
+    }
+
+    [Fact]
+    public async Task ResignNoRelayAccepted_IsSentAfterARestart_AndTheFinalStateSurvives()
+    {
+        var (host, guest) = await _t.Connect();
+        await _t.Play(host, guest, ["e5", "a1"]);
+        string hash = host.StateHash;
+        _t.R1.Refuse(_ => true, "blocked: maintenance");
+        _t.R2.Refuse(_ => true, "blocked: maintenance");
+        var outcomes = new List<PublishOutcome>();
+        host.PublishStatus += (_, o) => outcomes.Add(o);
+
+        Assert.True((await host.ResignAsync()).IsSuccess);
+        await Table.Eventually(() => outcomes.Contains(PublishOutcome.Failed), "both relays refused the resign");
+        await host.DisposeAsync(); // closed with the resign unsent
+        _t.R1.ClearRefusals();
+        _t.R2.ClearRefusals();
+
+        MultiplayerGame again = _t.Track((await MultiplayerGame.ResumeAsync(_t.HostOptions, host.GameId))!);
+
+        Assert.Equal(HandshakeState.Completed, again.Record.State);
+        Assert.Equal(2, again.AppliedTurn);
+        Assert.Equal(hash, again.StateHash);
+        await Table.Eventually(() => guest.Result is not null, "the guest sees the resignation after the host's restart");
+        Assert.Equal(GameEndReason.Resignation, guest.Result!.Reason);
+    }
+
+    [Fact]
+    public async Task CancelledGame_PublishesNothingOnResume()
+    {
+        MultiplayerGame host = await _t.Host();
+        await host.DisposeAsync();
+        _t.R1.Partition();
+        _t.R2.Partition();
+        MultiplayerGame guest = await _t.Join(host);
+        Assert.True(await guest.CancelAsync());
+        await guest.DisposeAsync();
+        _t.R1.Heal();
+        _t.R2.Heal();
+
+        _t.Track((await MultiplayerGame.ResumeAsync(_t.GuestOptions, guest.GameId))!);
+        await _t.Advance(TimeSpan.FromSeconds(6));
+
+        Assert.Equal(0, EventFrames(_t.R1) + EventFrames(_t.R2));
+    }
+
+    [Fact]
+    public async Task GuestCancelWhileOffline_TheJoinNeverGoesOut()
+    {
+        MultiplayerGame host = await _t.Host();
+        await Table.Eventually(() => host.OwnLink == OwnLink.Online, "host online");
+        _t.R1.Partition();
+        _t.R2.Partition();
+        MultiplayerGame guest = await _t.Join(host);
+
+        Assert.True(await guest.CancelAsync());
+        _t.R1.Heal();
+        _t.R2.Heal();
+        await _t.Advance(TimeSpan.FromSeconds(35));
+        await Table.Eventually(() => guest.OwnLink == OwnLink.Online, "guest back online");
+        await Task.Delay(50);
+
+        Assert.DoesNotContain(_t.R1.StoredEvents.Concat(_t.R2.StoredEvents), e => e.Pubkey == guest.Record.MyPubKey);
+        Assert.Equal(HandshakeState.Inviting, host.Record.State);
+    }
+
+    [Fact]
+    public async Task StrangersFutureEvent_DoesNotHideTheOpponentsMoves()
+    {
+        // D-042 lets anyone write to the host's game tag; a far-future created_at must not push the host's `since` past real moves.
+        var (host, guest) = await _t.Connect();
+        SecretKey stranger = TestKeys.Create("stranger");
+        long future = _t.Time.GetUtcNow().AddMinutes(14).ToUnixTimeSeconds();
+        NostrEvent junk = NostrEvents.Sign(stranger, future, EnvelopeCodec.Kind,
+            [new[] { "p", host.Record.MyPubKey }, new[] { "g", host.GameId.ToString("D") }], "junk", new byte[32]);
+        string frame = new RelayMessage.Event(SubscriptionPlan.SubscriptionId(host.GameId), junk).Format();
+        _t.R1.Inject(frame);
+        _t.R2.Inject(frame);
+        await Table.Eventually(() => host.DroppedEvents > 0, "the stranger's event is dropped");
+
+        _t.R1.DropConnections();
+        _t.R2.DropConnections();
+        await _t.Advance(TimeSpan.FromSeconds(3));
+        await Table.Eventually(() => host.OwnLink == OwnLink.Online && guest.OwnLink == OwnLink.Online, "reconnected");
+
+        await _t.Play(host, guest, ["e5", "a1"]);
+        Assert.Equal(host.StateHash, guest.StateHash);
+    }
+
+    [Fact]
+    public async Task ObserverCopyingTheJoinTags_CannotTakeTheGame()
+    {
+        // D-043: while the host is away, someone who sees the guest's JOIN on a relay (game id, host key) joins too, later.
+        MultiplayerGame host = await _t.Host();
+        await host.DisposeAsync();
+        MultiplayerGame guest = await _t.Join(host);
+        await Table.Eventually(() => _t.R1.StoredEvents.Any(e => e.Pubkey == guest.Record.MyPubKey), "the JOIN is on the relay");
+        NostrEvent seen = _t.R1.StoredEvents.First(e => e.Pubkey == guest.Record.MyPubKey);
+        var guessed = new InviteCode(Guid.Parse(seen.Tags[1][1]), seen.Tags[0][1], BoardSize.Five, 0, [_t.R1.Url.ToString()],
+            ColorSeed.Commit(new byte[32]));
+        await _t.Advance(TimeSpan.FromSeconds(2));
+        JoinOutcome observer = await MultiplayerGame.JoinAsync(_t.Options(TestKeys.Create("observer"), new InMemoryGameStore()), guessed.ToCompactCode());
+        _t.Track(observer.Game!);
+        await Table.Eventually(() => _t.R1.StoredEvents.Any(e => e.Pubkey == observer.Game!.Record.MyPubKey), "the observer's JOIN is on the relay");
+
+        MultiplayerGame back = _t.Track((await MultiplayerGame.ResumeAsync(_t.HostOptions, host.GameId))!);
+
+        await Table.Eventually(() => guest.Record.State == HandshakeState.InGame, "the real guest gets in");
+        Assert.Equal(guest.Record.MyPubKey, back.Record.OpponentPubKey);
+        Assert.Equal(HandshakeState.Joining, observer.Game!.Record.State);
+    }
+
+    [Fact]
+    public async Task HostLockNotSaved_LeavesNoAcceptBehind()
+    {
+        MultiplayerGame host = await _t.Host();
+        var notices = new List<string>();
+        host.Notice += notices.Add;
+        _t.HostStore.FailNextWrite(op => op == nameof(IGameStore.UpdateRecordAsync));
+
+        await _t.Join(host);
+
+        await Table.Eventually(() => notices.Any(n => n.StartsWith("Could not save the game", StringComparison.Ordinal)), "the host is told");
+        StoredGame stored = (await _t.HostStore.LoadAsync(host.GameId))!;
+        Assert.Equal(HandshakeState.Inviting, stored.Record.State);
+        Assert.Empty(stored.Outbox);
+        Assert.DoesNotContain(_t.R1.StoredEvents, e => e.Pubkey == host.Record.MyPubKey);
+    }
+
+    [Fact]
+    public async Task ResignNotSaved_IsRefused_AndNothingIsSent()
+    {
+        var (host, guest) = await _t.Connect();
+        await _t.Play(host, guest, ["e5", "a1"]);
+        _t.HostStore.FailNextWrite(op => op == nameof(IGameStore.UpdateRecordAsync));
+        int frames = EventFrames(_t.R1);
+
+        CommandResult result = await host.ResignAsync();
+
+        Assert.False(result.IsSuccess);
+        Assert.StartsWith("Your resignation could not be saved", result.ErrorMessage);
+        Assert.Equal(HandshakeState.InGame, (await _t.HostStore.LoadAsync(host.GameId))!.Record.State);
+        Assert.Equal("This game could not be saved earlier. Reopen it to continue.", (await host.SubmitAsync("b1")).ErrorMessage);
+        await Task.Delay(50);
+        Assert.Equal(frames, EventFrames(_t.R1));
+        Assert.Null(guest.Result);
+    }
+
+    [Fact]
+    public async Task Dispose_FailsCommandsStillQueued()
+    {
+        var (host, guest) = await _t.Connect();
+        MultiplayerGame white = host.MyColor == PlayerColor.White ? host : guest;
+        InMemoryGameStore store = white == host ? _t.HostStore : _t.GuestStore;
+        var disk = new TaskCompletionSource();
+        store.HoldWrites(disk.Task);
+        Task<CommandResult> first = white.SubmitAsync("e5"); // the worker waits on the slow save
+        var queued = Enumerable.Range(0, 5).Select(_ => white.SubmitAsync("a1")).ToList();
+
+        ValueTask disposing = white.DisposeAsync();
+
+        await Task.WhenAny(Task.WhenAll(queued).ContinueWith(_ => { }, TaskScheduler.Default), Task.Delay(5000));
+        Assert.True(queued.All(q => q.IsCompleted), "a queued command hangs after dispose");
+        Assert.All(queued, q => Assert.IsType<ObjectDisposedException>(q.Exception!.InnerException));
+        disk.SetResult();
+        await disposing;
+        Assert.True(first.IsCompleted);
     }
 }

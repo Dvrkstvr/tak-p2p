@@ -8,7 +8,7 @@
 - clarity: scope 5/5 · blocking 0 · assumed 9 · deferred 3
 - feasibility: amber · H-open 0 · M-open 3 · spiked 4
 - milestone: M0-A (CI gate, crypto, fake-relay game) · features passing 22/58 · M0 14/24 passing · owed checks 4
-- next: M0-A done (Plans A1-A3: F-033, F-035, F-017 pass; F-034 and F-016 fake-relay rows done, LiveRelay rows owed to M0-B). Write and execute the M0-B plan (F-014, F-036, F-037, F-038, then LiveRelay runs within the 150-event budget) after the user's check-in
+- next: M0-A done (Plans A1-A3: F-033, F-035, F-017 pass; F-034 and F-016 fake-relay rows done, LiveRelay rows owed to M0-B). M0-A review fixes in (D-043 invite proof). Write and execute the M0-B plan (F-014, F-036, F-037, F-038, then LiveRelay runs within the 150-event budget; also share one PublishBudget per process so a restart can't burst past 4/10 s) after the user's check-in
 - autopilot: M0-A · round 10/12 · A1 done, F-057/F-058 built · stall 0
 
 ## Stages

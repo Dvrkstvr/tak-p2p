@@ -75,9 +75,11 @@ public sealed class HostHandshake
             case HandshakeState.Inviting:
                 if (string.Equals(author, Record.MyPubKey, StringComparison.Ordinal))
                     return new HostDecision(HostDecisionKind.Ignore);
-                if (HandshakeMessages.ReadJoin(join) is not { } guestNonce)
+                if (HandshakeMessages.ReadJoin(join) is not { } terms)
                     return new HostDecision(HostDecisionKind.Ignore, Message: "ignored a malformed join");
-                return Lock(author, guestNonce);
+                if (!ColorSeed.VerifyJoinProof(terms.InviteProof, Record.SeedCommit, author))
+                    return new HostDecision(HostDecisionKind.Ignore, Message: $"ignored join from {Npub(author)}: it does not match this invite");
+                return Lock(author, terms.GuestNonce);
 
             case HandshakeState.InGame or HandshakeState.Completed:
                 if (string.Equals(author, Record.OpponentPubKey, StringComparison.Ordinal))

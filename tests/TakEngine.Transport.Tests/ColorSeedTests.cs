@@ -30,6 +30,7 @@ public class ColorSeedTests
             byte[] guestNonce = Convert.FromHexString(c.GetProperty("guest_nonce").GetString()!);
 
             Assert.Equal(c.GetProperty("seed_commit").GetString(), ColorSeed.Commit(hostNonce));
+            Assert.Equal(c.GetProperty("join_proof").GetString(), ColorSeed.JoinProof(ColorSeed.Commit(hostNonce), guest));
             string seed = ColorSeed.Derive(hostNonce, guestNonce);
             Assert.Equal(c.GetProperty("seed").GetString(), seed);
 
@@ -40,6 +41,23 @@ public class ColorSeedTests
         // The vectors exercise both outcomes, so a resolver stuck on one colour fails here.
         Assert.Contains(cases, c => c.GetProperty("host_colour").GetString() == "White");
         Assert.Contains(cases, c => c.GetProperty("host_colour").GetString() == "Black");
+    }
+
+    [Fact]
+    public void JoinProof_VerifiesOnlyForTheSameInviteAndGuest()
+    {
+        string commit = ColorSeed.Commit(Nonce("committed"));
+        string other = ColorSeed.Commit(Nonce("another"));
+        string guest = Convert.ToHexStringLower(Nonce("guest key"));
+        string proof = ColorSeed.JoinProof(commit, guest);
+
+        Assert.True(ColorSeed.VerifyJoinProof(proof, commit, guest));
+        Assert.False(ColorSeed.VerifyJoinProof(proof, other, guest));
+        Assert.False(ColorSeed.VerifyJoinProof(proof, commit, Convert.ToHexStringLower(Nonce("someone else"))));
+        Assert.False(ColorSeed.VerifyJoinProof(proof.ToUpperInvariant(), commit, guest));
+        Assert.False(ColorSeed.VerifyJoinProof(null, commit, guest));
+        Assert.False(ColorSeed.VerifyJoinProof(proof, "zz" + commit[2..], guest));
+        Assert.False(ColorSeed.VerifyJoinProof(proof, commit, guest[..62]));
     }
 
     [Fact]

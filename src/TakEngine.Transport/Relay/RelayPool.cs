@@ -22,7 +22,7 @@ public sealed class RelayPool : IAsyncDisposable
     private readonly PublishTracker _tracker = new();
     private readonly PublishBudget _budget = new();
     private readonly List<NostrEvent> _outgoing = [];
-    private readonly Dictionary<(string Id, Uri Relay), int> _inFlight = [];
+    private readonly Dictionary<(string Id, Uri Relay), (int Generation, DateTimeOffset SentAt)> _inFlight = [];
     private readonly HashSet<string> _seen = new(StringComparer.Ordinal);
     private readonly Queue<string> _seenOrder = new();
     private readonly int _seenCapacity;
@@ -50,7 +50,8 @@ public sealed class RelayPool : IAsyncDisposable
     /// <summary>Delivered events, once each, in arrival order.</summary>
     public ChannelReader<ReceivedEvent> Events => _events.Reader;
 
-    /// <summary>The newest <c>created_at</c> delivered so far (0 before any): feeds <see cref="SubscriptionPlan"/>'s <c>since</c>.</summary>
+    /// <summary>The newest <c>created_at</c> delivered so far (0 before any), from any author. Raw: anyone can raise it, so a
+    /// caller builds <c>since</c> only from events it accepted.</summary>
     public long MaxCreatedAt => Interlocked.Read(ref _maxCreatedAt);
 
     /// <summary>Raised (on a pool thread) whenever a relay acknowledges or refuses one of our events.</summary>
@@ -100,6 +101,17 @@ public sealed class RelayPool : IAsyncDisposable
             MarkSeenLocked(evt.Id);
         }
         _wake.Release();
+    }
+
+    /// <summary>Stops sending an event that no relay should get any more (a guest cancelled before its JOIN went out).</summary>
+    public void Withdraw(string eventId)
+    {
+        lock (_gate)
+        {
+            _outgoing.RemoveAll(e => e.Id == eventId);
+            foreach (RelayConnection c in _connections)
+                _inFlight.Remove((eventId, c.Url));
+        }
     }
 
     /// <summary>Sends the subscription again on every connected relay (catch-up after a gap, or the filter changed).</summary>
@@ -194,6 +206,7 @@ public sealed class RelayPool : IAsyncDisposable
             lock (_gate)
             {
                 DateTimeOffset now = _time.GetUtcNow();
+                ExpireUnansweredLocked(now);
                 foreach (NostrEvent evt in _outgoing)
                 {
                     var targets = _connections.Where(c => NeedsSendLocked(evt.Id, c, now)).ToList();
@@ -205,7 +218,7 @@ public sealed class RelayPool : IAsyncDisposable
                     foreach (RelayConnection c in targets)
                     {
                         _tracker.OnResent(evt.Id, c.Url);
-                        _inFlight[(evt.Id, c.Url)] = c.Generation;
+                        _inFlight[(evt.Id, c.Url)] = (c.Generation, now);
                         sends.Add((c, frame));
                     }
                 }
@@ -214,6 +227,7 @@ public sealed class RelayPool : IAsyncDisposable
 
             foreach (var (connection, frame) in sends)
             {
+                // SendAsync never throws; a failed send is resent after the next subscribe.
                 if (!await connection.SendAsync(frame).ConfigureAwait(false))
                 {
                     lock (_gate) _inFlight.Remove((ParseId(frame), connection.Url));
@@ -253,7 +267,28 @@ public sealed class RelayPool : IAsyncDisposable
             return false;
         if (state.RetryAt is { } at && at > now)
             return false;
-        return !(_inFlight.TryGetValue((id, c.Url), out int generation) && generation == c.Generation);
+        return !(_inFlight.TryGetValue((id, c.Url), out var sent) && sent.Generation == c.Generation);
+    }
+
+    /// <summary>
+    /// A send on the current socket with no OK after <see cref="PublishTracker.NoAnswerAfter"/> becomes NoAnswer and is retried after a
+    /// backoff; one from an older socket is simply forgotten (the reconnect resends it).
+    /// </summary>
+    private void ExpireUnansweredLocked(DateTimeOffset now)
+    {
+        foreach (var ((id, url), sent) in _inFlight.ToList())
+        {
+            RelayConnection c = _connections.First(x => x.Url == url);
+            if (sent.Generation != c.Generation)
+            {
+                _inFlight.Remove((id, url));
+            }
+            else if (now - sent.SentAt >= PublishTracker.NoAnswerAfter)
+            {
+                _inFlight.Remove((id, url));
+                _tracker.OnNoAnswer(id, url, now);
+            }
+        }
     }
 
     /// <summary>
@@ -263,6 +298,12 @@ public sealed class RelayPool : IAsyncDisposable
     private DateTimeOffset? NextDueLocked(DateTimeOffset now)
     {
         DateTimeOffset? due = _tracker.NextRetryAt(after: now);
+        foreach (var (_, sentAt) in _inFlight.Values)
+        {
+            DateTimeOffset expires = sentAt + PublishTracker.NoAnswerAfter;
+            if (expires > now && (due is null || expires < due))
+                due = expires;
+        }
         if (_outgoing.Any(e => _connections.Any(c => NeedsSendLocked(e.Id, c, now))))
         {
             DateTimeOffset budgetAt = _budget.NextAvailable(now);

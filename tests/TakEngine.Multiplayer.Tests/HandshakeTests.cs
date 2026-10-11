@@ -23,8 +23,10 @@ public class HandshakeTests
     private static HostHandshake NewHost(BoardSize size = BoardSize.Six, int komi = 5) =>
         HostHandshake.Create(Game, Host.PublicKey, size, komi, Nonce("host nonce"), Relays, "Calvin");
 
-    private static SignedGameAction SignedJoin(SecretKey guest, byte[] nonce, BoardSize size = BoardSize.Six) =>
-        ActionDigest.Sign(guest, HandshakeMessages.UnsignedJoin(Game, guest.PublicKey.ToHex(), size, nonce), new byte[32]);
+    private static readonly string SeedCommit = ColorSeed.Commit(Nonce("host nonce"));
+
+    private static SignedGameAction SignedJoin(SecretKey guest, byte[] nonce, BoardSize size = BoardSize.Six, string? seedCommit = null) =>
+        ActionDigest.Sign(guest, HandshakeMessages.UnsignedJoin(Game, guest.PublicKey.ToHex(), size, nonce, seedCommit ?? SeedCommit), new byte[32]);
 
     private static SignedGameAction Sign(SecretKey key, SignedGameAction a) => ActionDigest.Sign(key, a, new byte[32]);
 
@@ -112,18 +114,40 @@ public class HandshakeTests
     }
 
     [Fact]
+    public void JoinWithoutTheInvite_IsIgnoredAndSurfaced_AndTheInviteStaysOpen()
+    {
+        // D-043: an observer sees a JOIN's game id and host key on the relay, but not the invite's seed commitment.
+        HostHandshake host = NewHost();
+        SignedGameAction forged = SignedJoin(Other, Nonce("other nonce"), seedCommit: ColorSeed.Commit(Nonce("a guess")));
+        SignedGameAction copied = Sign(Other, SignedJoin(Guest, Nonce("guest nonce")) with { PlayerPubKey = Other.PublicKey.ToHex() });
+
+        HostDecision d = host.OnJoin(forged);
+        Assert.Equal(HostDecisionKind.Ignore, d.Kind);
+        Assert.Equal($"ignored join from {Other.PublicKey.ToNpub()}: it does not match this invite", d.Message);
+        Assert.Equal(HostDecisionKind.Ignore, host.OnJoin(copied).Kind); // a holder's proof is bound to the holder's key
+        Assert.Equal(HandshakeState.Inviting, host.State);
+        Assert.Null(host.Record.OpponentPubKey);
+        Assert.Equal(HostDecisionKind.Accept, host.OnJoin(SignedJoin(Guest, Nonce("guest nonce"))).Kind);
+    }
+
+    [Fact]
     public void MalformedJoin_IsIgnored_AndTheInviteStaysOpen()
     {
         HostHandshake host = NewHost();
         var noNonce = Sign(Guest, SignedGameAction.Unsigned(GameActionType.Join, Game, 0, Guest.PublicKey.ToHex(), "x"));
         var shortNonce = Sign(Guest, SignedGameAction.Unsigned(GameActionType.Join, Game, 0, Guest.PublicKey.ToHex(), "x",
             [new("guest_nonce", ActionValue.Of("abcd"))]));
-        var extra = Sign(Guest, SignedGameAction.Unsigned(GameActionType.Join, Game, 0, Guest.PublicKey.ToHex(), "x",
-            [new("guest_nonce", ActionValue.Of(new string('a', 64))), new("x", ActionValue.Of(1))]));
-        var turnOne = Sign(Guest, SignedGameAction.Unsigned(GameActionType.Join, Game, 1, Guest.PublicKey.ToHex(), "x",
+        string proof = ColorSeed.JoinProof(SeedCommit, Guest.PublicKey.ToHex());
+        var noProof = Sign(Guest, SignedGameAction.Unsigned(GameActionType.Join, Game, 0, Guest.PublicKey.ToHex(), "x",
             [new("guest_nonce", ActionValue.Of(new string('a', 64)))]));
+        var numberProof = Sign(Guest, SignedGameAction.Unsigned(GameActionType.Join, Game, 0, Guest.PublicKey.ToHex(), "x",
+            [new("guest_nonce", ActionValue.Of(new string('a', 64))), new("invite_proof", ActionValue.Of(1))]));
+        var extra = Sign(Guest, SignedGameAction.Unsigned(GameActionType.Join, Game, 0, Guest.PublicKey.ToHex(), "x",
+            [new("guest_nonce", ActionValue.Of(new string('a', 64))), new("invite_proof", ActionValue.Of(proof)), new("x", ActionValue.Of(1))]));
+        var turnOne = Sign(Guest, SignedGameAction.Unsigned(GameActionType.Join, Game, 1, Guest.PublicKey.ToHex(), "x",
+            [new("guest_nonce", ActionValue.Of(new string('a', 64))), new("invite_proof", ActionValue.Of(proof))]));
 
-        Assert.All([noNonce, shortNonce, extra, turnOne], j => Assert.Equal(HostDecisionKind.Ignore, host.OnJoin(j).Kind));
+        Assert.All([noNonce, shortNonce, noProof, numberProof, extra, turnOne], j => Assert.Equal(HostDecisionKind.Ignore, host.OnJoin(j).Kind));
         Assert.Equal(HandshakeState.Inviting, host.State);
         Assert.Equal(HostDecisionKind.Ignore, host.OnJoin(SignedJoin(Host, Nonce("self"))).Kind);
         Assert.Equal(HostDecisionKind.Accept, host.OnJoin(SignedJoin(Guest, Nonce("guest nonce"))).Kind);
@@ -197,7 +221,9 @@ public class HandshakeTests
 
         Assert.Equal(HandshakeState.Joining, guest.State);
         Assert.Equal(["wss://nos.lol", "wss://relay.damus.io"], guest.Record.Relays);
-        Assert.Equal(Nonce("guest nonce"), HandshakeMessages.ReadJoin(Sign(Guest, guest.UnsignedJoin)));
+        JoinTerms terms = HandshakeMessages.ReadJoin(Sign(Guest, guest.UnsignedJoin))!;
+        Assert.Equal(Nonce("guest nonce"), terms.GuestNonce);
+        Assert.Equal(ColorSeed.JoinProof(SeedCommit, Guest.PublicKey.ToHex()), terms.InviteProof);
         Assert.Equal(Host.PublicKey.ToHex(), guest.Record.OpponentPubKey);
         Assert.Null(guest.Record.HostNonce);
     }
@@ -470,6 +496,7 @@ public class HandshakeMessagesTests
     public void Nonce_MustBe64Hex(string nonce)
     {
         Assert.Null(HandshakeMessages.ReadAccept(Accept(data: Good(nonce: nonce))));
-        Assert.Null(HandshakeMessages.ReadJoin(SignedGameAction.Unsigned(GameActionType.Join, Game, 0, "g", "p", [new("guest_nonce", ActionValue.Of(nonce))])));
+        Assert.Null(HandshakeMessages.ReadJoin(SignedGameAction.Unsigned(GameActionType.Join, Game, 0, "g", "p",
+            [new("guest_nonce", ActionValue.Of(nonce)), new("invite_proof", ActionValue.Of("p"))])));
     }
 }

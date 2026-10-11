@@ -120,8 +120,10 @@ public sealed class RelayPoolTests : IAsyncDisposable
         Assert.All(events, e => Assert.Equal(PublishOutcome.Sent, _pool.Outcome(e.Id)));
         var sends = _r1.FrameLog.Where(f => f.Frame.StartsWith("[\"EVENT\"", StringComparison.Ordinal)).Select(f => f.At).ToList();
         Assert.Equal(20, sends.Count); // every event twice: the refused attempt and the retry
+        // The relay stamps a frame when it arrives; under load the test's clock can step once between the pump taking budget and
+        // the send, so a frame may carry a stamp up to 1 s late. Any 9 s span still holds at most 4.
         foreach (DateTimeOffset start in sends)
-            Assert.True(sends.Count(t => t >= start && t < start + TimeSpan.FromSeconds(10)) <= 4, $"more than 4 events in the 10 s from {start:O}");
+            Assert.True(sends.Count(t => t >= start && t < start + TimeSpan.FromSeconds(9)) <= 4, $"more than 4 events in the 9 s from {start:O}");
     }
 
     [Fact]
@@ -329,5 +331,50 @@ public sealed class RelayPoolTests : IAsyncDisposable
         await Eventually(() => _r1.ReceivedFrames.Count(f => f.StartsWith("[\"REQ\"")) == reqs + 1, "a second REQ");
         var received = new List<ReceivedEvent>();
         await Eventually(() => { received.AddRange(Drain()); return received.Any(r => r.Event.Id == missed.Id); }, "the missed event");
+    }
+
+    [Fact]
+    public async Task UnansweredPublish_IsNoAnswerAfter8s_AndRetriedOnTheSameSocket()
+    {
+        _r2.Partition();
+        Start();
+        await Eventually(() => _pool.Links[0].State == RelayLinkState.CaughtUp, "r1 up");
+        _r1.IgnorePublishes();
+        NostrEvent e = Evt(Me);
+        int Sends() => _r1.ReceivedFrames.Count(f => f.Contains(e.Id) && f.StartsWith("[\"EVENT\""));
+
+        _pool.Publish(e);
+        await Eventually(() => Sends() == 1, "first send");
+        await Advance(TimeSpan.FromSeconds(7));
+        Assert.Equal(1, Sends());
+        await Advance(TimeSpan.FromSeconds(1));
+        await Eventually(() => _pool.PerRelay(e.Id)[_r1.Url].Reason == PublishTracker.NoAnswerReason, "no answer at 8 s");
+        Assert.Equal(PublishOutcome.Pending, _pool.Outcome(e.Id));
+
+        _r1.IgnorePublishes(false);
+        await Advance(TimeSpan.FromSeconds(2));
+        await Eventually(() => _pool.Outcome(e.Id) == PublishOutcome.Sent, "the retry is answered");
+        Assert.Equal(2, Sends());
+        Assert.Equal(1, _r1.OpenConnections); // same socket, no reconnect needed
+    }
+
+    [Fact]
+    public async Task Withdraw_StopsAnEventThatHasNotGoneOut()
+    {
+        _r1.Partition();
+        _r2.Partition();
+        Start();
+        NostrEvent e = Evt(Me);
+        _pool.Publish(e);
+
+        _pool.Withdraw(e.Id);
+        _r1.Heal();
+        _r2.Heal();
+        for (int i = 0; i < 40 && !_pool.Links.All(l => l.State == RelayLinkState.CaughtUp); i++)
+            await Advance(TimeSpan.FromSeconds(1));
+        await Subscribed();
+        await Task.Delay(50);
+
+        Assert.DoesNotContain(_r1.ReceivedFrames.Concat(_r2.ReceivedFrames), f => f.Contains(e.Id));
     }
 }

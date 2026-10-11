@@ -47,16 +47,30 @@ public sealed class RelayConnection : IAsyncDisposable
 
     public void Start() => _run ??= Task.Run(() => RunAsync(_stop.Token));
 
-    /// <summary>Sends one frame on the current socket. False when not connected (the caller resends after the next subscribe).</summary>
+    /// <summary>
+    /// Sends one frame on the current socket. False when not connected, stopping, or the socket failed (the caller resends after the
+    /// next subscribe). Never throws: a send racing a drop must not stop the pool's pump.
+    /// </summary>
     public async Task<bool> SendAsync(string frame)
     {
         IRelaySocket? socket = _socket;
         if (socket is null)
             return false;
-        await _sendGate.WaitAsync(_stop.Token).ConfigureAwait(false);
+        try
+        {
+            await _sendGate.WaitAsync(_stop.Token).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is OperationCanceledException or ObjectDisposedException)
+        {
+            return false;
+        }
         try
         {
             return socket == _socket && await socket.SendAsync(frame, _stop.Token).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is OperationCanceledException or ObjectDisposedException or InvalidOperationException)
+        {
+            return false;
         }
         finally
         {
@@ -133,8 +147,17 @@ public sealed class RelayConnection : IAsyncDisposable
                 }
             }
 
-            _socket = null;
-            await socket.DisposeAsync().ConfigureAwait(false);
+            // Under the send gate, so no send is half way through on the socket being disposed.
+            await _sendGate.WaitAsync(CancellationToken.None).ConfigureAwait(false);
+            try
+            {
+                _socket = null;
+                await socket.DisposeAsync().ConfigureAwait(false);
+            }
+            finally
+            {
+                _sendGate.Release();
+            }
             if (!ct.IsCancellationRequested)
                 Link.OnDisconnected(_time.GetUtcNow(), "connection dropped");
         }

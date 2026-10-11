@@ -91,4 +91,23 @@ public class FakeStoreTests
 
         await Assert.ThrowsAsync<KeyStoreException>(() => InMemoryKeyStore.Corrupt().LoadSecretAsync());
     }
+
+    [Fact]
+    public async Task RecordUpdate_WithItsOutboxEntry_LandsWhole_OrNotAtAll()
+    {
+        var store = new InMemoryGameStore();
+        await store.SaveNewGameAsync(Record(), Progress(0));
+        var accept = new OutboxEntry("accept", GameActionType.Accept, 0, "{}");
+
+        store.FailNextWrite();
+        await Assert.ThrowsAsync<GameStoreException>(() => store.UpdateRecordAsync(Record() with { State = HandshakeState.InGame }, accept));
+        StoredGame before = (await store.LoadAsync(Game))!;
+        Assert.Equal(HandshakeState.Inviting, before.Record.State);
+        Assert.Empty(before.Outbox);
+
+        await store.UpdateRecordAsync(Record() with { State = HandshakeState.InGame }, accept);
+        StoredGame after = (await store.LoadAsync(Game))!;
+        Assert.Equal(HandshakeState.InGame, after.Record.State);
+        Assert.Equal("accept", Assert.Single(after.Outbox).EventId);
+    }
 }

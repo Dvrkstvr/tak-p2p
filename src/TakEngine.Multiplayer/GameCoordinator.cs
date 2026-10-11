@@ -24,6 +24,9 @@ internal sealed class GameCoordinator : IAsyncDisposable
 {
     private static readonly TimeSpan TickInterval = TimeSpan.FromSeconds(1);
 
+    /// <summary>How far ahead of our clock an opponent's <c>created_at</c> may move <c>since</c>.</summary>
+    private static readonly TimeSpan MaxClockAhead = TimeSpan.FromMinutes(1);
+
     private readonly MultiplayerOptions _o;
     private readonly MultiplayerGame _owner;
     private readonly IGameStore _store;
@@ -38,6 +41,7 @@ internal sealed class GameCoordinator : IAsyncDisposable
     private GuestHandshake? _guest;
     private TakGameSession? _session;
     private TurnExchange? _exchange;
+    private ExchangeProgress? _final;
     private SignedGameAction? _lastSigned;
     private RelayPool? _pool;
     private Task? _loop;
@@ -66,9 +70,9 @@ internal sealed class GameCoordinator : IAsyncDisposable
 
     public InviteCode Invite => _invite;
 
-    public int AppliedTurn => _session?.AppliedTurn ?? 0;
+    public int AppliedTurn => _session?.AppliedTurn ?? _final?.AppliedTurn ?? 0;
 
-    public string StateHash => _session?.CurrentStateHash ?? StateHasher.ComputeGenesisHash(_record.Size);
+    public string StateHash => _session?.CurrentStateHash ?? _final?.StateHash ?? StateHasher.ComputeGenesisHash(_record.Size);
 
     public int DroppedEvents => Volatile.Read(ref _dropped);
 
@@ -128,7 +132,19 @@ internal sealed class GameCoordinator : IAsyncDisposable
             _invite = _guest.Invite;
         }
         if (_record.State is HandshakeState.Cancelled or HandshakeState.Failed or HandshakeState.Completed)
-            return true; // nothing to do on the network
+        {
+            _final = stored.Progress;
+            // A finished game may still owe the opponent its last word (a RESIGN or the winning move that no relay took yet).
+            // A cancelled or failed one publishes nothing more.
+            var owed = _record.State == HandshakeState.Completed ? stored.Outbox.Where(o => !o.Sent).ToList() : [];
+            if (owed.Count > 0)
+            {
+                StartNetwork();
+                foreach (OutboxEntry entry in owed)
+                    _pool!.Publish(ParseEvent(entry.EventJson));
+            }
+            return true;
+        }
 
         if (_record.State == HandshakeState.InGame)
         {
@@ -164,7 +180,8 @@ internal sealed class GameCoordinator : IAsyncDisposable
 
     private RelayMessage.Req Subscription()
     {
-        long max = Math.Max(Interlocked.Read(ref _maxCreatedAt), _pool?.MaxCreatedAt ?? 0);
+        // Only the opponent's accepted events move `since` (NoteCreatedAt): a stranger's or our own clock must not hide their moves.
+        long max = Interlocked.Read(ref _maxCreatedAt);
         // A host never narrows the first filter to its guest (D-042): a second guest's JOIN must still reach it to be surfaced.
         // Decoding still judges authors (row 2), so a stranger's event is only counted.
         return SubscriptionPlan.Build(_record.GameId, Me, _host is null ? Opponent : null, max > 0 ? max : null);
@@ -177,19 +194,39 @@ internal sealed class GameCoordinator : IAsyncDisposable
     private Task<T> Enqueue<T>(Func<Task<T>> work)
     {
         var done = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+        CancellationTokenRegistration onStop = default;
         if (!_work.Writer.TryWrite(async () =>
             {
                 try
                 {
-                    done.SetResult(await work().ConfigureAwait(false));
+                    done.TrySetResult(await work().ConfigureAwait(false));
+                }
+                catch (GameStoreException ex)
+                {
+                    MarkBroken(ex);
+                    done.TrySetException(ex);
                 }
                 catch (Exception ex)
                 {
-                    done.SetException(ex);
+                    done.TrySetException(ex);
+                }
+                finally
+                {
+                    onStop.Dispose();
                 }
             }))
         {
-            done.SetException(new ObjectDisposedException(nameof(MultiplayerGame)));
+            done.TrySetException(new ObjectDisposedException(nameof(MultiplayerGame)));
+            return done.Task;
+        }
+        try
+        {
+            // Disposing stops the worker; a command still queued then fails instead of hanging.
+            onStop = _stop.Token.Register(() => done.TrySetException(new ObjectDisposedException(nameof(MultiplayerGame))));
+        }
+        catch (ObjectDisposedException ex)
+        {
+            done.TrySetException(ex);
         }
         return done.Task;
     }
@@ -206,8 +243,7 @@ internal sealed class GameCoordinator : IAsyncDisposable
                 }
                 catch (GameStoreException ex)
                 {
-                    _broken = true;
-                    _owner.RaiseNotice("Could not save the game: " + ex.Message + " Reopen the game to continue.");
+                    MarkBroken(ex);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
@@ -220,6 +256,12 @@ internal sealed class GameCoordinator : IAsyncDisposable
         catch (OperationCanceledException)
         {
         }
+    }
+
+    private void MarkBroken(GameStoreException ex)
+    {
+        _broken = true;
+        _owner.RaiseNotice("Could not save the game: " + ex.Message + " Reopen the game to continue.");
     }
 
     private async Task ReadAsync()
@@ -241,8 +283,6 @@ internal sealed class GameCoordinator : IAsyncDisposable
         if (_broken)
             return;
         NostrEvent evt = received.Event;
-        if (evt.CreatedAt > Interlocked.Read(ref _maxCreatedAt))
-            Interlocked.Exchange(ref _maxCreatedAt, evt.CreatedAt);
 
         PublicKey? opponent = Opponent;
         var context = new DecodeContext(_o.Key, _record.GameId, opponent);
@@ -272,7 +312,10 @@ internal sealed class GameCoordinator : IAsyncDisposable
 
         SignedGameAction action = result.Action!;
         if (opponent is not null && action.PlayerPubKey == opponent.ToHex())
+        {
             _lastHeardFromOpponent = _time.GetUtcNow();
+            NoteCreatedAt(evt.CreatedAt);
+        }
 
         switch (action.ActionType)
         {
@@ -292,6 +335,15 @@ internal sealed class GameCoordinator : IAsyncDisposable
         }
     }
 
+    /// <summary>Moves <c>since</c> forward from an accepted opponent event, never past our clock plus <see cref="MaxClockAhead"/>.</summary>
+    private void NoteCreatedAt(long createdAt)
+    {
+        long cap = (_time.GetUtcNow() + MaxClockAhead).ToUnixTimeSeconds();
+        long value = Math.Min(createdAt, cap);
+        if (value > Interlocked.Read(ref _maxCreatedAt))
+            Interlocked.Exchange(ref _maxCreatedAt, value);
+    }
+
     private async Task OnJoinAsync(SignedGameAction join)
     {
         HostDecision d = _host!.OnJoin(join);
@@ -299,9 +351,9 @@ internal sealed class GameCoordinator : IAsyncDisposable
         {
             case HostDecisionKind.Accept:
                 NostrEvent accept = Encode(PublicKey.FromHex(_host.Record.OpponentPubKey!), Sign(d.Accept!));
-                await _store.AddOutboxAsync(_record.GameId, Outbox(accept, GameActionType.Accept, 0)).ConfigureAwait(false);
+                // The lock and its ACCEPT land together: a restart never finds one without the other.
                 _record = _host.Record;
-                await _store.UpdateRecordAsync(_record).ConfigureAwait(false);
+                await _store.UpdateRecordAsync(_record, Outbox(accept, GameActionType.Accept, 0)).ConfigureAwait(false);
                 StartGame();
                 _pool!.Publish(accept);
                 break;
@@ -415,7 +467,14 @@ internal sealed class GameCoordinator : IAsyncDisposable
         }
         _pool!.Publish(evt);
         _owner.RaiseApplied(mine, mine: true);
-        await ApplyStepAsync(step, skip: 1).ConfigureAwait(false);
+        try
+        {
+            await ApplyStepAsync(step, skip: 1).ConfigureAwait(false);
+        }
+        catch (GameStoreException ex)
+        {
+            MarkBroken(ex); // the move itself is saved and on its way
+        }
         return CommandResult.Success();
     }
 
@@ -428,9 +487,20 @@ internal sealed class GameCoordinator : IAsyncDisposable
         if (!result.IsSuccess)
             return result;
         NostrEvent evt = Encode(Opponent!, _lastSigned!);
-        await _store.AddOutboxAsync(_record.GameId, Outbox(evt, GameActionType.Resign, _lastSigned!.Turn)).ConfigureAwait(false);
+        GameResult ended = _session.Result!;
+        NetGameRecord completed = _record with { State = HandshakeState.Completed, Result = ended };
+        try
+        {
+            await _store.UpdateRecordAsync(completed, Outbox(evt, GameActionType.Resign, _lastSigned!.Turn)).ConfigureAwait(false);
+        }
+        catch (GameStoreException ex)
+        {
+            _broken = true;
+            return CommandResult.Fail("Your resignation could not be saved, so it was not sent. Reopen the game to continue. " + ex.Message);
+        }
+        _record = completed;
         _pool!.Publish(evt);
-        await EndAsync(_session.Result!).ConfigureAwait(false);
+        _owner.RaiseEnded(ended);
         return CommandResult.Success();
     });
 
@@ -440,6 +510,8 @@ internal sealed class GameCoordinator : IAsyncDisposable
         if (!cancelled)
             return false;
         _record = _host?.Record ?? _guest!.Record;
+        if (_join is not null)
+            _pool?.Withdraw(_join.Id); // nothing more is published, even if the JOIN is still waiting for a relay
         _join = null;
         await _store.UpdateRecordAsync(_record).ConfigureAwait(false);
         return true;

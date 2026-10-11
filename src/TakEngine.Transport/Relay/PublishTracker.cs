@@ -19,15 +19,22 @@ public enum PublishOutcome
     Failed,
 }
 
-/// <param name="RetryAt">For a rate-limited refusal: when to try this relay again.</param>
-public sealed record RelayPublishState(RelayPublishStatus Status, string? Reason = null, DateTimeOffset? RetryAt = null, int RateLimits = 0);
+/// <param name="RetryAt">After a rate-limited refusal or no answer: when to try this relay again.</param>
+/// <param name="Retries">Rate limits and unanswered sends so far; sets the backoff.</param>
+public sealed record RelayPublishState(RelayPublishStatus Status, string? Reason = null, DateTimeOffset? RetryAt = null, int Retries = 0);
 
 /// <summary>
-/// Per event id, per relay: Pending, Sent or Refused(reason). <c>rate-limited:</c> keeps the relay Pending with a retry due after
-/// a backoff (2, 4, 8, 16, 30 s); any other <c>OK false</c> is final for that relay. Pure: time is passed in.
+/// Per event id, per relay: Pending, Sent or Refused(reason). <c>rate-limited:</c> and no answer within <see cref="NoAnswerAfter"/>
+/// keep the relay Pending with a retry due after a backoff (2, 4, 8, 16, 30 s); any other <c>OK false</c> is final for that relay.
+/// Pure: time is passed in.
 /// </summary>
 public sealed class PublishTracker
 {
+    /// <summary>scope.md "Relay publish status": a relay that hasn't answered a send by then is NoAnswer, and is retried.</summary>
+    public static readonly TimeSpan NoAnswerAfter = TimeSpan.FromSeconds(8);
+
+    public const string NoAnswerReason = "no answer";
+
     private readonly Dictionary<string, Dictionary<Uri, RelayPublishState>> _events = new(StringComparer.Ordinal);
 
     public void Track(string eventId, IEnumerable<Uri> relays)
@@ -59,13 +66,23 @@ public sealed class PublishTracker
         }
         else if (message.StartsWith("rate-limited:", StringComparison.Ordinal))
         {
-            int limits = current.RateLimits + 1;
-            relays[relay] = new RelayPublishState(RelayPublishStatus.Pending, message, now + RelayLink.BackoffDelay(limits + 1), limits);
+            int retries = current.Retries + 1;
+            relays[relay] = new RelayPublishState(RelayPublishStatus.Pending, message, now + RelayLink.BackoffDelay(retries + 1), retries);
         }
         else
         {
             relays[relay] = new RelayPublishState(RelayPublishStatus.Refused, message);
         }
+    }
+
+    /// <summary>A send to <paramref name="relay"/> got no OK within <see cref="NoAnswerAfter"/>: still Pending, retried after a backoff.</summary>
+    public void OnNoAnswer(string eventId, Uri relay, DateTimeOffset now)
+    {
+        if (!_events.TryGetValue(eventId, out var relays) || !relays.TryGetValue(relay, out RelayPublishState? current)
+            || current.Status != RelayPublishStatus.Pending)
+            return;
+        int retries = current.Retries + 1;
+        relays[relay] = new RelayPublishState(RelayPublishStatus.Pending, NoAnswerReason, now + RelayLink.BackoffDelay(retries + 1), retries);
     }
 
     public IReadOnlyDictionary<Uri, RelayPublishState> PerRelay(string eventId) =>

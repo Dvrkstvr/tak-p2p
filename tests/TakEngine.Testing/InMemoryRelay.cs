@@ -26,6 +26,7 @@ public sealed class InMemoryRelay
     private int _upgradeRejectsLeft;
     private bool _partitioned;
     private bool _authForReads;
+    private bool _ignorePublishes;
     private int _rateLimitBurst;
     private TimeSpan _rateLimitWindow;
     private int _duplicateDeliveries = 1;
@@ -88,6 +89,12 @@ public sealed class InMemoryRelay
             _rateLimitBurst = burst;
             _rateLimitWindow = window ?? TimeSpan.FromSeconds(10);
         }
+    }
+
+    /// <summary>Swallows published events: no OK, nothing stored (an overloaded relay or a half-open socket).</summary>
+    public void IgnorePublishes(bool ignore = true)
+    {
+        lock (_gate) _ignorePublishes = ignore;
     }
 
     /// <summary>The next <paramref name="times"/> connection attempts fail with HTTP <paramref name="status"/>.</summary>
@@ -244,6 +251,8 @@ public sealed class InMemoryRelay
 
     private void HandlePublishLocked(Link link, NostrEvent evt)
     {
+        if (_ignorePublishes)
+            return;
         string id = evt.Id ?? "";
         if (!NostrEvents.Verify(evt))
         {

@@ -9,8 +9,11 @@ public interface IGameStore
     /// <summary>Saves a game that doesn't exist yet, with its starting progress. Throws if the game id is already stored.</summary>
     Task SaveNewGameAsync(NetGameRecord record, ExchangeProgress progress, CancellationToken cancellationToken = default);
 
-    /// <summary>Replaces the game record (handshake state, opponent, nonces, colour, result). The id must exist.</summary>
-    Task UpdateRecordAsync(NetGameRecord record, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Replaces the game record (handshake state, opponent, nonces, colour, result). The id must exist. A signed event the new state
+    /// owes the peer (the host's ACCEPT, a RESIGN) goes into the outbox in the same transaction.
+    /// </summary>
+    Task UpdateRecordAsync(NetGameRecord record, OutboxEntry? outbox = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Appends one applied action and moves the progress to <paramref name="progress"/>, in one transaction. For a local action the
@@ -21,7 +24,8 @@ public interface IGameStore
     /// <summary>Moves the progress without an applied action (a newer <c>maxCreatedAt</c>).</summary>
     Task UpdateProgressAsync(Guid gameId, ExchangeProgress progress, CancellationToken cancellationToken = default);
 
-    /// <summary>Adds a signed event to publish (JOIN, ACCEPT, RESIGN; moves go through <see cref="CommitAppliedAsync"/>).</summary>
+    /// <summary>Adds a signed event to publish (a JOIN; moves go through <see cref="CommitAppliedAsync"/>, ACCEPT and RESIGN through
+    /// <see cref="UpdateRecordAsync"/>).</summary>
     Task AddOutboxAsync(Guid gameId, OutboxEntry entry, CancellationToken cancellationToken = default);
 
     /// <summary>Records that at least one relay accepted the event. Unknown ids are ignored.</summary>

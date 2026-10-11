@@ -14,6 +14,7 @@ public static class ColorSeed
     public const int NonceLength = 32;
 
     private static readonly byte[] Tag = Encoding.UTF8.GetBytes("tak/seed/v1\n");
+    private static readonly byte[] JoinTag = Encoding.UTF8.GetBytes("tak/join/v1\n");
 
     /// <summary><c>SHA-256("tak/seed/v1\n" || host_nonce)</c> as lowercase hex.</summary>
     public static string Commit(byte[] hostNonce)
@@ -38,10 +39,33 @@ public static class ColorSeed
         return Hash(hostNonce, guestNonce);
     }
 
-    private static string Hash(params byte[][] parts)
+    /// <summary>
+    /// <c>SHA-256("tak/join/v1\n" || seed_commit || guest_pubkey)</c> as lowercase hex (D-043): a JOIN carries it to show the guest
+    /// holds the invite. The seed commitment travels only inside the invite, never in clear on a relay, so someone who only sees a
+    /// JOIN's tags can't make one for their own key.
+    /// </summary>
+    public static string JoinProof(string seedCommitHex, string guestPubKeyHex)
+    {
+        ArgumentNullException.ThrowIfNull(seedCommitHex);
+        ArgumentNullException.ThrowIfNull(guestPubKeyHex);
+        return HashWith(JoinTag, Convert.FromHexString(seedCommitHex), Convert.FromHexString(guestPubKeyHex));
+    }
+
+    /// <summary>True when <paramref name="proof"/> is <see cref="JoinProof"/> for this invite and guest. Never throws.</summary>
+    public static bool VerifyJoinProof(string? proof, string seedCommitHex, string guestPubKeyHex)
+    {
+        if (proof is null || seedCommitHex.Length != 64 || guestPubKeyHex.Length != 64
+            || !seedCommitHex.All(char.IsAsciiHexDigit) || !guestPubKeyHex.All(char.IsAsciiHexDigit))
+            return false;
+        return string.Equals(proof, JoinProof(seedCommitHex, guestPubKeyHex), StringComparison.Ordinal);
+    }
+
+    private static string Hash(params byte[][] parts) => HashWith(Tag, parts);
+
+    private static string HashWith(byte[] tag, params byte[][] parts)
     {
         using var sha = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-        sha.AppendData(Tag);
+        sha.AppendData(tag);
         foreach (byte[] part in parts)
             sha.AppendData(part);
         return Convert.ToHexStringLower(sha.GetHashAndReset());

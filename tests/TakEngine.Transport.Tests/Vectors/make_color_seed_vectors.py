@@ -2,6 +2,7 @@
 seed_commit = sha256(b"tak/seed/v1\n" + host_nonce), seed = sha256(b"tak/seed/v1\n" + host_nonce + guest_nonce) (raw 32-byte nonces),
 colours = ColorResolver: sha256(UTF-8(seed_hex + ":" + lower(min(H, G)) + ":" + lower(max(H, G)))), first byte even -> the
 ordinally smaller key is White.
+join_proof = sha256(b"tak/join/v1\n" + seed_commit + guest_pubkey) (raw 32-byte values, D-043).
 Run from the repo root: python3 tests/TakEngine.Transport.Tests/Vectors/make_color_seed_vectors.py"""
 import hashlib
 import json
@@ -35,6 +36,7 @@ for i in range(6):
         "host_nonce": hn.hex(),
         "guest_nonce": gn.hex(),
         "seed_commit": hashlib.sha256(TAG + hn).hexdigest(),
+        "join_proof": hashlib.sha256(b"tak/join/v1\n" + hashlib.sha256(TAG + hn).digest() + bytes.fromhex(guest)).hexdigest(),
         "seed": seed,
         "host_colour": hc,
         "guest_colour": gc,

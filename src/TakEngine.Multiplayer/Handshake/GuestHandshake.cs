@@ -48,7 +48,7 @@ public sealed class GuestHandshake
 
     /// <summary>The JOIN to sign and publish (and republish verbatim on the schedule).</summary>
     public SignedGameAction UnsignedJoin =>
-        HandshakeMessages.UnsignedJoin(Record.GameId, Record.MyPubKey, Record.Size, Convert.FromHexString(Record.GuestNonce!));
+        HandshakeMessages.UnsignedJoin(Record.GameId, Record.MyPubKey, Record.Size, Convert.FromHexString(Record.GuestNonce!), Record.SeedCommit);
 
     /// <param name="defaultRelays">Added after the invite's relay hints.</param>
     public static GuestStart Start(string inviteText, PublicKey me, byte[] guestNonce, IReadOnlyList<string> defaultRelays)

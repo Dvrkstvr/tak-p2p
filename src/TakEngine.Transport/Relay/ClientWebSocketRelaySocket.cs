@@ -35,9 +35,9 @@ public sealed class ClientWebSocketRelaySocket(Uri relayUrl) : IRelaySocket
             await _socket.SendAsync(Encoding.UTF8.GetBytes(frame), WebSocketMessageType.Text, endOfMessage: true, cancellationToken).ConfigureAwait(false);
             return true;
         }
-        catch (WebSocketException)
+        catch (Exception ex) when (ex is WebSocketException or ObjectDisposedException or InvalidOperationException)
         {
-            return false;
+            return false; // the socket closed under us; the connection reconnects and the pool resends
         }
     }
 
@@ -59,7 +59,7 @@ public sealed class ClientWebSocketRelaySocket(Uri relayUrl) : IRelaySocket
                     return Encoding.UTF8.GetString(message.GetBuffer(), 0, (int)message.Length);
             }
         }
-        catch (WebSocketException)
+        catch (Exception ex) when (ex is WebSocketException or ObjectDisposedException or InvalidOperationException)
         {
             return null;
         }
