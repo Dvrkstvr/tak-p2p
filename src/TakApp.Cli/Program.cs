@@ -357,7 +357,9 @@ public static class Program
 
         var keyPair = SecretKey.Generate(() => RandomNumberGenerator.GetBytes(SecretKey.Length));
         var gameId = Guid.NewGuid();
-        var invite = new InviteCode(gameId, keyPair.PublicKey.ToHex(), BoardSize.Five, ["wss://relay.damus.io"]);
+        // Not playable yet: `host` (F-036) keeps the nonce and runs the handshake; this menu entry only shows the format.
+        var invite = new InviteCode(gameId, keyPair.PublicKey.ToHex(), BoardSize.Five, 0, ["wss://relay.damus.io"],
+            ColorSeed.Commit(RandomNumberGenerator.GetBytes(ColorSeed.NonceLength)));
 
         AnsiConsole.WriteLine();
         AnsiConsole.MarkupLine("[bold yellow]Shareable Link (URI):[/]");
@@ -375,7 +377,7 @@ public static class Program
         SafeClear();
         RenderHeader();
         AnsiConsole.MarkupLine("[bold cyan]Join Match via Invite Code[/]");
-        AnsiConsole.Markup("Paste Invite URI or TAK1_ Code: ");
+        AnsiConsole.Markup("Paste Invite URI or TAK2_ Code: ");
         string? input = Console.ReadLine()?.Trim();
 
         if (string.IsNullOrEmpty(input))

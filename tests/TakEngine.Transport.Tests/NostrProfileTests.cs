@@ -62,8 +62,9 @@ public class NostrProfileTests
             GameId: gameId,
             HostPubKey: hostPub,
             BoardSize: BoardSize.Five,
+            KomiHalves: 0,
             Relays: relays,
-            SeedHex: "1234abcd",
+            SeedCommit: new string('a', 64),
             HostNickname: "Kvothe");
 
         // URI Roundtrip
