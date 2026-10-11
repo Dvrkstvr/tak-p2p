@@ -270,3 +270,11 @@ independent Python implementation (`tests/TakEngine.Crypto.Tests/Vectors/make_ac
 in tamper row 4, and Transport must not reference Core.
 - why: one byte-exact digest both peers and spectators compute; Crypto is the lowest layer both Core and Transport see
 - revisit if: action data ever needs nested objects or non-integer numbers (new `pv`)
+
+## D-042 · 2026-10-11 · stage 7 · by: assumed
+A host's subscription never names its guest in the first filter: `{kinds:[3825], "#p":[host], "#g":[gid]}` for the whole game, not
+only while `Inviting` (architecture.md "Wire format" said the host adds `authors` once locked). Decoding still checks the author
+(tamper row 2), so anything from a stranger is counted and dropped. The guest's filter still names the host.
+- why: F-017 requires a second guest's JOIN to be "ignored and surfaced"; with `authors:[guest]` the relay never delivers it, so
+  the host could not surface it. The extra traffic is only events addressed to the host for this game id
+- revisit if: a live run shows strangers spamming a game tag (then add `authors` after lock and drop the "surfaced" requirement)

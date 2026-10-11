@@ -19,6 +19,7 @@ public sealed class InMemoryRelay
     private readonly List<Link> _links = [];
     private readonly List<(Func<NostrEvent, bool> Predicate, string Reason)> _refusals = [];
     private readonly HashSet<string> _withheld = new(StringComparer.Ordinal);
+    private Func<NostrEvent, bool>? _withholdWhere;
     private readonly List<string> _receivedFrames = [];
     private readonly List<(DateTimeOffset At, string Frame)> _frameLog = [];
     private int _upgradeRejectStatus;
@@ -152,6 +153,12 @@ public sealed class InMemoryRelay
         lock (_gate) _withheld.Add(eventId);
     }
 
+    /// <summary>Withholds every event published from now on that matches <paramref name="predicate"/> (null stops it).</summary>
+    public void WithholdWhere(Func<NostrEvent, bool>? predicate)
+    {
+        lock (_gate) _withholdWhere = predicate;
+    }
+
     /// <summary>Stops withholding and delivers the event to every matching subscription.</summary>
     public void Release(string eventId)
     {
@@ -272,6 +279,8 @@ public sealed class InMemoryRelay
         }
 
         _stored.Add(evt);
+        if (_withholdWhere?.Invoke(evt) == true)
+            _withheld.Add(id);
         link.SendLocked(new RelayMessage.Ok(id, true, "").Format());
         if (!_withheld.Contains(id))
             DeliverLiveLocked(evt);

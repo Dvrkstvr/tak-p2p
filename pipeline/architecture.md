@@ -103,7 +103,7 @@ ActionDigest = SHA-256(UTF-8("tak/action/v1\n" + pv + "\n" + action_type + "\n" 
   Receivers still treat "same turn + same action digest" as a duplicate, because a peer that lost its outbox re-signs.
 - Subscription, one REQ per relay per (re)connect, sub id `tak-<first 8 of game id>`:
   `{kinds:[3825], authors:[opponent], "#p":[me], "#g":[gid], since, limit:500}` and `{kinds:[3825], authors:[me], "#g":[gid], since, limit:500}`;
-  a host still `Inviting` drops `authors` from the first filter. `since = maxCreatedAt - 30 s`, absent on a cold rebuild.
+  a host drops `authors` from the first filter for the whole game (D-042). `since = maxCreatedAt - 30 s`, absent on a cold rebuild.
   `ids` lookups chunked to <= 5 (nos.lol silently returns nothing for 20; spike, seen running).
 - Decode order = tamper rows: (1) id + sig, (2) author is the opponent (or any non-self author for a JOIN while Inviting),
   (3) decrypt, (4) JSON + `pv` + game id + inner signature + `player_pubkey == event.pubkey`, then in `TurnExchange`:
