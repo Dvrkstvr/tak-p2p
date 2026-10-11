@@ -11,6 +11,7 @@ using TakEngine.Core.Board;
 using TakEngine.Core.Cryptography;
 using TakEngine.Core.Serialization;
 using TakEngine.Core.Storage;
+using TakEngine.Storage.Local.Legacy;
 using TakEngine.Crypto;
 using TakEngine.Transport.Matchmaking;
 

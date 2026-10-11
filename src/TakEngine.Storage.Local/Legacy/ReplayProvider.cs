@@ -5,7 +5,9 @@ using TakEngine.Abstractions;
 using TakEngine.Core.Board;
 using TakEngine.Core.Serialization;
 
-namespace TakEngine.Core.Storage;
+using TakEngine.Core.Storage;
+
+namespace TakEngine.Storage.Local.Legacy;
 
 public sealed record ReplayFrame(
     int TurnIndex,

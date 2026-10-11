@@ -3,9 +3,10 @@ using System.IO;
 using System.Threading.Tasks;
 using TakEngine.Abstractions;
 using TakEngine.Core.Storage;
+using TakEngine.Storage.Local.Legacy;
 using Xunit;
 
-namespace TakEngine.Core.Tests;
+namespace TakEngine.Storage.Tests.Legacy;
 
 public class SqliteStorageTests : IAsyncLifetime
 {

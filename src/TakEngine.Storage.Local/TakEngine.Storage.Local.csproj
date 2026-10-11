@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TakEngine.Abstractions\TakEngine.Abstractions.csproj" />
+    <ProjectReference Include="..\TakEngine.Core\TakEngine.Core.csproj" />
     <ProjectReference Include="..\TakEngine.Crypto\TakEngine.Crypto.csproj" />
   </ItemGroup>
 
