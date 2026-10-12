@@ -433,8 +433,8 @@
         "One forged move from the test-peer tool is rejected and shown",
         "Transcript or screenshots stored under pipeline/ ; if no second machine is available this is an owed check and the feature stays passes:false"
       ],
-      "passes": false,
-      "evidence": null
+      "passes": true,
+      "evidence": "Seen running 2026-10-12 over nos.lol + damus between two devices (D-046): the CLI hosted on the user's Windows PC, the user joined from their phone's browser (the web app's /online page, served from a dev build on the PC over Wi-Fi). 5x5 to a road win: both printed FINAL white-road e78b2dbb9d74dc86d38a1ff78583176d6564ebc99f1fab79e140e13aba3ae64c. The CLI host was killed after its turn 3, the phone played turn 4 while it was down, and resume caught turn 4 up from the relays and played on. TakTestPeer forged an illegal a1 at turn 7 with the host's key (event 02d70864...); the phone showed 'FLAG turn 7 illegal move from opponent: Square a1 is already occupied.' and accepted the real d1. Transcripts in pipeline/evidence/m0-f039-2026-10-12/, event ids in pipeline/evidence/live-relay-log.md."
     },
     {
       "id": "F-040",
@@ -470,7 +470,7 @@
         "Failure: if ClientWebSocket does not work in the WASM runtime, the result is recorded and the fallback (JS interop WebSocket) or the R-005 fallback (browser stays local/AI only) is chosen before M2 starts"
       ],
       "passes": false,
-      "evidence": null
+      "evidence": "Row 1 seen running 2026-10-12 (D-046): the Blazor WASM app's ClientWebSocket connected to nos.lol + damus from a desktop browser and from a phone browser, and played two full games with the CLI (each side verifies every event; m0-browser-2026-10-12/, m0-f039-2026-10-12/). Row 2 (5 minutes backgrounded, then catch-up) not run."
     },
     {
       "id": "F-043",
@@ -506,7 +506,7 @@
         "Owed to the user if a second device is not available to the agent"
       ],
       "passes": false,
-      "evidence": null
+      "evidence": "Both directions seen running 2026-10-12 from a dev build, not the Pages site (D-046): browser host vs CLI join on one PC (FINAL white-road 0a1ef466..., m0-browser-2026-10-12/) and CLI host vs phone browser (FINAL white-road e78b2dbb..., m0-f039-2026-10-12/). Owed: the same from the deployed Pages site."
     },
     {
       "id": "F-046",
