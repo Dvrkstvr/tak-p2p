@@ -4,11 +4,11 @@
 
 ## Now
 - track: deep · approach: spec-first (+ prototype-first: relay round-trip spikes)
-- stage: 7 Build — M0-A built on branch m0a-crypto-fake-relay-game; M0-B (plan B1) built on claude/project-thread-jtojtm (PR #3); live runs done 2026-10-12 on claude/project-thread-eldgs6
+- stage: 7 Build — M0-A built on branch m0a-crypto-fake-relay-game; M0-B (plan B1) built on claude/project-thread-jtojtm (PR #3); live runs done 2026-10-12 on claude/project-thread-eldgs6; F-039 and the browser /online page (D-046) on claude/project-thread-tkdan9 (PR #6)
 - clarity: scope 5/5 · blocking 0 · assumed 9 · deferred 3
 - feasibility: amber · H-open 0 · M-open 3 · spiked 4
-- milestone: M0-B (live relays, storage, CLI) · features passing 28/58 · M0 20/24 passing · owed checks 4
-- next: M0-B live rows passed 2026-10-12 over nos.lol + damus (F-014, F-034, F-016, F-036, F-037, F-038; 28 of 150 events, pipeline/evidence/live-relay-log.md). The first run found strfry escapes DEL as \u007f; serializer fixed. Damus rate-limits and briefly bans two players on one IP; nos.lol carried the game. Owed: F-039 on the user's two machines
+- milestone: M0-B (live relays, storage, CLI) · features passing 29/58 · M0 21/24 passing · owed checks 4
+- next: F-039 passed 2026-10-12: CLI host on the user's PC vs the user's phone browser over nos.lol + damus, same FINAL hash, host restart and one forged move flagged (57 of 150 events, pipeline/evidence/live-relay-log.md). D-046 lifted the UI freeze for the web /online page only. M0 still open: F-031, F-057, F-058
 - autopilot: M0-A · round 10/12 · A1 done, F-057/F-058 built · stall 0
 
 ## Stages

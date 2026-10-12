@@ -32,3 +32,32 @@ Every event published to a public relay by a LiveRelay test or a hand run. Budge
 | 2026-10-12 00:28:04 | hand: CLI F-037/F-038 game 2, profile a, MOVE turn 7 | b1808d175d8665340aa504a18328a77d6ac2eddac7288fee4a88520ccd3f2bc1 | nos.lol: stored; relay.damus.io: stored |
 | 2026-10-12 00:28:05 | hand: CLI F-037/F-038 game 2, profile b, MOVE turn 8 | 0256df9a54905506d8264fce9c9e3864fc9cb674d024ebda9eebab650210df48 | nos.lol: stored; relay.damus.io: stored |
 | 2026-10-12 00:28:06 | hand: CLI F-037/F-038 game 2, profile a, MOVE turn 9 | 05a41164e74c8557da2ed2350ee567a0259887c1130dfa5b843316078bade1bc | nos.lol: stored; relay.damus.io: stored |
+| 2026-10-12 20:32:02 | hand: F-039 rehearsal (both CLIs on one PC, stopped at turn 4), guest JOIN turn 0 | b7ac73756561e45057bde87ed597f2ca81c459ba0db8529f676e02368260458a | at least one relay: stored (outbox Sent) |
+| 2026-10-12 20:32:02 | hand: F-039 rehearsal, host ACCEPT turn 0 | 98dbbcd2d5385dcda2173242f353e7b29b36ba2ab5b8ecf0f2e02bc22644b2a1 | at least one relay: stored (outbox Sent) |
+| 2026-10-12 20:32:15 | hand: F-039 rehearsal, host MOVE turn 1 | 3c30da04844552830dc87da2fcd9015592075b0a3c128372718de877ccbe991a | nos.lol: stored; relay.damus.io: pending |
+| 2026-10-12 20:32:27 | hand: F-039 rehearsal, guest MOVE turn 2 | f387eed949dd1018667e3f860b66349cc94b06eeaa18e2b8910af73044b1e601 | at least one relay: stored (outbox Sent) |
+| 2026-10-12 20:32:35 | hand: F-039 rehearsal, host MOVE turn 3 | a9f6b5253d241dac8840706a88450d0f84c064320f8a720979493ac39256d5c2 | nos.lol: stored; relay.damus.io: pending |
+| 2026-10-12 20:32:48 | hand: F-039 rehearsal, guest MOVE turn 4 | 4547fa14c0796044b78466d5a873ffb2fd31e846a7724616cad7e9781536c014 | at least one relay: stored (outbox Sent) |
+| 2026-10-12 20:44:53 | hand: D-046 browser smoke (browser host, CLI join, one PC), CLI JOIN turn 0 | af848957699ba7d7f04a6e8800a9fd886956b7baf452743794e1c5d1f0d60559 | at least one relay: stored (outbox Sent) |
+| 2026-10-12 ~20:45 | hand: D-046 browser smoke, browser ACCEPT turn 0 | not captured (the page had no event-id line yet) | the CLI received it |
+| 2026-10-12 ~20:45 | hand: D-046 browser smoke, browser MOVE turn 1 | be0e62016d4a2dc7645883fc7ce16c9a9aca9377f25ea5e7e3e135fbec8c1823 | nos.lol: stored; relay.damus.io: pending |
+| 2026-10-12 20:45:32 | hand: D-046 browser smoke, CLI MOVE turn 2 | 7836c7add87a4e156bb977004bfc3606471153fe78b6b1ac6409eb283bace4a6 | nos.lol: stored; relay.damus.io: pending |
+| 2026-10-12 ~20:45 | hand: D-046 browser smoke, browser MOVE turn 3 | 66d0b6169fb6979ac6031a2d5de2ec5c837be9d7e8a34da5f1d4c7e6fc9f569b | nos.lol: stored; relay.damus.io: pending |
+| 2026-10-12 20:45:58 | hand: D-046 browser smoke, CLI MOVE turn 4 | 957832e14b07ff357ef6ee5eb75aefe417b70f08fbd57ca20370df75770ed3ac | nos.lol: stored; relay.damus.io: pending |
+| 2026-10-12 ~20:46 | hand: D-046 browser smoke, browser MOVE turn 5 | 0c1e0e2257ebb5a87457cd89030b42d4f7d5a7a4e65287c656b2a13acff5af2e | nos.lol: stored; relay.damus.io: pending |
+| 2026-10-12 20:46:15 | hand: D-046 browser smoke, CLI MOVE turn 6 | ed9c48923ede994eb0e6f7fef6ff77a2756e605faffe00ed2fbbfa741e4f2d6a | nos.lol: stored; relay.damus.io: pending |
+| 2026-10-12 ~20:46 | hand: D-046 browser smoke, browser MOVE turn 7 | 358a55c826ecef4cac852d5dd76239f4dcfb81155b6fe29216c7fe352a79636c | nos.lol: stored; relay.damus.io: pending |
+| 2026-10-12 20:46:40 | hand: D-046 browser smoke, CLI MOVE turn 8 | a768517decf735eb1839c4e45d9a9869735c40d567559f499a6d1fd7b89d2274 | nos.lol: stored; relay.damus.io: pending |
+| 2026-10-12 ~20:47 | hand: D-046 browser smoke, browser MOVE turn 9 | 78bb3fd70ca40b0c3da9cb20a36a6bc491de35418f8da3920a7c7961d0ea4a52 | nos.lol: stored; relay.damus.io: pending |
+| 2026-10-12 ~21:05 | hand: F-039 game (phone browser guest vs CLI host on PC), phone JOIN turn 0 | b4359053da413240743b6c17c9873543e50350be5c3f66ebef76f78bc9d200c2 | at least one relay: stored (the host received it) |
+| 2026-10-12 21:05:31 | hand: F-039 game, CLI host ACCEPT turn 0 | b33f171c57bdae1a62f3dda19c70ec35b3e2642e5fea9e8b872b1f0607433b93 | at least one relay: stored (outbox Sent) |
+| 2026-10-12 21:05:47 | hand: F-039 game, CLI host MOVE turn 1 | cab3fb9d8e5f752f8ce6ba1d79f1b816af4f1c3241774e6b1a1d9ce843a65cf6 | nos.lol: stored; relay.damus.io: pending |
+| 2026-10-12 ~21:06 | hand: F-039 game, phone MOVE turn 2 | 9380c9552f7c4bd7e05ad9c628d8fb814effcb26c93ef7a09788911d864cb97c | nos.lol: stored; relay.damus.io: pending |
+| 2026-10-12 21:06:31 | hand: F-039 game, CLI host MOVE turn 3 (host killed after this) | 668aa703e1b8532378b1e7569c935bec806c454f34f7053684ccbc061e413677 | nos.lol: stored; relay.damus.io: pending |
+| 2026-10-12 ~21:07 | hand: F-039 game, phone MOVE turn 4 (played while the host was down) | 990a41013269922f0913fdc5df6cf81074585531eee2e3750477f60a9ec6878c | nos.lol: stored; relay.damus.io: pending |
+| 2026-10-12 21:07:25 | hand: F-039 game, CLI host (resumed) MOVE turn 5 | 501727c496e06aeb3c41e9d35298a35a3f0646f7dd384d401b32da910fb81a28 | nos.lol: stored; relay.damus.io: pending |
+| 2026-10-12 ~21:07 | hand: F-039 game, phone MOVE turn 6 | 02b4348c7b220369e1738311079c8caff310e66c9fdedc30135fd101c512a617 | nos.lol: stored; relay.damus.io: pending |
+| 2026-10-12 21:07:58 | hand: F-039 game, TakTestPeer as host key, FORGED illegal a1 turn 7 | 02d70864907c6aca7fe71fe4e2d8f24c93dae964104ca6ff8bf583b4154cf192 | sent; the phone flagged it |
+| 2026-10-12 21:08:12 | hand: F-039 game, CLI host MOVE turn 7 | aa7635a37596548f0d1a585f80e0329f0cd63d55bb687b1834d23c3a9f646ea9 | nos.lol: stored; relay.damus.io: pending |
+| 2026-10-12 ~21:08 | hand: F-039 game, phone MOVE turn 8 | 869f1a6ec594f854dbefba63030887aba4554620c51d9d58e4e7ecd2575f7d72 | nos.lol: stored; relay.damus.io: pending |
+| 2026-10-12 21:08:21 | hand: F-039 game, CLI host MOVE turn 9 | 8a77164e22f4fcf8d7cc166ef473ff6915fa47f312d97417a98f1c12286932cf | nos.lol: stored; relay.damus.io: pending |

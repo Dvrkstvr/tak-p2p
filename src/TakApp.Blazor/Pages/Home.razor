@@ -99,10 +99,10 @@
         <button class="btn-tak btn-white" @onclick="StartLocalGame">
             Local
         </button>
-        <button class="btn-tak btn-outline" @onclick="OpenCreateInvite">
+        <button class="btn-tak btn-outline" @onclick='() => Nav.NavigateTo("online")'>
             Invite
         </button>
-        <button class="btn-tak btn-outline" @onclick="OpenJoinModal">
+        <button class="btn-tak btn-outline" @onclick='() => Nav.NavigateTo("online")'>
             Join
         </button>
     </div>
@@ -293,9 +293,8 @@
     {
         try
         {
-            var payload = InviteCode.Parse(code);
-            Session.StartLocalMatch(payload.BoardSize, payload.HostNickname ?? "Host", PlayerNickname ?? "You");
-            Nav.NavigateTo("play");
+            InviteCode.Parse(code);
+            Nav.NavigateTo($"online?invite={Uri.EscapeDataString(code.Trim())}");
         }
         catch { }
     }
@@ -304,8 +303,7 @@
     {
         if (PendingChallenge != null)
         {
-            Session.StartLocalMatch(PendingChallenge.BoardSize, PendingChallenge.HostNickname ?? "Host", PlayerNickname ?? "You");
-            Nav.NavigateTo("play");
+            Nav.NavigateTo($"online?invite={Uri.EscapeDataString(PendingChallenge.ToCompactCode())}");
         }
     }
 }

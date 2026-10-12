@@ -1,0 +1,248 @@
+@page "/online"
+@using TakEngine.Multiplayer
+@using TakEngine.Transport.Relay
+@inject OnlineGameService Online
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@implements IDisposable
+
+@* D-046: play over nos.lol + damus in the browser. A view over OnlineGameService; the game itself verifies everything. *@
+<div class="home-container" style="max-width: 720px;">
+
+    @if (Online.Game is null)
+    {
+        <div class="hero-section">
+            <h1 class="hero-title" style="font-size: 2.5rem;">ONLINE</h1>
+            <div class="hero-subtitle">over nos.lol + relay.damus.io</div>
+            <div class="amber-line"></div>
+        </div>
+
+        <div class="feature-block" style="margin-bottom: 1.5rem;">
+            <div class="feature-title">HOST</div>
+            <div class="controls-row" style="margin: 0.75rem 0;">
+                <div class="toggle-btn-group">
+                    @foreach (BoardSize size in new[] { BoardSize.Four, BoardSize.Five, BoardSize.Six })
+                    {
+                        <button class="toggle-btn @(HostSize == size ? "active" : "")" @onclick="() => HostSize = size">
+                            @((int)size)×@((int)size)
+                        </button>
+                    }
+                </div>
+            </div>
+            <button class="btn-tak btn-white" disabled="@Busy" @onclick="HostAsync">Host a game</button>
+        </div>
+
+        <div class="feature-block">
+            <div class="feature-title">JOIN</div>
+            <textarea class="online-invite-input" rows="4" placeholder="Paste an invite (TAK2_...)" @bind="InviteText"></textarea>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.75rem;">
+                <button class="btn-tak btn-white" disabled="@Busy" @onclick="JoinAsync">Join</button>
+                <button class="btn-tak btn-outline" disabled="@Busy" @onclick="RebuildAsync"
+                        title="For a game this browser already joined or hosted, after a reload">Rebuild from relays</button>
+            </div>
+        </div>
+
+        @if (Error is not null)
+        {
+            <div class="online-error">@Error</div>
+        }
+    }
+    else
+    {
+        MultiplayerGame game = Online.Game;
+        <div class="online-status">
+            <div><strong>@game.Record.Role</strong> · @(game.MyColor?.ToString() ?? "colour not set yet") · @((int)game.Record.Size)×@((int)game.Record.Size)</div>
+            <div class="online-waiting">@Online.Waiting</div>
+            <div class="online-relays">
+                @foreach (var (url, state) in Online.Links)
+                {
+                    <span class="online-relay @(state == RelayLinkState.CaughtUp ? "ok" : "")">@url.Host: @StateText(state)</span>
+                }
+            </div>
+        </div>
+
+        @if (game.Record.State == HandshakeState.Inviting && Online.InviteCode is { } invite)
+        {
+            <div class="feature-block" style="margin-bottom: 1rem;">
+                <div class="feature-title">INVITE</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin: 0.5rem 0;">Send this to the other player. They open the link, or paste the code into Join (web) or <code>join</code> (CLI).</div>
+                <textarea class="online-invite-input" rows="4" readonly>@invite</textarea>
+                <textarea class="online-invite-input" rows="2" readonly>@InviteLink(invite)</textarea>
+                <button class="btn-tak btn-outline btn-sm" @onclick="() => CopyAsync(invite)">Copy code</button>
+            </div>
+        }
+
+        @if (game.Result is { } result)
+        {
+            <div class="online-final">FINAL @OnlineGameService.Result(result) <span class="online-hash">@game.StateHash</span></div>
+        }
+
+        <TakBoardView Board="@Online.Board"
+                      LegalTargets="@PlaceTargets"
+                      LastMoveTarget="@LastTarget"
+                      OnSquareClick="HandleSquareClick"
+                      OnSquareRightClick="HandleSquareRightClick" />
+
+        @if (game.Record.State == HandshakeState.InGame && game.Result is null)
+        {
+            <div class="piece-selector-row">
+                <button class="piece-selector-tab @(Piece == PieceType.Flat ? "active" : "")" @onclick="() => Piece = PieceType.Flat">Flat</button>
+                <button class="piece-selector-tab @(Piece == PieceType.Standing ? "active" : "")" @onclick="() => Piece = PieceType.Standing">Wall</button>
+                @if (game.Record.Size != BoardSize.Four)
+                {
+                    <button class="piece-selector-tab @(Piece == PieceType.Capstone ? "active" : "")" @onclick="() => Piece = PieceType.Capstone">Cap</button>
+                }
+            </div>
+            <div style="display: flex; gap: 0.5rem; margin: 0.75rem 0;">
+                <input class="online-ptn-input" placeholder="or type a move in PTN (a1, Sb2, 3c3>12)" @bind="PtnText" @bind:event="oninput" @onkeydown="HandlePtnKey" />
+                <button class="btn-tak btn-white btn-sm" disabled="@(!Online.IsMyTurn)" @onclick="SendPtnAsync">Send</button>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">Tap an empty square to place the selected piece. Stack moves go in the PTN box.</div>
+        }
+
+        @if (Error is not null)
+        {
+            <div class="online-error">@Error</div>
+        }
+
+        <div style="display: flex; gap: 0.75rem; margin: 1rem 0;">
+            @if (game.Result is null && game.Record.State == HandshakeState.InGame)
+            {
+                <button class="btn-tak btn-outline btn-sm" @onclick="ResignAsync">Resign</button>
+            }
+            <button class="btn-tak btn-outline btn-sm" @onclick="LeaveAsync">Leave</button>
+            <button class="btn-tak btn-outline btn-sm" @onclick="() => CopyAsync(string.Join('\n', Online.Transcript))">Copy transcript</button>
+        </div>
+
+        <div class="feature-title">MOVES</div>
+        <div class="online-moves">@string.Join("  ", Online.Moves)</div>
+
+        <div class="feature-title" style="margin-top: 1rem;">TRANSCRIPT</div>
+        <pre class="online-transcript">@string.Join('\n', Online.Transcript)</pre>
+    }
+</div>
+
+@code {
+    private BoardSize HostSize { get; set; } = BoardSize.Five;
+    private string InviteText { get; set; } = "";
+    private string PtnText { get; set; } = "";
+    private PieceType Piece { get; set; } = PieceType.Flat;
+    private string? Error { get; set; }
+    private bool Busy { get; set; }
+    private Coord? LastTarget { get; set; }
+
+    private HashSet<Coord> PlaceTargets
+    {
+        get
+        {
+            var targets = new HashSet<Coord>();
+            if (!Online.IsMyTurn || Online.Board is not { } board)
+                return targets;
+            int size = (int)board.Size;
+            for (int x = 0; x < size; x++)
+                for (int y = 0; y < size; y++)
+                    if (board.GetStack(new Coord(x, y)).IsEmpty)
+                        targets.Add(new Coord(x, y));
+            return targets;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        Online.Changed += Refresh;
+        var query = new Uri(Nav.Uri).Query.TrimStart('?');
+        foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var kv = part.Split('=', 2);
+            if (kv.Length == 2 && kv[0].ToLowerInvariant() is "invite" or "c" or "code")
+                InviteText = Uri.UnescapeDataString(kv[1]);
+        }
+    }
+
+    private void Refresh() => _ = InvokeAsync(StateHasChanged);
+
+    private string InviteLink(string code) => $"{Nav.BaseUri}online?invite={code}";
+
+    private static string StateText(RelayLinkState state) =>
+        state == RelayLinkState.CaughtUp ? "caught up" : state.ToString().ToLowerInvariant();
+
+    private async Task RunAsync(Func<Task<string?>> action)
+    {
+        Error = null;
+        Busy = true;
+        try
+        {
+            Error = await action();
+        }
+        catch (Exception ex)
+        {
+            Error = ex.Message;
+        }
+        finally
+        {
+            Busy = false;
+        }
+    }
+
+    private Task HostAsync() => RunAsync(() => Online.HostAsync(HostSize));
+
+    private Task JoinAsync() => RunAsync(() => Online.JoinAsync(InviteText));
+
+    private Task RebuildAsync() => RunAsync(() => Online.RebuildAsync(InviteText));
+
+    private async Task HandleSquareClick(Coord coord) => await PlaceAsync(coord, Piece);
+
+    private async Task HandleSquareRightClick(Coord coord) => await PlaceAsync(coord, PieceType.Standing);
+
+    private async Task PlaceAsync(Coord coord, PieceType type)
+    {
+        Error = null;
+        if (!Online.IsMyTurn || Online.Board is not { } board || !board.GetStack(coord).IsEmpty)
+            return;
+        CommandResult result = await Online.SubmitAsync(new PlaceMove(coord, type));
+        if (result.IsSuccess)
+            LastTarget = coord;
+        else
+            Error = result.ErrorMessage;
+    }
+
+    private async Task SendPtnAsync()
+    {
+        Error = null;
+        if (string.IsNullOrWhiteSpace(PtnText))
+            return;
+        CommandResult result = await Online.SubmitAsync(PtnText);
+        if (result.IsSuccess)
+            PtnText = "";
+        else
+            Error = result.ErrorMessage;
+    }
+
+    private async Task HandlePtnKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await SendPtnAsync();
+    }
+
+    private async Task ResignAsync() => await Online.ResignAsync();
+
+    private async Task LeaveAsync()
+    {
+        await Online.LeaveAsync();
+        Error = null;
+    }
+
+    private async Task CopyAsync(string text)
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        }
+        catch (JSException)
+        {
+            Error = "Copy isn't allowed on this connection; select the text and copy it by hand.";
+        }
+    }
+
+    public void Dispose() => Online.Changed -= Refresh;
+}

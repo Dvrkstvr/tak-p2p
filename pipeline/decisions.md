@@ -315,3 +315,14 @@ game is saved in one transaction (`IGameStore.SaveRebuiltGameAsync`) or not at a
   mid-history, or never answered) and a half-saved rebuild are refused rather than used. With live state the gap can't open at all: the opponent can't
   play n+2 before we answered n+1, so scope.md's "move n+1 not found" surfaces only here
 - revisit if: games get more than two players, or a "please resend turn n" message is added to the wire format (new `pv`)
+
+## D-046 · 2026-10-12 · stage 7 · by: user
+The UI freeze (D-006) is lifted for one page: the Blazor app gets `/online` (host, join, rebuild from relays) over
+`MultiplayerGame`, so F-039 can run as a phone browser against the CLI. Calvin chose this over waiting for a second computer
+("override and lets build"). The page is a view only: `OnlineGameService` holds the game and keeps a transcript in the CLI's
+`--plain` line format plus `EVENT <type> turn <n> <id>` lines for the live-relay log. Games live in the tab's memory
+(`TabGameStore`): a reload loses the game and "Rebuild from relays" (D-045) brings it back from the invite. The home page's
+Invite and Join go to `/online`; the simulated join is gone. Tapping an empty square places the selected piece; stack moves are
+typed in PTN.
+- why: the user has no second computer at hand; the phone browser is a second device, and the M2 head is needed anyway
+- revisit if: M2 starts (it replaces this page's UX, adds a persisted browser store and key backup), or the page grows past a view

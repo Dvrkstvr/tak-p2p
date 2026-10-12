@@ -52,7 +52,7 @@ Tak P2P is engineered with a strict **Separation of Concerns**—the determinist
 
 | Device / Platform | Method of Play | Technology | Implementation Status | Quick Launch / Access |
 | :--- | :--- | :--- | :--- | :--- |
-| **🌐 Web Browser** | Zero-Install Web Client | Blazor WebAssembly (.NET 10) | 🟡 **Deployed, not verified** (site deploys; in-browser play not yet verified; no PWA/offline) | [Launch Web Client](https://dvrkstvr.github.io/tak-p2p/) |
+| **🌐 Web Browser** | Zero-Install Web Client | Blazor WebAssembly (.NET 10) | 🟡 **Online play verified from a dev build, deployed site not verified** (phone browser vs CLI over relays, F-039; the Pages site itself not yet checked; no PWA/offline) | [Launch Web Client](https://dvrkstvr.github.io/tak-p2p/) |
 | **🪟 Windows PC** | Native Desktop App & Terminal CLI | Avalonia UI + Spectre.Console | 🟡 **Released, not verified** (archives published; desktop and CLI not yet verified running) | [GitHub Releases](https://github.com/Dvrkstvr/tak-p2p/releases) (`tak-desktop-windows-x64.zip`) |
 | **🐧 Linux** | Native Desktop App & Terminal CLI | Avalonia UI (X11/Wayland) + CLI | 🟡 **Released, not verified** (archives published; desktop and CLI not yet verified running) | [GitHub Releases](https://github.com/Dvrkstvr/tak-p2p/releases) (`tak-desktop-linux-x64.tar.gz`) |
 | **💻 MacBook / macOS** | Native Desktop App & Terminal CLI | Avalonia Desktop + Terminal CLI | 🔴 **Not released** (no macOS build published; never run on macOS) | Build from source, or use the [Web Client](https://dvrkstvr.github.io/tak-p2p/) |
@@ -60,13 +60,13 @@ Tak P2P is engineered with a strict **Separation of Concerns**—the determinist
 | **📱 iPhone & iPad** | Mobile Browser & Native App | Blazor WASM in Safari + Native iOS App | 🔴 **Native app not built** (never built or run on a device) | [Web Client in Safari](https://dvrkstvr.github.io/tak-p2p/) |
 
 > Status mirrors [pipeline/features.json](pipeline/features.json): 🟢 verified with evidence · 🟡 built or published, not yet verified · 🔴 not available. No platform is 🟢 yet.
-> **Online play between two devices over Nostr relays does not work on any platform yet** (F-014 to F-017): joining an invite currently starts a local game.
+> **Online play between two devices over Nostr relays works from the CLI and from the web client's Online page** (F-016, F-036, F-039), verified with a dev build; the published releases and the Pages site are not yet verified.
 
 ---
 
 ### Detailed Device Breakdown: What Exists vs. What is Missing
 
-"Built" means the code exists and compiles; it has not yet been verified in a running app (see [pipeline/features.json](pipeline/features.json)). On every platform, **online play between two devices is missing**. Moves are never sent over relays, and joining an invite starts a local game. The crypto underneath (BIP-340 signatures, NIP-44 v2 encryption, NIP-01 event ids) is real and tested against the official vectors, but nothing uses it for a game yet.
+"Built" means the code exists and compiles; it has not yet been verified in a running app (see [pipeline/features.json](pipeline/features.json)). Online play between two devices runs from the CLI (`host` / `join`) and the web client's Online page, and has been seen running from a dev build (F-039); the desktop and mobile apps don't have it. The crypto underneath (BIP-340 signatures, NIP-44 v2 encryption, NIP-01 event ids) is tested against the official vectors.
 
 #### 1. 🌐 Web Client (Desktop & Mobile Browsers)
 * **Method of Play:** Web application running client-side in the browser via WebAssembly (Blazor WASM).

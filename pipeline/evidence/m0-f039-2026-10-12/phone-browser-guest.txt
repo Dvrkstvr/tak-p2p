@@ -1,0 +1,34 @@
+RELAY wss://nos.lol disconnected
+RELAY wss://relay.damus.io disconnected
+RELAY wss://nos.lol caught-up
+RELAY wss://relay.damus.io connecting
+EVENT JOIN turn 0 b4359053da413240743b6c17c9873543e50350be5c3f66ebef76f78bc9d200c2
+RELAY wss://relay.damus.io caught-up
+APPLIED turn 1 e5 d8336c5c82d093cb93236aaf6918eba9c730922eaceae666c15ed354a9a5a4ca
+RELAY wss://nos.lol backoff
+RELAY wss://relay.damus.io backoff
+RELAY wss://nos.lol connecting
+RELAY wss://relay.damus.io connecting
+RELAY wss://nos.lol caught-up
+RELAY wss://relay.damus.io backoff
+RELAY wss://relay.damus.io connecting
+RELAY wss://relay.damus.io subscribed
+RELAY wss://relay.damus.io caught-up
+APPLIED turn 2 a1 750d4bb882b97fd79b906226759fe2fd043ac1e14fef0b18cd68b3f21ed77a51
+SENT turn 2 wss://nos.lol:ok wss://relay.damus.io:pending
+EVENT MOVE turn 2 9380c9552f7c4bd7e05ad9c628d8fb814effcb26c93ef7a09788911d864cb97c
+APPLIED turn 3 b1 68754978f39418f49f86a095facd0ff2e29f468c8680ed092ddf762482d2fcfe
+APPLIED turn 4 e4 7cdf78c8d6a44f29cfc33c5a9d7c6fb49ade42dc0c9fc590440f898a676bb90a
+SENT turn 4 wss://nos.lol:ok wss://relay.damus.io:pending
+EVENT MOVE turn 4 990a41013269922f0913fdc5df6cf81074585531eee2e3750477f60a9ec6878c
+APPLIED turn 5 c1 25ffaab8bf3cce6339542dce8fa4aa56630d4990485f973b1429f836ce988132
+APPLIED turn 6 e3 dec0950ef8e06925b3a5538e8406609fcbf79d2291f9aefaf93ee597032c60cf
+SENT turn 6 wss://nos.lol:ok wss://relay.damus.io:pending
+EVENT MOVE turn 6 02b4348c7b220369e1738311079c8caff310e66c9fdedc30135fd101c512a617
+FLAG turn 7 illegal move from opponent: Square a1 is already occupied.
+APPLIED turn 7 d1 51c03bd2b988393d60cca33f5350912971f03bc7fd815f41c87609ed2e639944
+APPLIED turn 8 e2 45f1bc8e874026d33797a2e0c1d5771ad6b092c5f5394b5e9fdd8a3c23d64139
+SENT turn 8 wss://nos.lol:ok wss://relay.damus.io:pending
+EVENT MOVE turn 8 869f1a6ec594f854dbefba63030887aba4554620c51d9d58e4e7ecd2575f7d72
+APPLIED turn 9 e1 e78b2dbb9d74dc86d38a1ff78583176d6564ebc99f1fab79e140e13aba3ae64c
+FINAL white-road e78b2dbb9d74dc86d38a1ff78583176d6564ebc99f1fab79e140e13aba3ae64c

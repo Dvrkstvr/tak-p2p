@@ -10,5 +10,6 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddSingleton<BrowserStorage>();
 builder.Services.AddSingleton<WebGameSessionManager>();
+builder.Services.AddSingleton<OnlineGameService>();
 
 await builder.Build().RunAsync();
