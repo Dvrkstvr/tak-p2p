@@ -141,6 +141,21 @@ internal sealed class GameCoordinator : IAsyncDisposable
             _guest = GuestHandshake.Restore(_record);
             _invite = _guest.Invite;
         }
+        if (_record.State == HandshakeState.InGame && FinishedBoard.Result(stored.Progress, _record.KomiHalves) is { } ended)
+        {
+            // The move that ended the game was saved but the Completed record after it was not (a crash between the two writes,
+            // review M0-code finding 1): the stored board says the game is over, so it is.
+            _record = _record with { State = HandshakeState.Completed, Result = ended };
+            try
+            {
+                await _store.UpdateRecordAsync(_record).ConfigureAwait(false);
+            }
+            catch (GameStoreException)
+            {
+                // Derived again on the next reopen.
+            }
+        }
+
         if (_record.State is HandshakeState.Cancelled or HandshakeState.Failed or HandshakeState.Completed)
         {
             _final = stored.Progress;
@@ -168,9 +183,18 @@ internal sealed class GameCoordinator : IAsyncDisposable
         OutboxEntry? lastOwnMove = stored.Outbox.Where(o => o.ActionType == GameActionType.Move).MaxBy(o => o.Turn);
         foreach (OutboxEntry entry in stored.Outbox.Where(o => !o.Sent || o == lastOwnMove))
             _pool!.Publish(ParseEvent(entry.EventJson));
-        if (_record.State == HandshakeState.Joining && stored.Outbox.FirstOrDefault(o => o.ActionType == GameActionType.Join) is { } join)
+        if (_record.State == HandshakeState.Joining)
         {
-            _join = ParseEvent(join.EventJson);
+            if (stored.Outbox.FirstOrDefault(o => o.ActionType == GameActionType.Join) is { } join)
+            {
+                _join = ParseEvent(join.EventJson);
+            }
+            else
+            {
+                // The game was saved but its JOIN was not (JoinAsync's second write failed): no JOIN ever went out, so sign it now.
+                _join = Encode(Opponent!, Sign(_guest!.UnsignedJoin));
+                await _store.AddOutboxAsync(_record.GameId, Outbox(_join, GameActionType.Join, 0)).ConfigureAwait(false);
+            }
             _pool!.Publish(_join);
             _joinFirstSent = _time.GetUtcNow();
             _joinTimesSent = 1;
@@ -246,6 +270,9 @@ internal sealed class GameCoordinator : IAsyncDisposable
 
     private Task<T> Enqueue<T>(Func<Task<T>> work)
     {
+        // A finished game reopened with nothing left to send has no worker (and no network): nothing can race it, so answer here.
+        if (_loop is null && !_stop.IsCancellationRequested)
+            return work();
         var done = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
         CancellationTokenRegistration onStop = default;
         if (!_work.Writer.TryWrite(async () =>
@@ -376,7 +403,7 @@ internal sealed class GameCoordinator : IAsyncDisposable
                 await OnJoinAsync(action).ConfigureAwait(false);
                 break;
             case GameActionType.Accept when _guest is not null:
-                await OnAcceptAsync(action, evt).ConfigureAwait(false);
+                await OnAcceptAsync(action).ConfigureAwait(false);
                 break;
             case GameActionType.Move or GameActionType.Resign when _exchange is null:
                 if (_early.Count < TurnExchange.BufferCapacity)
@@ -421,7 +448,7 @@ internal sealed class GameCoordinator : IAsyncDisposable
         }
     }
 
-    private async Task OnAcceptAsync(SignedGameAction accept, NostrEvent evt)
+    private async Task OnAcceptAsync(SignedGameAction accept)
     {
         GuestDecision d = _guest!.OnAccept(accept);
         switch (d.Kind)
@@ -436,9 +463,6 @@ internal sealed class GameCoordinator : IAsyncDisposable
                 await _store.UpdateRecordAsync(_record).ConfigureAwait(false);
                 _early.Clear();
                 _owner.RaiseFailed(d.Message!);
-                break;
-            case GuestDecisionKind.DropAndFlag:
-                await FlagAsync(0, d.Message!, evt.Id, evt.Pubkey).ConfigureAwait(false);
                 break;
         }
     }
@@ -580,6 +604,8 @@ internal sealed class GameCoordinator : IAsyncDisposable
     {
         if (_broken)
             return CommandResult.Fail("This game could not be saved earlier. Reopen it to continue.");
+        if (_record.State == HandshakeState.Completed)
+            return CommandResult.Fail("The game is over.");
         if (_session is null || _exchange is null)
             return CommandResult.Fail("The game has not started yet.");
         if (_exchange.IsCompleted)

@@ -108,7 +108,7 @@ public sealed class TurnExchange
         return action.ActionType switch
         {
             GameActionType.Move => ReceiveMove(action, eventId, now),
-            GameActionType.Resign => ReceiveResign(action, eventId),
+            GameActionType.Resign => ReceiveResign(action, eventId, now),
             _ => ExchangeStep.Of(ReceiveOutcome.Ignored),
         };
     }
@@ -181,13 +181,18 @@ public sealed class TurnExchange
         return new ExchangeStep(ReceiveOutcome.Applied, appliedNow, flags, Drain(appliedNow, flags));
     }
 
-    private ExchangeStep ReceiveResign(SignedGameAction action, string eventId)
+    /// <summary>
+    /// A RESIGN carries the resigner's <c>appliedTurn</c> k. When k is ahead of ours, the resigner's own moves up to k are still in
+    /// flight (they were saved and published before the RESIGN, so they will come): hold it until turn k is applied, so both sides
+    /// end on the hash after turn k (review M0-code finding 2). The gap gets the usual catch-up.
+    /// </summary>
+    private ExchangeStep ReceiveResign(SignedGameAction action, string eventId, DateTimeOffset now)
     {
-        if (action.Turn > AppliedTurn + 1)
+        if (action.Turn > AppliedTurn)
         {
-            // The opponent resigned after moves we haven't received yet: hold it until they arrive.
             if (_pendingResign is null)
                 _pendingResign = (action, eventId);
+            _gapSince ??= now;
             return ExchangeStep.Of(ReceiveOutcome.Buffered);
         }
         return ApplyResign(action, eventId);
@@ -226,7 +231,7 @@ public sealed class TurnExchange
     {
         if (!IsCompleted && _buffer.Remove(AppliedTurn + 1, out var held) && Apply(held.Action, held.EventId, held.Digest, applied) is { } flag)
             flags.Add(flag);
-        if (!IsCompleted && _pendingResign is { } resign && resign.Action.Turn <= AppliedTurn + 1)
+        if (!IsCompleted && _pendingResign is { } resign && resign.Action.Turn <= AppliedTurn)
             flags.AddRange(ApplyResign(resign.Action, resign.EventId).Flags);
         if (IsCompleted)
             ClearHeld();

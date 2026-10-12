@@ -326,3 +326,13 @@ Invite and Join go to `/online`; the simulated join is gone. Tapping an empty sq
 typed in PTN.
 - why: the user has no second computer at hand; the phone browser is a second device, and the M2 head is needed anyway
 - revisit if: M2 starts (it replaces this page's UX, adds a persisted browser store and key backup), or the page grows past a view
+
+## D-047 · 2026-10-12 · stage 7 · by: assumed (conductor)
+An event from a stranger's key (valid id and signature, the game tag matches, but the author is not the opponent; for a joining
+guest, not the invite's host) is counted and dropped, never flagged. That includes an ACCEPT from a non-host key: F-017's acceptance
+and scope.md's guest handshake now say "counted and dropped", as tamper row 2 already did (review M0-code finding 4).
+`GuestHandshake.OnAccept` keeps its author check as defence in depth, but answers Ignore instead of asking for a flag.
+- why: a flag is a visible warning against the opponent and counts toward the "you can resign" notice. Anyone who watches the
+  relays sees the game tag and both keys, so flagging a stranger's events would let a bystander raise warnings in someone else's
+  game. An event that can't be attributed to the opponent can't be held against them
+- revisit if: players get an identity other than the key in the invite, so that such an event could be attributed

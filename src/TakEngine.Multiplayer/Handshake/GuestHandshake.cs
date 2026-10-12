@@ -9,11 +9,8 @@ public enum GuestDecisionKind
     /// <summary>The ACCEPT checks out: the game starts with <see cref="GuestHandshake.Record"/>'s colour.</summary>
     Start,
 
-    /// <summary>Not acted on (a repeated ACCEPT, anything after the handshake ended).</summary>
+    /// <summary>Not acted on (a repeated ACCEPT, anything after the handshake ended, an ACCEPT from a key that is not the host's).</summary>
     Ignore,
-
-    /// <summary>Dropped and flagged: an ACCEPT signed by someone who is not the host.</summary>
-    DropAndFlag,
 
     /// <summary>The handshake failed with <see cref="GuestDecision.Message"/>; nothing is played.</summary>
     Fail,
@@ -95,8 +92,10 @@ public sealed class GuestHandshake
         ArgumentNullException.ThrowIfNull(accept);
         if (Record.State != HandshakeState.Joining)
             return new GuestDecision(GuestDecisionKind.Ignore);
+        // Defence in depth: the shell already drops a stranger's event at tamper row 2 (counted, never flagged, D-047), so this
+        // is not reached in the running system. It stays so the pure state machine never trusts its caller with the author check.
         if (!string.Equals(accept.PlayerPubKey, Record.HostPubKey, StringComparison.Ordinal))
-            return new GuestDecision(GuestDecisionKind.DropAndFlag, "ACCEPT from a key that is not the host's");
+            return new GuestDecision(GuestDecisionKind.Ignore, "ACCEPT from a key that is not the host's");
         if (HandshakeMessages.ReadAccept(accept) is not { } terms)
             return Fail("The host's answer is malformed.");
         if (!ColorSeed.Verify(Record.SeedCommit, terms.HostNonce))

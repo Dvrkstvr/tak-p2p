@@ -147,7 +147,7 @@ Host states: `Idle` -> `Inviting` -> `Locked(G)` -> `InGame` | `Cancelled`.
 Guest states: `Idle` -> `InviteParsed` -> `Joining` -> `InGame` | `Failed`.
 - Idle -> InviteParsed: a malformed or truncated invite, size not 3..8, komi outside 0..20 half flats, missing seed commitment or host key, or host key == own key -> `Failed` with a specific message and no network traffic.
 - InviteParsed -> Joining: connect to the relay set (invite hints plus defaults); publish JOIN; republish at 5 s, 15 s, 45 s, then every 60 s; show per-relay state.
-- Joining -> InGame: ACCEPT arrives from H's pubkey (id, sig, game id), its host nonce matches the invite's commitment, its size and komi equal the invite's, and its colours equal the guest's own `ResolveColors` result. ACCEPT from any other pubkey is dropped and flagged.
+- Joining -> InGame: ACCEPT arrives from H's pubkey (id, sig, game id), its host nonce matches the invite's commitment, its size and komi equal the invite's, and its colours equal the guest's own `ResolveColors` result. ACCEPT from any other pubkey is counted and dropped, never flagged (tamper row 2, D-047).
   Colour mismatch -> `Failed` ("host and guest disagree on colours"), nothing played.
 - Joining, all relays unreachable: stay in Joining with "offline, retrying". Guest cancel -> `Idle`; nothing more is published, but a JOIN that already reached the host still locks the game to this guest
   (no un-join message in v1). The host's way out is cancel/resign, so a cancelled guest can strand the invite; accepted for v1 and listed under the bearer-invite gap below.
