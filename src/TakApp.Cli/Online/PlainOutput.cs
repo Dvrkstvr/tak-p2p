@@ -1,11 +1,14 @@
 using TakEngine.Abstractions;
+using TakEngine.Core.Text;
 using TakEngine.Transport.Relay;
 
 namespace TakApp.Cli.Online;
 
 /// <summary>
 /// The <c>--plain</c> contract (pipeline/playbook.md "Verify method"): one event per line, a keyword first, fields split by single
-/// spaces; free text comes last. Agents and the two-process tests read these lines, so a change here needs its test.
+/// spaces; free text comes last. Agents and the two-process tests read these lines, so a change here needs its test. Every line
+/// goes through <see cref="DisplayText.Sanitize"/> on its way out: much of it (flag reasons, PTN, relay reasons) is the
+/// opponent's or a relay's text, and must not reach the terminal with control characters in it.
 /// </summary>
 public sealed class PlainOutput(TextWriter writer) : IGameOutput
 {
@@ -73,7 +76,7 @@ public sealed class PlainOutput(TextWriter writer) : IGameOutput
     {
         lock (_gate)
         {
-            writer.WriteLine(line);
+            writer.WriteLine(DisplayText.Sanitize(line));
             writer.Flush();
         }
     }

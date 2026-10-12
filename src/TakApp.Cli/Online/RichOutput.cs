@@ -1,16 +1,19 @@
 using Spectre.Console;
 using TakApp.Cli.Rendering;
 using TakEngine.Abstractions;
+using TakEngine.Core.Text;
 using TakEngine.Core.Serialization;
 using TakEngine.Transport.Relay;
 
 namespace TakApp.Cli.Online;
 
 /// <summary>The same events as <see cref="PlainOutput"/>, as coloured status lines, with the board drawn after each move (D-006: no
-/// new screens).</summary>
-public sealed class RichOutput : IGameOutput
+/// new screens). Everything printed goes through <see cref="DisplayText.Sanitize"/>: flag reasons, PTN and relay reasons are
+/// the opponent's or a relay's text, and must not reach the terminal with control characters in it.</summary>
+public sealed class RichOutput(IAnsiConsole? console = null) : IGameOutput
 {
     private readonly object _gate = new();
+    private readonly IAnsiConsole _console = console ?? AnsiConsole.Console;
 
     public void Invite(string code) => Line($"[bold yellow]Invite code[/] (send it to your opponent): [bold lime]{Markup.Escape(code)}[/]");
 
@@ -37,10 +40,11 @@ public sealed class RichOutput : IGameOutput
 
     public void Applied(int turn, string ptn, string hashAfter, string tpsAfter, int komiHalves, bool mine)
     {
+        ptn = DisplayText.Sanitize(ptn);
         lock (_gate)
         {
-            AnsiBoardRenderer.Render(TpsSerializer.Deserialize(tpsAfter, komiHalves), ptn);
-            AnsiConsole.MarkupLine($"[grey]turn {turn}:[/] {(mine ? "you played" : "opponent played")} [bold]{Markup.Escape(ptn)}[/]");
+            AnsiBoardRenderer.Render(TpsSerializer.Deserialize(tpsAfter, komiHalves), ptn, console: _console);
+            _console.MarkupLine(DisplayText.Sanitize($"[grey]turn {turn}:[/] {(mine ? "you played" : "opponent played")} [bold]{Markup.Escape(ptn)}[/]"));
         }
     }
 
@@ -56,6 +60,6 @@ public sealed class RichOutput : IGameOutput
 
     private void Line(string markup)
     {
-        lock (_gate) AnsiConsole.MarkupLine(markup);
+        lock (_gate) _console.MarkupLine(DisplayText.Sanitize(markup));
     }
 }
