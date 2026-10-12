@@ -218,7 +218,7 @@
         "WebGameSessionManager's duplicate board and road logic is deleted (D-008); one rules implementation remains"
       ],
       "passes": false,
-      "evidence": "row 3, builder 2026-10-12, not verified: WebGameSessionManager.cs deleted (F-041, D-049); road squares come from RoadFinder.FindRoad in Core."
+      "evidence": "verifier 2026-10-12: rows 1 and 3 pass, row 2 fails. Row 1: one-off Playwright run, human (White) beat the Easy AI on 5x5 by road a1-a5 (pipeline/evidence/m1-verify-2026-10-12/probes-and-human-win, run.txt + human-win-vs-ai.png). Row 3: WebGameSessionManager.cs gone, no road code in TakApp.Blazor. Row 2 FAILS: the slide bar keeps a stale move from an earlier origin (gestures.md Q-1; StackSlideBar.razor OnParametersSet does not reset SelectedMove when OriginCoord changes) and offers it as an enabled 'Confirm Move (c3+)' while c2 is the origin and c3 is empty; the engine refuses it ('No pieces to move at c3.'), so it is rejected if forced but it is offered (pipeline/evidence/m1-verify-2026-10-12/q1-stale-slide-bar). Also placement markers ignore the selected piece (Wall in the opening is offered, then refused)."
     },
     {
       "id": "F-022",
@@ -229,8 +229,8 @@
         "Scripted: move a 3-stack 1-1-1 and 2-1 on 5x5, cancel mid-move, place a wall via right click; each ends in the expected board",
         "Failure: an out-of-range click mid-move cancels the move and places no tile; a move that exceeds the carry limit is not offered"
       ],
-      "passes": false,
-      "evidence": null
+      "passes": true,
+      "evidence": "verifier 2026-10-12: table pipeline/design/gestures.md, encoded by tests/e2e/play.mjs (rows cited per check). `node tests/e2e/play.mjs` SUMMARY PASS: 3b3>111, 3d3<21, cancels by out-of-range click / mid-move click / right-click / Esc / slide-bar Cancel, Sa2 by right click, each with the expected PTN history (pipeline/evidence/m1-verify-2026-10-12/play-run1). One-off probe: an empty out-of-range square clicked mid-move and with only the origin picked cancels and places nothing; a 6-stack on 5x5 starts at 5 of 5 and the count cycle never offers 6, slide bar max drop 5 (pipeline/evidence/m1-verify-2026-10-12/probes-and-human-win)."
     },
     {
       "id": "F-023",
@@ -457,8 +457,8 @@
         "Playwright regression (F-043) passes: place, slide, cancel, win, vs AI full game",
         "Failure: forcing an illegal move through the adapter returns the engine's error and the UI shows it"
       ],
-      "passes": false,
-      "evidence": "builder 2026-10-12, not verified: LocalGameAdapter over TakGameSession, WebGameSessionManager deleted, slide targets from the engine's legal moves (D-049). tests/TakApp.Blazor.Tests (LocalGameAdapterTests: illegal placement and slide return the engine error and change nothing; hash chain equals a reference session; bot answers through the session) and Core RoadFinder.FindRoad / TakGameSession.WinningRoad tests, red (missing types) then green. UI shows the engine error: Playwright row G-10b. `node tests/e2e/play.mjs` unchanged script, SUMMARY PASS before (pipeline/evidence/m1-f043-2026-10-12/before-f041) and after (.../after-f041)."
+      "passes": true,
+      "evidence": "verifier 2026-10-12: the four checks pass (one run had a Transport LocalRelayTests timing failure, unrelated and green on rerun); grep of src/TakApp.Blazor finds no legality or road code of its own (slide bar reads Core MoveValidator, gesture choice reads the board as D-049 says); `node tests/e2e/play.mjs` SUMMARY PASS (pipeline/evidence/m1-verify-2026-10-12/play-run1); forcing an illegal slide through the stale slide-bar Confirm shows the engine's 'No pieces to move at c3.' and changes nothing (pipeline/evidence/m1-verify-2026-10-12/q1-stale-slide-bar). Builder: LocalGameAdapter over TakGameSession, WebGameSessionManager deleted, slide targets from the engine's legal moves (D-049). tests/TakApp.Blazor.Tests (LocalGameAdapterTests: illegal placement and slide return the engine error and change nothing; hash chain equals a reference session; bot answers through the session) and Core RoadFinder.FindRoad / TakGameSession.WinningRoad tests, red (missing types) then green. UI shows the engine error: Playwright row G-10b. `node tests/e2e/play.mjs` unchanged script, SUMMARY PASS before (pipeline/evidence/m1-f043-2026-10-12/before-f041) and after (.../after-f041)."
     },
     {
       "id": "F-042",
@@ -481,8 +481,8 @@
         "The script fails when a cell click is broken on purpose (deliberate-break check)",
         "A state/transition table of the existing gestures exists in pipeline/ (design task) and the script cites it"
       ],
-      "passes": false,
-      "evidence": "builder 2026-10-12, not verified: table pipeline/design/gestures.md; `node tests/e2e/play.mjs` run on the pre-F-041 build, SUMMARY PASS, log and screenshots in pipeline/evidence/m1-f043-2026-10-12/before-f041. Deliberate break: TakBoardView.HandleSquareClick dropped b-file clicks, the run failed (G-15, G-12, G-21, G-20, G-24, G-32, G-33, G-40 rows; SUMMARY FAIL, exit 1), log in .../deliberate-break; reverted."
+      "passes": true,
+      "evidence": "verifier 2026-10-12: `node tests/e2e/play.mjs --out pipeline/evidence/m1-verify-2026-10-12/play-run1` started the dev server itself, wrote run.txt citing gestures.md rows and 9 screenshots, SUMMARY PASS, exit 0, all WebSockets stubbed. Own deliberate breaks, each reverted: right-click quick wall placing a flat failed G-11 (pipeline/evidence/m1-verify-2026-10-12/break-rightclick-wall); dropping the stack-on-current-square increment failed G-30 and the road win (pipeline/evidence/m1-verify-2026-10-12/break-slide-stack-drop); both exit 1. Builder: table pipeline/design/gestures.md; `node tests/e2e/play.mjs` run on the pre-F-041 build, SUMMARY PASS, log and screenshots in pipeline/evidence/m1-f043-2026-10-12/before-f041. Deliberate break: TakBoardView.HandleSquareClick dropped b-file clicks, the run failed (G-15, G-12, G-21, G-20, G-24, G-32, G-33, G-40 rows; SUMMARY FAIL, exit 1), log in .../deliberate-break; reverted."
     },
     {
       "id": "F-044",

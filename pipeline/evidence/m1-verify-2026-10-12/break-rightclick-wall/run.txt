@@ -1,0 +1,69 @@
+2026-10-12T22:53:24.627Z SERVER starting dotnet run --project src/TakApp.Blazor/TakApp.Blazor.csproj --urls http://127.0.0.1:5199
+2026-10-12T22:53:32.854Z SERVER up (pid 25581)
+2026-10-12T22:53:32.965Z SCENARIO local pass-and-play 5x5: place, rotate, quick wall, inspect, slides 1-1-1 and 2-1, cancels, road win
+2026-10-12T22:53:35.979Z PASS G-01 new local game opens in the opening phase
+2026-10-12T22:53:35.983Z PASS G-01 Flat is the selected piece at start
+2026-10-12T22:53:35.991Z PASS G-01 every empty square is marked as a placement target
+2026-10-12T22:53:36.174Z PASS G-04 Wall tab selects Wall
+2026-10-12T22:53:36.352Z PASS G-10b refused placement shows the engine error
+2026-10-12T22:53:36.356Z PASS G-10b history is [] (got [])
+2026-10-12T22:53:36.401Z SHOT 01-opening-wall-refused.png
+2026-10-12T22:53:36.547Z PASS G-05 key F selects Flat
+2026-10-12T22:53:36.740Z PASS G-10 a successful click clears the error
+2026-10-12T22:53:36.915Z PASS G-10 history is [a1 e5] (got [a1 e5])
+2026-10-12T22:53:36.918Z PASS G-10 after both opening plies it is White to play
+2026-10-12T22:53:37.101Z PASS G-13 left-click on an opponent stack opens the inspector
+2026-10-12T22:53:37.148Z SHOT 02-inspect-a1.png
+2026-10-12T22:53:37.333Z PASS G-15 a square click dismisses the inspector
+2026-10-12T22:53:37.336Z PASS G-15/G-10 history is [a1 e5 b3] (got [a1 e5 b3])
+2026-10-12T22:53:37.528Z PASS G-02 clicking the selected Flat chip rotates to Wall
+2026-10-12T22:53:37.716Z PASS G-02 clicking the Flat chip when Wall is selected selects Flat
+2026-10-12T22:53:37.896Z PASS G-03 right-clicking the Flat chip rotates to Wall
+2026-10-12T22:53:38.777Z PASS G-12 clicking an own stack selects it as slide origin
+2026-10-12T22:53:38.783Z PASS G-12 HUD shows 1 of 1 carried
+2026-10-12T22:53:38.968Z PASS G-21 (carry 1) history is [a1 e5 b3 a5 b2 b5 b2+] (got [a1 e5 b3 a5 b2 b5 b2+])
+2026-10-12T22:53:40.071Z PASS G-21 history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1] (got [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1])
+2026-10-12T22:53:40.266Z PASS G-12 3-stack: carry starts at min(height, size) = 3
+2026-10-12T22:53:40.271Z PASS G-12 adjacent enterable squares are marked (got a3,b2,b4,c3)
+2026-10-12T22:53:40.461Z PASS G-20 clicking the origin leaves one tile: 2 of 3
+2026-10-12T22:53:40.659Z PASS G-20 again: 1 of 3
+2026-10-12T22:53:40.860Z PASS G-20 below 1 wraps to the maximum: 3 of 3
+2026-10-12T22:53:40.923Z SHOT 03-slide-origin-b3.png
+2026-10-12T22:53:41.106Z PASS G-24 out-of-range click cancels the move
+2026-10-12T22:53:41.110Z PASS G-24 nothing placed history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1] (got [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1])
+2026-10-12T22:53:41.515Z PASS G-21 first step drops 1, 2 in hand
+2026-10-12T22:53:41.601Z SHOT 04-mid-slide.png
+2026-10-12T22:53:41.780Z PASS G-32 click outside the path mid-move cancels the whole move
+2026-10-12T22:53:41.783Z PASS G-32 board unchanged history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1] (got [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1])
+2026-10-12T22:53:42.348Z PASS G-33 right-click mid-move cancels
+2026-10-12T22:53:42.352Z PASS G-33 board unchanged history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1] (got [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1])
+2026-10-12T22:53:42.662Z PASS G-06 Esc cancels a started move
+2026-10-12T22:53:42.835Z PASS G-40 the slide bar opens with a started move
+2026-10-12T22:53:43.018Z PASS G-41 the slide bar Cancel cancels the move
+2026-10-12T22:53:43.021Z PASS G-41 board unchanged history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1] (got [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1])
+2026-10-12T22:53:43.571Z PASS G-31 the next square along the path is offered
+2026-10-12T22:53:43.766Z PASS G-31 slide 1-1-1 history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1 3b3>111] (got [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1 3b3>111])
+2026-10-12T22:53:43.824Z SHOT 05-after-3b3-111.png
+2026-10-12T22:53:44.004Z FAIL G-11 right-click empty places a wall history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1 3b3>111 Sa2] (got [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1 3b3>111 a2])
+2026-10-12T22:53:44.007Z PASS G-11 quick wall leaves the selected piece unchanged
+2026-10-12T22:53:45.484Z PASS G-30 the current step square is offered for stacking
+2026-10-12T22:53:45.679Z PASS G-30 clicking the current square drops one more
+2026-10-12T22:53:45.868Z FAIL G-30/G-31 slide 2-1 history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1 3b3>111 Sa2 c3> b1 e3< e2 3d3<21] (got [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1 3b3>111 a2 c3> b1 e3< e2 3d3<21])
+2026-10-12T22:53:45.927Z SHOT 06-after-3d3-21.png
+2026-10-12T22:53:47.039Z FAIL G-10 final placement history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1 3b3>111 Sa2 c3> b1 e3< e2 3d3<21 c1 a3 c5 d3 d2 e3] (got [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1 3b3>111 a2 c3> b1 e3< e2 3d3<21 c1 a3 c5 d3 d2 e3])
+2026-10-12T22:53:47.042Z PASS G-50 road win is announced (status "WHITE WINS (ROAD)")
+2026-10-12T22:53:47.046Z PASS G-50 the winning road is highlighted (got a3,b3,c3,d3,e3)
+2026-10-12T22:53:47.049Z PASS G-50 Resign is hidden after the game ends
+2026-10-12T22:53:47.052Z PASS G-50 no placement targets after the game ends
+2026-10-12T22:53:47.101Z SHOT 07-local-road-win.png
+2026-10-12T22:53:47.287Z PASS G-17 a click after the end is refused by the engine (error "Game has already completed.")
+2026-10-12T22:53:47.290Z FAIL G-17 nothing changes after the end history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1 3b3>111 Sa2 c3> b1 e3< e2 3d3<21 c1 a3 c5 d3 d2 e3] (got [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1 3b3>111 a2 c3> b1 e3< e2 3d3<21 c1 a3 c5 d3 d2 e3])
+2026-10-12T22:53:47.290Z SCENARIO vs AI (Easy) 5x5: the human places flats on the first empty square until the game ends
+2026-10-12T22:53:49.578Z PASS G-52 the status names the AI mode
+2026-10-12T22:53:50.061Z SHOT 08-ai-first-reply.png
+2026-10-12T22:53:52.727Z RESULT vs AI after 7 human plies: AI (EASY) WINS (ROAD)
+2026-10-12T22:53:52.729Z PASS G-52 the vs AI game reached a result ("AI (EASY) WINS (ROAD)")
+2026-10-12T22:53:52.732Z AI GAME PTN a1 a5 a2 Cb1 a3 c2 a4 c3 b2 c1 b3 d2 b4 e2
+2026-10-12T22:53:52.801Z SHOT 09-ai-result.png
+2026-10-12T22:53:52.841Z SERVER stopped (pid 25581)
+2026-10-12T22:53:52.841Z SUMMARY FAIL checks=52 failed=4 evidence=pipeline/evidence/m1-verify-2026-10-12/break-rightclick-wall

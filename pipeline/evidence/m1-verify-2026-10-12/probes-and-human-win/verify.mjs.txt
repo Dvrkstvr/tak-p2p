@@ -1,0 +1,165 @@
+// One-off verifier run (M1 verify 2026-10-12): human win vs Easy AI on 5x5, empty out-of-range click mid-move, carry limit on a 6-stack.
+// Drives an already-running site; every WebSocket is stubbed.
+import { createRequire } from 'node:module';
+import fs from 'node:fs';
+import path from 'node:path';
+const require = createRequire(import.meta.url);
+const { chromium } = require('/opt/node-tools/node_modules/playwright');
+
+const base = 'http://127.0.0.1:5199';
+const out = path.resolve(process.argv[2]);
+fs.mkdirSync(out, { recursive: true });
+const logPath = path.join(out, 'run.txt');
+fs.writeFileSync(logPath, '');
+const log = (l) => { const s = `${new Date().toISOString()} ${l}`; console.log(s); fs.appendFileSync(logPath, s + '\n'); };
+let failures = 0;
+const check = (ok, what) => { if (!ok) failures++; log(`${ok ? 'PASS' : 'FAIL'} ${what}`); return ok; };
+
+const D = '.arena-3col';
+const sq = (c) => `${D} #sq-${c} > rect.svg-sq`;
+const settle = (p) => p.waitForTimeout(150);
+const click = async (p, c) => { await p.click(sq(c)); await settle(p); };
+const status = async (p) => ((await p.textContent(`${D} .play-turn-text`)) ?? '').trim();
+const hud = async (p) => { const e = await p.$(`${D} .slide-hud-banner`); return e ? (await e.textContent()).replace(/\s+/g, ' ').trim() : ''; };
+const history = (p) => p.$$eval(`${D} .move-history-list .move-history-row`, (rows) =>
+  rows.flatMap((r) => [r.querySelector('.move-ptn-white')?.textContent?.trim(), r.querySelector('.move-ptn-black')?.textContent?.trim()]).filter((m) => m));
+const withClass = (p, cls) => p.$$eval(`${D} g[data-coord]`, (gs, c) => gs.filter((g) => g.querySelector(`rect.svg-sq.${c}`)).map((g) => g.dataset.coord), cls);
+const tops = (p) => p.$$eval(`${D} g[data-coord]`, (gs) => Object.fromEntries(gs.map((g) => {
+  const uses = [...g.querySelectorAll('use')].map((u) => u.getAttribute('href')).filter((h) => h && h.startsWith('#tak-'));
+  return [g.dataset.coord, uses.length ? uses[uses.length - 1].slice(5) : null]; // e.g. flat-white
+})));
+async function start(p, mode) {
+  await p.goto(base + '/');
+  await p.waitForSelector('.actions-row button', { timeout: 60000 });
+  await p.click('.toggle-btn:has-text("5×5")');
+  if (mode === 'vs AI') await p.click('.toggle-btn:has-text("Easy")');
+  await p.click(`.actions-row button:has-text("${mode}")`);
+  await p.waitForSelector(sq('a1'), { timeout: 30000 });
+  await settle(p);
+}
+
+const files = ['a', 'b', 'c', 'd', 'e'];
+const lines = [];
+for (let i = 0; i < 5; i++) {
+  lines.push(files.map((f) => `${f}${i + 1}`));
+  lines.push([1, 2, 3, 4, 5].map((r) => `${files[i]}${r}`));
+}
+function choose(t, empties) {
+  const road = (c, col) => t[c] === `flat-${col}` || t[c] === `cap-${col}`;
+  // block a black line that needs one more
+  for (const L of lines) {
+    const b = L.filter((c) => road(c, 'black')).length;
+    const e = L.filter((c) => empties.includes(c));
+    if (b === 4 && e.length === 1) return e[0];
+  }
+  let best = null, bestScore = -1;
+  for (const L of lines) {
+    const w = L.filter((c) => road(c, 'white')).length;
+    const e = L.filter((c) => empties.includes(c));
+    if (w + e.length < 5 || e.length === 0) continue;
+    if (w > bestScore) { bestScore = w; best = e[0]; }
+  }
+  return best ?? empties[0];
+}
+
+async function waitHumanTurn(p) {
+  await p.waitForFunction(() => {
+    const t = document.querySelector('.arena-3col .play-turn-text')?.textContent ?? '';
+    const thinking = document.querySelector('.arena-3col .status-block')?.textContent?.includes('AI is thinking') ?? false;
+    return !thinking && (t.includes('WHITE') || t.includes('WINS') || t.includes('DRAW'));
+  }, null, { timeout: 30000 });
+}
+
+async function humanWin(p) {
+  for (let game = 1; game <= 12; game++) {
+    await start(p, 'vs AI');
+    log(`GAME ${game} vs AI (Easy) 5x5, human is White`);
+    for (let turn = 0; turn < 60; turn++) {
+      await waitHumanTurn(p);
+      const s = await status(p);
+      if (/WINS|DRAW/.test(s)) break;
+      const empties = await withClass(p, 'legal-target');
+      const target = turn === 0 ? 'e5' : choose(await tops(p), empties);
+      const before = (await history(p)).length;
+      await click(p, target);
+      await p.waitForFunction((n) => {
+        let count = 0;
+        document.querySelectorAll('.arena-3col .move-history-list .move-history-row').forEach((r) => {
+          if (r.querySelector('.move-ptn-white')?.textContent?.trim()) count++;
+          if (r.querySelector('.move-ptn-black')?.textContent?.trim()) count++;
+        });
+        const t = document.querySelector('.arena-3col .play-turn-text')?.textContent ?? '';
+        return count >= n + 2 || t.includes('WINS') || t.includes('DRAW');
+      }, before, { timeout: 30000 });
+    }
+    const s = await status(p);
+    const h = await history(p);
+    log(`GAME ${game} RESULT "${s}" PTN ${h.join(' ')}`);
+    if (/^YOU WINS/.test(s) || s.includes('YOU WINS')) {
+      const road = await p.$$eval(`${D} g[data-coord]`, (gs) => gs.filter((g) => g.querySelector('.svg-road-highlight')).map((g) => g.dataset.coord).sort());
+      check(true, `F-021 human (White) beat the Easy AI on 5x5 in game ${game}; road highlighted ${road.join(',')}`);
+      await p.screenshot({ path: path.join(out, 'human-win-vs-ai.png') });
+      log('SHOT human-win-vs-ai.png');
+      return;
+    }
+  }
+  check(false, 'F-021 no human win vs Easy AI in 12 games');
+}
+
+async function probes(p) {
+  await start(p, 'Local');
+  log('PROBES local 5x5');
+  // build a 6-stack at c3 with White on top
+  for (const m of ['a1', 'e5', 'c3', 'c4', 'c2', 'd3']) await click(p, m);
+  await click(p, 'c2'); await click(p, 'c3'); // W c2+
+  await click(p, 'c4'); await click(p, 'c3'); // B c4-
+  await click(p, 'b3');                        // W
+  await click(p, 'd4');                        // B
+  await click(p, 'b3'); await click(p, 'c3'); // W b3>
+  await click(p, 'd3'); await click(p, 'c3'); // B d3<
+  await click(p, 'c2');                        // W
+  await click(p, 'e1');                        // B
+  await click(p, 'c2'); await click(p, 'c3'); // W c2+ : c3 height 6
+  await click(p, 'a5');                        // B
+  const h = await history(p);
+  check(JSON.stringify(h) === JSON.stringify(['a1', 'e5', 'c3', 'c4', 'c2', 'd3', 'c2+', 'c4-', 'b3', 'd4', 'b3>', 'd3<', 'c2', 'e1', 'c2+', 'a5']),
+    `setup history (got ${h.join(' ')})`);
+  await click(p, 'c3');
+  const seen = [await hud(p)];
+  check(seen[0].includes('5 of 5'), `carry limit: 6-stack starts at 5 of 5 (HUD "${seen[0]}")`);
+  for (let i = 0; i < 6; i++) { await click(p, 'c3'); seen.push(await hud(p)); }
+  check(seen.every((s) => !/\b6 of\b|of 6/.test(s)), `carry limit: cycling the count never offers 6 (${seen.map((s) => s.match(/\d+ of \d+/)?.[0]).join(', ')})`);
+  const barText = (await p.textContent(`${D} .slide-control-box`).catch(() => '')) ?? '';
+  log(`slide bar text: ${barText.replace(/\s+/g, ' ').trim()}`);
+  await p.screenshot({ path: path.join(out, 'carry-limit-6-stack.png') });
+  // carry 5 (wrap), step east to d3 then an empty out-of-range square mid-move
+  await p.keyboard.press('Escape'); await settle(p);
+  await click(p, 'c3');
+  await click(p, 'd3');
+  check((await hud(p)).includes('In hand: 4'), `stepping started (HUD "${await hud(p)}")`);
+  const emptyBefore = (await withClass(p, 'legal-target')).length;
+  await click(p, 'b5'); // empty, out of range
+  const h2 = await history(p);
+  check((await hud(p)) === '' && JSON.stringify(h2) === JSON.stringify(h), `empty out-of-range click mid-move cancels and places nothing (history ${h2.length} plies)`);
+  const t = await tops(p);
+  check(t['b5'] === null, `b5 stays empty (top ${t['b5']})`);
+  // Slide (no direction) + empty out-of-range square
+  await click(p, 'c3');
+  await click(p, 'a4');
+  const h3 = await history(p);
+  check((await hud(p)) === '' && JSON.stringify(h3) === JSON.stringify(h) && (await tops(p))['a4'] === null, 'empty out-of-range click with origin picked cancels and places nothing');
+  await p.screenshot({ path: path.join(out, 'after-out-of-range-cancel.png') });
+}
+
+const browser = await chromium.launch();
+try {
+  const ctx = await browser.newContext({ viewport: { width: 1400, height: 1000 } });
+  const p = await ctx.newPage();
+  await p.routeWebSocket(/.*/, (ws) => log(`WS stubbed ${ws.url()}`));
+  p.on('pageerror', (e) => log(`PAGEERROR ${e.message}`));
+  for (const s of [probes, humanWin]) {
+    try { await s(p); } catch (e) { check(false, `${s.name} threw ${e.message.split('\n')[0]}`); }
+  }
+} finally { await browser.close(); }
+log(`SUMMARY ${failures === 0 ? 'PASS' : 'FAIL'} failed=${failures}`);
+process.exit(failures ? 1 : 0);
