@@ -1,0 +1,28 @@
+INVITE TAK2_eyJnaWQiOiIwZDQ0YWRiMC02ZDczLTRhNGUtYjY1ZS02ODM0OTllMjBkYTYiLCJob3N0IjoiYmVhYzc2MmVlZDUzZjYwODYzMmI1MDg4NDIxYTg1YTA2Njk0ODdkYmU5YmQzMTU4Y2RkNDQ5ZjA5YTgxYzU1NSIsInNpemUiOjUsImtvbWkiOjAsInJlbGF5cyI6WyJ3c3M6Ly9ub3MubG9sIiwid3NzOi8vcmVsYXkuZGFtdXMuaW8iXSwic2VlZF9jb21taXQiOiJkZTA2MjBmOGJhMmI2M2VjMTQ2YWY1NTU4ZjMwYWU5MjRjOGY1ZmJkMzNhNDFjYzFmNDk3ZGU1ZGU5NmM5MWNkIn0
+RELAY wss://nos.lol connecting
+RELAY wss://relay.damus.io connecting
+RELAY wss://nos.lol caught-up
+RELAY wss://relay.damus.io caught-up
+EVENT ACCEPT turn 0 186e8f3350b282d229cb044c0b9b90c8c398a6bf841a787670e9019c1df6aaee
+APPLIED turn 1 a1 bf6742d8a9c7c8d8b4cb35f1c66ca1a4076dc9165364fa9b60f16318ceb24361
+SENT turn 1 wss://nos.lol:ok wss://relay.damus.io:ok
+EVENT MOVE turn 1 22fde1863e64532dfe6e814c9eec87b99226e8449e5cdccf05a75d1d23602545
+APPLIED turn 2 e5 b04061419f96324e62d52b8016191bc344b38b6738679a37b7036a704c7e6271
+APPLIED turn 3 b2 dce4daca3cf7176e2e6b6c4cbd7d562116643b52313934d2c2942cbc09be597c
+SENT turn 3 wss://nos.lol:ok wss://relay.damus.io:pending
+EVENT MOVE turn 3 bae194c7e93880d346265cd4ef11e219984d176a28ed907c4070a237444e3ae3
+APPLIED turn 4 d4 8b203984a611f9562b9b4568b47524067c5c557934830c37b18c46e39554ac70
+APPLIED turn 5 c3 d7eb46cca55f49d09119fb32a0a6aa92ced8c4eb829743866818116639173f74
+SENT turn 5 wss://nos.lol:ok wss://relay.damus.io:pending
+EVENT MOVE turn 5 5d5a0c2e782fe5ae3c2b0924d28399abac1378a61f5fa7e06a93266bb0d0868c
+RELAY wss://nos.lol backoff
+RELAY wss://relay.damus.io backoff
+RELAY wss://nos.lol subscribed
+RELAY wss://relay.damus.io connecting
+APPLIED turn 6 b4 b4d79d304eb6d48489345ccea9d9a6eb7bc0b469cba3973e6c7d722eb68803f2
+RELAY wss://nos.lol caught-up
+RELAY wss://relay.damus.io caught-up
+APPLIED turn 7 a3 b1662030dac527fde4269928a0b3fd103045c5587b3473a1071344b8093d2fac
+SENT turn 7 wss://nos.lol:ok wss://relay.damus.io:ok
+EVENT MOVE turn 7 9f2f08697263c64a0706852cdf17abab7a8193f7708bde222715df4d486a33cf
+APPLIED turn 8 e1 08cde0b1a22059c3b4cc7a0ef11c25aeeefeda30ebc5c4739ed1d4fdd0043fec

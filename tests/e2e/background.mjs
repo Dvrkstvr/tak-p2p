@@ -9,6 +9,8 @@
 //                --freeze-seconds <n>  how long the tab stays frozen (default 300)
 //                --out <dir>           evidence folder (default pipeline/evidence/m1-f042-<yyyy-mm-dd>)
 //                --headed              show the browser
+//                --silent              the sockets die silently instead (no close reaches the page, ever: a NAT dropped the
+//                                      flow); the page must notice by its own liveness probe (D-051) and reconnect
 // Exit code 0 = every check passed; 1 = a check failed (run.txt names it); 2 = the harness could not start.
 //
 // How the page reaches the local relay without any product change: the page always dials wss://nos.lol and wss://relay.damus.io
@@ -51,6 +53,7 @@ const freezeSeconds = Number(arg('--freeze-seconds', '300'));
 const today = new Date().toISOString().slice(0, 10);
 const outDir = path.resolve(arg('--out', path.join(repoRoot, 'pipeline', 'evidence', `m1-f042-${today}`)));
 const headed = args.includes('--headed');
+const silentDrop = args.includes('--silent');
 const relayUrls = [`ws://127.0.0.1:${relayPort}/r1`, `ws://127.0.0.1:${relayPort}/r2`];
 // The page's hard-wired relays, each piped to one local relay.
 const PIPE = { 'nos.lol': relayUrls[0], 'relay.damus.io': relayUrls[1] };
@@ -175,7 +178,8 @@ function appliedMap(lines) {
 const pipes = []; // { n, url, target, route, up, openedAt, closed }
 let pipeCount = 0;
 let maxCreatedAtSeen = 0;
-const reqs = []; // { n, at, since, raw }
+const reqs = []; // { n, at, since, raw } (the game's subscription; liveness probes are counted apart)
+const probes = []; // { n, at, silent }
 // Playwright's routed WebSocket loses frames and closes sent to the page while its main thread is paused (seen 2026-10-12), so
 // while the tab is frozen a close for the page is held and handed over at the thaw, as a browser hands a frozen tab its queued
 // socket events when it wakes.
@@ -238,15 +242,21 @@ async function installPipe(page) {
     up.addEventListener('error', () => log(`WS#${n} relay side error`));
     route.onMessage((m) => {
       const text = typeof m === 'string' ? m : Buffer.from(m).toString();
-      log(describeFrame('page->relay', n, text));
+      log(describeFrame('page->relay', n, text) + (pipe.silent ? ' (lost: silent socket)' : ''));
       try {
         const msg = JSON.parse(text);
-        if (msg[0] === 'REQ') reqs.push({ n, at: nowSec(), since: msg.slice(2).map((f) => f.since ?? null), raw: text });
+        if (msg[0] === 'REQ' && msg[1] === 'tak-probe') probes.push({ n, at: nowSec(), silent: !!pipe.silent });
+        else if (msg[0] === 'REQ') reqs.push({ n, at: nowSec(), since: msg.slice(2).map((f) => f.since ?? null), raw: text });
       } catch { /* logged above */ }
+      if (pipe.silent) return;
       if (up.readyState === WebSocket.OPEN) up.send(text);
       else pending.push(text);
     });
     route.onClose((code, reason) => {
+      if (pipe.silent && !pipe.pageClosed) {
+        pipe.pageClosed = true;
+        log(`WS#${n} page side closed the silent socket (${code} ${reason ?? ''})`);
+      }
       if (!pipe.closed) {
         pipe.closed = true;
         log(`WS#${n} page side closed (${code} ${reason ?? ''})`);
@@ -263,6 +273,16 @@ function dropAllPipes(why) {
     log(`WS#${p.n} DROP (${why})`);
     try { p.up.close(); } catch { /* gone */ }
     closePageSide(p, why);
+  }
+}
+
+/** Kills every relay socket silently: the relay side goes, the page side stays open and is never told; frames it sends are lost. */
+function silenceAllPipes(why) {
+  for (const p of pipes.filter((x) => !x.closed)) {
+    p.closed = true;
+    p.silent = true;
+    log(`WS#${p.n} SILENT DROP (${why})`);
+    try { p.up.close(); } catch { /* gone */ }
   }
 }
 
@@ -370,6 +390,7 @@ try {
   const maxSeenBeforeFreeze = maxCreatedAtSeen;
   const pipesBeforeFreeze = pipeCount;
   const reqsBeforeFreeze = reqs.length;
+  const probesBeforeFreeze = probes.length;
 
   // Background: freeze the page, then break its relay sockets.
   // Page.setWebLifecycleState frozen is sent as a phone/desktop browser would freeze a background tab, but in Playwright's
@@ -383,7 +404,8 @@ try {
   const freezeAt = nowSec();
   log(`FREEZE at ${freezeAt} (newest created_at the pipe saw: ${maxSeenBeforeFreeze}); the tab stays frozen ${freezeSeconds} s`);
   await sleep(500);
-  dropAllPipes('tab backgrounded: sockets dropped');
+  if (silentDrop) silenceAllPipes('tab backgrounded: flows dropped without a close');
+  else dropAllPipes('tab backgrounded: sockets dropped');
 
   // The CLI plays while the tab is frozen.
   await sleep(10000);
@@ -396,7 +418,7 @@ try {
   log(`WAIT ${remaining} s more with the tab frozen`);
   await sleep(Math.max(0, remaining) * 1000);
   check(pipeCount === pipesBeforeFreeze, `no new relay socket was opened while frozen (sockets opened: ${pipeCount - pipesBeforeFreeze})`);
-  check(reqs.length === reqsBeforeFreeze, 'no REQ was sent while frozen');
+  check(reqs.length === reqsBeforeFreeze && probes.length === probesBeforeFreeze, 'no REQ was sent while frozen');
 
   // Foreground.
   await cdp.send('Debugger.resume');
@@ -405,12 +427,19 @@ try {
   thawPipes();
   const thawAt = nowSec();
   log(`THAW at ${thawAt} (${thawAt - freezeAt} s after the freeze)`);
+  // Read at the thaw, not after the catch-up: a silent drop takes the tab up to 70 s more to notice, with its timers running.
+  const ticksAfter = await page.evaluate(() => window.__ticks);
   await waitPage(page, (t) => (document.querySelector('pre.online-transcript')?.textContent ?? '').includes(`APPLIED turn ${t} `), frozenTurn,
     `browser catches up turn ${frozenTurn}`, 90000);
   const caughtUpAt = nowSec();
-  const ticksAfter = await page.evaluate(() => window.__ticks);
   check(ticksAfter - ticksBefore <= 5, `the page's timers were stopped while frozen (a 1 s interval ticked ${ticksAfter - ticksBefore} times over ${thawAt - freezeAt} s)`);
 
+  if (silentDrop) {
+    const silentProbes = probes.slice(probesBeforeFreeze).filter((p) => p.silent);
+    check(silentProbes.length > 0, `the tab probed its silent sockets after the thaw (${silentProbes.map((p) => `WS#${p.n} at ${p.at}`).join(', ')})`);
+    // Informational: whether Playwright reports the page closing (aborting) a socket it gave up on varies; the reconnect below is the check.
+    log(`SILENT sockets the page closed itself: ${pipes.filter((p) => p.silent && p.pageClosed).map((p) => `WS#${p.n}`).join(' ') || 'none reported'}`);
+  }
   const newReqs = reqs.slice(reqsBeforeFreeze);
   check(pipeCount > pipesBeforeFreeze, `the tab reopened relay sockets after the thaw (${pipeCount - pipesBeforeFreeze} new)`);
   check(newReqs.length > 0, `the tab sent ${newReqs.length} REQ after the thaw`);
