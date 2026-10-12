@@ -6,6 +6,12 @@ namespace TakApp.Blazor.Services;
 /// <see cref="IGameStore"/> for one browser tab, kept in memory (D-046): a reload loses the game, and a later run can rebuild it from
 /// the relays with the invite (D-045). A persisted browser store is M3. Each call lands whole or throws and changes nothing.
 /// </summary>
+/// <remarks>
+/// Same semantics as <c>tests/TakEngine.Testing/InMemoryGameStore</c>, minus its crash knobs (<c>FailNextWrite</c>, <c>HoldWrites</c>).
+/// It is a copy on purpose: the shipped app can't reference a test project, and this class goes away when M3 brings the persisted
+/// browser store. Until then a change to the in-memory semantics (turn-follows check, outbox) goes into both copies
+/// (M0 code review, nit 7).
+/// </remarks>
 public sealed class TabGameStore : IGameStore
 {
     private readonly object _gate = new();

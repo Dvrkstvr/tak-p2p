@@ -1,0 +1,17 @@
+M0 code review findings 5 and 6, Blazor /online, 2026-10-12.
+Dev server: dotnet run --project src/TakApp.Blazor/TakApp.Blazor.csproj --urls http://127.0.0.1:5198
+Playwright (Chromium), one browser context, every WebSocket stubbed with context.routeWebSocket(/.*/, ws => {}): no relay traffic.
+
+A hosted, invite TAK2_eyJnaWQiOiIwMTFjNGI...
+A after Join of stored game: waiting="FOR A GUEST TO JOIN"
+A after Resume button: waiting="FOR A GUEST TO JOIN"
+A after Rebuild of stored game: waiting="FOR A GUEST TO JOIN"
+B Rebuild: error="This game is open in another tab of this browser. Play it there, or press Leave in that tab (or close it) and try again here."
+B Join: error="This game is open in another tab of this browser. Play it there, or press Leave in that tab (or close it) and try again here.", game view shown=false
+locks held: ["tak.game.011c4b9266e4470099a76e93f1096955"]
+after A Leave, locks held: []
+C console.warning: Tak: the Web Locks API is missing (an http:// page on another host?), so nothing stops a second tab from playing tak.game.692419f9b3c74b7f948db1e0d80e3fc9 at the same time.
+C (no navigator.locks) hosted: true
+
+Screenshots: 01 hosted, 02 after Leave (this tab's games + Resume), 03 Join of the stored invite resumes it,
+04 Resume button and Rebuild of a stored game resume it, 05 second tab refused, 06 no Web Locks API: allowed with a warning.

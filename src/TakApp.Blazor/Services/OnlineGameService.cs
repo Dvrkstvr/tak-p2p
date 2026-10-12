@@ -13,8 +13,12 @@ namespace TakApp.Blazor.Services;
 /// transcript in the CLI's <c>--plain</c> line format so two devices' runs can be compared. No rules or protocol here; the board shown
 /// is the TPS the game committed after each applied move.
 /// </summary>
-public sealed class OnlineGameService(BrowserStorage storage) : IAsyncDisposable
+public sealed class OnlineGameService(BrowserStorage storage, TabGameLock tabLock) : IAsyncDisposable
 {
+    /// <summary>The refusal when another tab of this browser holds the game (M0 code review, finding 6).</summary>
+    public const string OpenInAnotherTab =
+        "This game is open in another tab of this browser. Play it there, or press Leave in that tab (or close it) and try again here.";
+
     public static readonly IReadOnlyList<string> DefaultRelays = ["wss://nos.lol", "wss://relay.damus.io"];
 
     private readonly TabGameStore _store = new();
@@ -26,6 +30,7 @@ public sealed class OnlineGameService(BrowserStorage storage) : IAsyncDisposable
     private readonly HashSet<string> _reportedEvents = new(StringComparer.Ordinal);
     private readonly Dictionary<Uri, RelayLinkState> _links = [];
     private CancellationTokenSource? _watch;
+    private Guid? _locked;
 
     public MultiplayerGame? Game { get; private set; }
 
@@ -80,6 +85,8 @@ public sealed class OnlineGameService(BrowserStorage storage) : IAsyncDisposable
         try
         {
             MultiplayerGame game = await MultiplayerGame.HostAsync(options, size, komiHalves);
+            // A fresh game id, so no other tab holds it; holding it stops a second tab from rebuilding this game.
+            await ClaimAsync(game.GameId);
             InviteCode = game.Invite.ToCompactCode();
             Line($"INVITE {InviteCode}");
             await BeginAsync(game);
@@ -91,12 +98,35 @@ public sealed class OnlineGameService(BrowserStorage storage) : IAsyncDisposable
         }
     }
 
+    /// <summary>The games this tab stored since it loaded, finished or not; any of them can be resumed.</summary>
+    public Task<IReadOnlyList<NetGameRecord>> StoredGamesAsync() => _store.ListGamesAsync();
+
+    /// <summary>Joins by invite; a game this tab already stored (one it left) is resumed instead.</summary>
     public async Task<string?> JoinAsync(string inviteText) =>
         await OpenAsync(inviteText.Trim(), rebuild: false);
 
-    /// <summary>Rebuilds a game this browser's key is in from the relays (after a reload lost the tab's memory).</summary>
+    /// <summary>
+    /// Rebuilds a game this browser's key is in from the relays (after a reload lost the tab's memory); a game this tab still has
+    /// stored is resumed instead.
+    /// </summary>
     public async Task<string?> RebuildAsync(string inviteText) =>
         await OpenAsync(inviteText.Trim(), rebuild: true);
+
+    /// <summary>Reopens a game this tab stored (after Leave), as the CLI's <c>resume</c> does.</summary>
+    public async Task<string?> ResumeAsync(Guid gameId)
+    {
+        MultiplayerOptions options = await OptionsAsync();
+        if (await ClaimAsync(gameId) is { } refused)
+            return refused;
+        if (await MultiplayerGame.ResumeAsync(options, gameId) is not { } game)
+        {
+            await ReleaseAsync();
+            return "This game is not stored in this tab any more. Paste its invite and use Rebuild from relays.";
+        }
+        InviteCode = game.Invite.ToCompactCode();
+        await BeginAsync(game, "stored");
+        return null;
+    }
 
     public async Task<CommandResult> SubmitAsync(TakMove move)
     {
@@ -132,6 +162,7 @@ public sealed class OnlineGameService(BrowserStorage storage) : IAsyncDisposable
         _watch = null;
         if (Game is { } g)
             await g.DisposeAsync();
+        await ReleaseAsync();
         Game = null;
         Board = null;
         InviteCode = null;
@@ -150,17 +181,51 @@ public sealed class OnlineGameService(BrowserStorage storage) : IAsyncDisposable
 
     private async Task<string?> OpenAsync(string inviteText, bool rebuild)
     {
-        if (!TakEngine.Transport.Matchmaking.InviteCode.TryParse(inviteText, out _, out string? error))
+        if (!TakEngine.Transport.Matchmaking.InviteCode.TryParse(inviteText, out var invite, out string? error))
             return error;
+        // Left earlier in this tab: the store still has it, so carry on from there (as the CLI's join does).
+        if (await _store.LoadAsync(invite!.GameId) is not null)
+            return await ResumeAsync(invite.GameId);
         MultiplayerOptions options = await OptionsAsync();
-        JoinOutcome outcome = rebuild
-            ? await MultiplayerGame.RebuildAsync(options, inviteText)
-            : await MultiplayerGame.JoinAsync(options, inviteText);
-        if (outcome.Game is not { } game)
-            return outcome.Error;
-        InviteCode = inviteText;
-        await BeginAsync(game);
+        if (await ClaimAsync(invite.GameId) is { } refused)
+            return refused;
+        try
+        {
+            JoinOutcome outcome = rebuild
+                ? await MultiplayerGame.RebuildAsync(options, inviteText)
+                : await MultiplayerGame.JoinAsync(options, inviteText);
+            if (outcome.Game is not { } game)
+            {
+                await ReleaseAsync();
+                return outcome.Error;
+            }
+            InviteCode = inviteText;
+            await BeginAsync(game, "rebuilt");
+            return null;
+        }
+        catch
+        {
+            await ReleaseAsync();
+            throw;
+        }
+    }
+
+    /// <summary>Takes the cross-tab lock on <paramref name="gameId"/>, or returns the refusal when another tab holds it.</summary>
+    private async Task<string?> ClaimAsync(Guid gameId)
+    {
+        if (await tabLock.AcquireAsync(gameId) == TabGameLock.Outcome.Busy)
+            return OpenInAnotherTab;
+        _locked = gameId;
         return null;
+    }
+
+    private async Task ReleaseAsync()
+    {
+        if (_locked is { } id)
+        {
+            _locked = null;
+            await tabLock.ReleaseAsync(id);
+        }
     }
 
     private async Task<MultiplayerOptions> OptionsAsync()
@@ -215,10 +280,10 @@ public sealed class OnlineGameService(BrowserStorage storage) : IAsyncDisposable
         game.LinkChanged += (_, _) => Changed?.Invoke();
     }
 
-    private async Task BeginAsync(MultiplayerGame game)
+    private async Task BeginAsync(MultiplayerGame game, string historyFrom = "stored")
     {
         Game = game;
-        // A rebuilt game arrives with its history already stored; show it as stored.
+        // A rebuilt or resumed game arrives with its history already stored; show it as stored.
         StoredGame? stored = await _store.LoadAsync(game.GameId);
         if (stored is { Progress.AppliedTurn: > 0 } && Moves.Count == 0)
         {
@@ -229,7 +294,7 @@ public sealed class OnlineGameService(BrowserStorage storage) : IAsyncDisposable
                 _moves.AddRange(stored.Applied.Select(a => a.Action.Ptn).OfType<string>());
             }
             foreach (AppliedAction applied in stored.Applied)
-                Line($"APPLIED turn {applied.Action.Turn} {applied.Action.Ptn} {applied.StateHashAfter} (rebuilt)");
+                Line($"APPLIED turn {applied.Action.Turn} {applied.Action.Ptn} {applied.StateHashAfter} ({historyFrom})");
             if (game.Result is { } result)
                 Line($"FINAL {Result(result)} {game.StateHash}");
         }

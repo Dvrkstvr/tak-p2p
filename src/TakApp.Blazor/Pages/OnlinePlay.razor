@@ -57,6 +57,23 @@
         {
             <div class="online-error">@Error</div>
         }
+
+        @if (Stored.Count > 0)
+        {
+            <div class="feature-block online-stored" style="margin-top: 1.5rem;">
+                <div class="feature-title">THIS TAB'S GAMES</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin: 0.5rem 0;">Games you left in this tab. A reload forgets them; then use Rebuild from relays.</div>
+                @foreach (NetGameRecord record in Stored)
+                {
+                    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin: 0.5rem 0;">
+                        <span style="font-size: 0.8rem;">
+                            @record.Role · @((int)record.Size)×@((int)record.Size) · @StoredState(record) · <code>@record.GameId.ToString("N")[..8]</code>
+                        </span>
+                        <button class="btn-tak btn-outline btn-sm" disabled="@Busy" @onclick="() => ResumeAsync(record.GameId)">Resume</button>
+                    </div>
+                }
+            </div>
+        }
     }
     else
     {
@@ -142,6 +159,7 @@
     private string? Error { get; set; }
     private bool Busy { get; set; }
     private Coord? LastTarget { get; set; }
+    private IReadOnlyList<NetGameRecord> Stored { get; set; } = [];
 
     private HashSet<Coord> PlaceTargets
     {
@@ -159,8 +177,9 @@
         }
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        Stored = await Online.StoredGamesAsync();
         Online.Changed += Refresh;
         var query = new Uri(Nav.Uri).Query.TrimStart('?');
         foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
@@ -193,8 +212,19 @@
         finally
         {
             Busy = false;
+            Stored = await Online.StoredGamesAsync();
         }
     }
+
+    private static string StoredState(NetGameRecord record) => record.State switch
+    {
+        HandshakeState.Inviting => "waiting for a guest",
+        HandshakeState.Joining => "waiting for the host",
+        HandshakeState.InGame => "in progress",
+        _ => record.State.ToString().ToLowerInvariant(),
+    };
+
+    private Task ResumeAsync(Guid gameId) => RunAsync(() => Online.ResumeAsync(gameId));
 
     private Task HostAsync() => RunAsync(() => Online.HostAsync(HostSize, HostKomiHalves));
 
@@ -242,6 +272,7 @@
     {
         await Online.LeaveAsync();
         Error = null;
+        Stored = await Online.StoredGamesAsync();
     }
 
     private async Task CopyAsync(string text)
