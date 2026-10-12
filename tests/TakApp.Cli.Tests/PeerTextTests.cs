@@ -69,6 +69,8 @@ public class PeerTextTests
             ColorSystem = ColorSystemSupport.NoColors,
             Interactive = InteractionSupport.No,
             Out = new AnsiConsoleOutput(text),
+            // Spectre's CI enrichers (GitHub Actions among them) switch ANSI back on, so the styling escapes would fail the check.
+            Enrichment = new ProfileEnrichment { UseDefaultEnrichers = false },
         });
         console.Profile.Width = 200; // a StringWriter has no width, and Spectre writes nothing at -1
         return (new RichOutput(console), text);
