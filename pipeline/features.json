@@ -482,7 +482,7 @@
         "A state/transition table of the existing gestures exists in pipeline/ (design task) and the script cites it"
       ],
       "passes": false,
-      "evidence": null
+      "evidence": "builder 2026-10-12, not verified: table pipeline/design/gestures.md; `node tests/e2e/play.mjs` run on the pre-F-041 build, SUMMARY PASS, log and screenshots in pipeline/evidence/m1-f043-2026-10-12/before-f041. Deliberate break: TakBoardView.HandleSquareClick dropped b-file clicks, the run failed (G-15, G-12, G-21, G-20, G-24, G-32, G-33, G-40 rows; SUMMARY FAIL, exit 1), log in .../deliberate-break; reverted."
     },
     {
       "id": "F-044",
