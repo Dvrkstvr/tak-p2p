@@ -819,7 +819,7 @@
                 for (int y = 0; y < size; y++)
                 {
                     var c = new Coord(x, y);
-                    if (Session.LegalMovesFor(c).Any(m => m is PlaceMove))
+                    if (Session.LegalMovesFor(c).Any(m => m is PlaceMove place && place.PieceType == SelectedPieceType))
                     {
                         LegalPlacementTargets.Add(c);
                     }

@@ -194,7 +194,8 @@ async function localGame(page) {
   await page.click(`${D} .piece-selector-tab:has-text("Wall")`);
   await settle(page);
   check((await selectedTab(page)).startsWith('Wall'), 'G-04 Wall tab selects Wall');
-  await click(page, 'c3');
+  check((await squaresWithClass(page, 'legal-target')).length === 0, 'G-04 no square is marked for a wall in the opening (F-021 row 2)');
+  await click(page, 'c3'); // forced anyway: the engine refuses it
   check((await errorText(page)).includes('First turn placement must be a Flat stone'), 'G-10b refused placement shows the engine error');
   await expectHistory(page, [], 'G-10b');
   await screenshot(page, 'opening-wall-refused');

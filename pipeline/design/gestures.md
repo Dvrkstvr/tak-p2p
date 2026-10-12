@@ -20,7 +20,7 @@ M1 freezes it (D-006 spirit). Rows marked *driven* are checked by the Playwright
 | G-01 | page opens | — | Selected = Flat; every empty square carries the placement marker (`legal-target`); opening status `OPENING: WHITE PLACES OPPONENT` | yes |
 | G-02 | any, active player's card | left-click Flat chip | Flat selected → Wall; anything else → Flat. Chips of the side not to move do nothing | yes |
 | G-03 | any, active player's card | right-click Flat chip | Wall | yes |
-| G-04 | any | click Wall / Cap chip or the Flat·Wall·Cap tab under the board | that piece. Cap chip is disabled at 0 caps; the Cap tab is hidden on 4×4 | yes (tab) |
+| G-04 | any | click Wall / Cap chip or the Flat·Wall·Cap tab under the board | that piece; placement markers show only squares where the engine allows that piece (none for a Wall or Cap in the opening). Cap chip is disabled at 0 caps; the Cap tab is hidden on 4×4 | yes (tab) |
 | G-05 | any | key F / W / C | Flat / Wall / Cap (C ignored on 4×4). Selecting a piece also ends a Slide/Stepping and closes the inspector | yes (F) |
 | G-06 | any | key Esc | back to Idle (ends a move, closes the inspector and the controls guide) | yes |
 | G-07 | any | key ? or H | toggles the controls guide | no |
