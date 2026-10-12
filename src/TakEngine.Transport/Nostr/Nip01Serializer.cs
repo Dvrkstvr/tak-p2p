@@ -8,7 +8,9 @@ namespace TakEngine.Transport.Nostr;
 /// The one NIP-01 event serializer: <c>[0,pubkey,created_at,kind,tags,content]</c>, compact, UTF-8. Hand-written on
 /// purpose (pipeline/architecture.md "Wire format", docs/decisions/0004): System.Text.Json escapes + &lt; &gt; &amp;, DEL and
 /// astral characters even with relaxed escaping, so its ids differ from the ids relays compute.
-/// Escapes: \" \\ \n \r \t \b \f; every other character below U+0020 as \u00xx (lowercase hex); everything else verbatim.
+/// Escapes: \" \\ \n \r \t \b \f; every other character below U+0020, and DEL (U+007F), as \u00xx (lowercase hex);
+/// everything else verbatim. This is what strfry computes (tao::json's escape), and both default relays run strfry: a raw DEL
+/// gets "invalid: bad event id" from nos.lol and relay.damus.io (live run 2026-10-12, pipeline/evidence/live-relay-log.md).
 /// </summary>
 public static class Nip01Serializer
 {
@@ -82,9 +84,9 @@ public static class Nip01Serializer
                     {
                         sb.Append(c).Append(value[++i]); // a valid pair is one character, written raw
                     }
-                    else if (c < ' ' || char.IsSurrogate(c))
+                    else if (c < ' ' || c == '\u007f' || char.IsSurrogate(c))
                     {
-                        // Control characters, and lone surrogates (UTF-8 can't encode them; JSON.stringify escapes them).
+                        // Control characters and DEL (as strfry escapes them), and lone surrogates (UTF-8 can't encode them; JSON.stringify escapes them).
                         sb.Append("\\u").Append(((int)c).ToString("x4", CultureInfo.InvariantCulture));
                     }
                     else

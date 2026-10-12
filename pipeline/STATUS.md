@@ -4,11 +4,11 @@
 
 ## Now
 - track: deep · approach: spec-first (+ prototype-first: relay round-trip spikes)
-- stage: 7 Build — M0-A built on branch m0a-crypto-fake-relay-game; M0-B (plan B1) built on claude/project-thread-jtojtm (PR #3) except its live runs
+- stage: 7 Build — M0-A built on branch m0a-crypto-fake-relay-game; M0-B (plan B1) built on claude/project-thread-jtojtm (PR #3); live runs done 2026-10-12 on claude/project-thread-eldgs6
 - clarity: scope 5/5 · blocking 0 · assumed 9 · deferred 3
 - feasibility: amber · H-open 0 · M-open 3 · spiked 4
-- milestone: M0-B (live relays, storage, CLI) · features passing 22/58 · M0 14/24 passing · owed checks 4
-- next: M0-B offline rows done (F-036 CLI host/join/resume over two processes, F-037 restart + cold rebuild, F-038 tamper matrix + TakTestPeer; SQLite store; TakRelay.Local; legacy SQLite out of Core). Owed: the LiveRelay runs (F-014, F-034, F-016, F-036, F-037, F-038 live rows; user approved, ≤150 events, D-032), blocked because this cloud environment's network policy refuses nos.lol and relay.damus.io; then F-039 on the user's two machines
+- milestone: M0-B (live relays, storage, CLI) · features passing 28/58 · M0 20/24 passing · owed checks 4
+- next: M0-B live rows passed 2026-10-12 over nos.lol + damus (F-014, F-034, F-016, F-036, F-037, F-038; 28 of 150 events, pipeline/evidence/live-relay-log.md). The first run found strfry escapes DEL as \u007f; serializer fixed. Damus rate-limits and briefly bans two players on one IP; nos.lol carried the game. Owed: F-039 on the user's two machines
 - autopilot: M0-A · round 10/12 · A1 done, F-057/F-058 built · stall 0
 
 ## Stages

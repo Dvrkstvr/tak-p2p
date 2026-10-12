@@ -54,8 +54,9 @@ public class Nip01SerializerTests
         Assert.Equal(v.Id, Nip01Serializer.ComputeId(evt));
     }
 
+    // The spike's DEL event is gone from spike-csharp-events.jsonl: it was signed over a raw DEL, which strfry refuses (see the "del" vector).
     [Theory]
-    [InlineData("spike-csharp-events.jsonl", 5)]
+    [InlineData("spike-csharp-events.jsonl", 4)]
     [InlineData("spike-python-events.jsonl", 3)]
     public void ComputeId_MatchesTheSpikesPythonVerifiedEvents(string file, int count)
     {

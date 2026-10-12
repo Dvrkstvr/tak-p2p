@@ -1,0 +1,20 @@
+WAITING for the host to answer
+RELAY wss://nos.lol connecting
+RELAY wss://relay.damus.io connecting
+RELAY wss://nos.lol subscribed
+RELAY wss://relay.damus.io backoff
+RELAY wss://nos.lol caught-up
+WAITING opponent move turn 1
+APPLIED turn 1 e5 ece51791fa6ab563afb62d431e8f61a78956cf539ccee7561d53eb2a3027b124
+WAITING your move turn 2
+RELAY wss://relay.damus.io connecting
+APPLIED turn 2 a1 cb4da9b5bb10f11dc39d8b2e3458ce42b6472c8fd970f1bd6f1a4fbdba1dd28b
+WAITING opponent move turn 3
+SENT turn 2 wss://nos.lol:ok wss://relay.damus.io:pending
+RELAY wss://relay.damus.io subscribed
+RELAY wss://relay.damus.io caught-up
+APPLIED turn 3 b1 6ca824fd438fec7d5664bcab203cc421905af2d1d034b2c1beee18566ee190a3
+WAITING your move turn 4
+APPLIED turn 4 e4 c508aefaeba610194b8aa2f19a0c0c85d42f17126eb9a3c4717ea070a2e98480
+WAITING opponent move turn 5
+SENT turn 4 wss://nos.lol:ok wss://relay.damus.io:refused(banned:_too_many_rate-limit_violations,_try_again_later)
