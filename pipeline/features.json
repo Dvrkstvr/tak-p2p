@@ -470,7 +470,7 @@
         "Failure: if ClientWebSocket does not work in the WASM runtime, the result is recorded and the fallback (JS interop WebSocket) or the R-005 fallback (browser stays local/AI only) is chosen before M2 starts"
       ],
       "passes": false,
-      "evidence": "Row 1 seen running 2026-10-12 (D-046): the Blazor WASM app's ClientWebSocket connected to nos.lol + damus from a desktop browser and from a phone browser, and played two full games with the CLI (each side verifies every event; m0-browser-2026-10-12/, m0-f039-2026-10-12/). Row 2 (5 minutes backgrounded, then catch-up) not run."
+      "evidence": "Row 1 seen running 2026-10-12 (D-046): the Blazor WASM app's ClientWebSocket connected to nos.lol + damus from a desktop browser and from a phone browser, and played two full games with the CLI (each side verifies every event; m0-browser-2026-10-12/, m0-f039-2026-10-12/). Row 2 (5 minutes backgrounded, then catch-up) seen running 2026-10-12 against local relays only (frozen-tab approximation in desktop headless Chromium, not a phone): `node tests/e2e/background.mjs` froze the /online tab 300 s (Page.setWebLifecycleState frozen + Debugger.pause) and closed its relay connections while the CLI moved; at the thaw it reconnected in ~1 s, sent REQ since = newest seen created_at - 30 s (1791847190; freeze at 1791847222), applied the missed move with the CLI's hash, and both sides agreed on every hash after one more move each (m1-f042-2026-10-12/)."
     },
     {
       "id": "F-043",

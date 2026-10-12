@@ -91,6 +91,15 @@ dotnet test TakGame.Ci.slnf --no-build --filter "Category!=LiveRelay"
   road win) and a vs-AI game to a result, writes `run.txt` (one `PASS`/`FAIL <row> …` line per check, citing
   `pipeline/design/gestures.md` rows) and numbered screenshots, and exits 0 only when every check passed.
 - Every WebSocket the page opens is stubbed (`page.routeWebSocket`), so a run sends nothing to a relay.
+- **Backgrounded tab catches up (F-042 row 2):** `node tests/e2e/background.mjs` (same Playwright; `--freeze-seconds` default 300,
+  `--relay-port` default 7447, `--url`, `--out` default `pipeline/evidence/m1-f042-<date>`, `--headed`). It starts
+  `tools/TakRelay.Local` and the Blazor dev server when nothing answers, hosts on `/online`, joins with the CLI on
+  `ws://127.0.0.1:<port>/r1,r2`, plays, freezes the tab (CDP `Page.setWebLifecycleState frozen` + `Debugger.pause`; the lifecycle
+  call alone does not stop timers in headless Chromium), closes both relay connections, lets the CLI move, thaws after the freeze
+  time, and checks the tab reopens its sockets, sends a REQ with `since` = newest seen `created_at` - 30 s, applies the missed move
+  and agrees with the CLI on every hash. The page's `wss://nos.lol` / `wss://relay.damus.io` sockets are answered by
+  `page.routeWebSocket` and piped to the local r1 / r2 (every frame is logged); any other non-loopback socket is closed unanswered,
+  so nothing reaches a public relay and the app is unchanged. A desktop-Chromium approximation of a backgrounded phone tab.
 - A 404 on `dotnet.<hash>.js` means stale `bin`/`obj` in `src/TakApp.Blazor`: delete both and rerun.
 
 ## Quality bar (track: deep)
