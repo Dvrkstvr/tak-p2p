@@ -60,13 +60,20 @@ dotnet test TakGame.Ci.slnf --no-build --filter "Category!=LiveRelay"
 1. **Headless, every commit (CI):** the fake-relay game tests in `tests/TakEngine.Multiplayer.Tests` (F-016, F-017, F-037, F-038):
    `dotnet test TakGame.Ci.slnf --filter "FullyQualifiedName~TakEngine.Multiplayer.Tests"`.
 2. **Two CLI processes, local relay (no public traffic):**
-   - `dotnet run --project tools/TakRelay.Local -- --port 7447` (the same fake relay core as the tests, over real WebSockets)
-   - A: `dotnet run --project src/TakApp.Cli -- host --profile a --size 5 --relays ws://127.0.0.1:7447 --plain`
-   - B: `dotnet run --project src/TakApp.Cli -- join <invite> --profile b --relays ws://127.0.0.1:7447 --plain`
-   - Moves are fed on stdin (pipe a script file or write to the process); read stdout. `--plain` contract (F-036 defines it, tests
-     pin it): one event per line — `INVITE <code>`, `RELAY <url> <state>`, `SENT turn <n> <relay>:<status>…`, `APPLIED turn <n> <ptn> <hash>`,
-     `REJECTED turn <n> <reason>`, `WAITING <text>`, `FINAL <result> <hash>`. Pass = both processes print the same `FINAL` line;
-     restart = kill B, rerun the same `join` command with `--profile b`, and see `APPLIED` resume.
+   - `dotnet run --project tools/TakRelay.Local -- --port 7447` (the same fake relay core as the tests, over real WebSockets; it
+     serves `ws://127.0.0.1:7447/r1` and `/r2`, plus `--rate-limit-like-damus` and `--auth-for-reads r2` to act like damus)
+   - A: `dotnet run --project src/TakApp.Cli -- host --profile a --size 5 --relays ws://127.0.0.1:7447/r1,ws://127.0.0.1:7447/r2 --plain`
+   - B: `dotnet run --project src/TakApp.Cli -- join <invite> --profile b --relays ws://127.0.0.1:7447/r1,ws://127.0.0.1:7447/r2 --plain`
+   - Moves are fed on stdin one PTN per line (`resign` resigns, `quit` leaves a game that `resume` picks up); read stdout. `--plain`
+     contract (F-036 defines it, `tests/TakApp.Cli.Tests/PlainOutputTests.cs` pins it): one event per line —
+     `INVITE <code>`, `RELAY <url> <connecting|subscribed|caught-up|backoff|disconnected>`,
+     `SENT turn <n> <relay>:<ok|pending|refused(reason)>…` (reason spaces as `_`), `APPLIED turn <n> <ptn> <hash>`,
+     `REJECTED turn <n> <reason>` (your own input, refused locally, nothing sent), `FLAG turn <n> <reason>` (the opponent's move or
+     message dropped, game unchanged), `NOTICE <text>`, `WAITING <text>` (`your move turn <n>`, `opponent move turn <n>`, `for a guest
+     to join`, `for the host to answer`), `FINAL <winner>-<road|flats|resign|timeout> <hash>`. Errors that stop a command before it
+     starts go to stderr with exit code 2. Pass = both processes print the same `FINAL` line; restart = kill B, rerun the same
+     `join` command, and see `APPLIED` resume (`TwoProcessTests` does exactly this in CI).
+   - A device that lost its game state: `resume --invite <code>` rebuilds the game from the relays (D-045).
 3. **Two CLI processes, public relays (by hand, after Q-018):** as step 2 with `--relays wss://nos.lol,wss://relay.damus.io`.
 4. **Two machines (F-039):** the user runs step 3 with A and B on different machines; transcripts go to `pipeline/` evidence. Owed to the
    user if the agent has no second machine.

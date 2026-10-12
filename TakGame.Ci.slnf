@@ -6,15 +6,21 @@
       "src/TakEngine.Crypto/TakEngine.Crypto.csproj",
       "src/TakEngine.Core/TakEngine.Core.csproj",
       "src/TakEngine.Transport/TakEngine.Transport.csproj",
+      "src/TakEngine.Multiplayer/TakEngine.Multiplayer.csproj",
       "src/TakEngine.Storage.Local/TakEngine.Storage.Local.csproj",
       "src/TakApp.Cli/TakApp.Cli.csproj",
       "src/TakApp.Blazor/TakApp.Blazor.csproj",
       "src/TakApp.Avalonia/TakApp.Avalonia.csproj",
       "src/TakApp.Avalonia.Desktop/TakApp.Avalonia.Desktop.csproj",
+      "tests/TakApp.Cli.Tests/TakApp.Cli.Tests.csproj",
       "tests/TakEngine.Core.Tests/TakEngine.Core.Tests.csproj",
       "tests/TakEngine.Crypto.Tests/TakEngine.Crypto.Tests.csproj",
+      "tests/TakEngine.Multiplayer.Tests/TakEngine.Multiplayer.Tests.csproj",
       "tests/TakEngine.Storage.Tests/TakEngine.Storage.Tests.csproj",
-      "tests/TakEngine.Transport.Tests/TakEngine.Transport.Tests.csproj"
+      "tests/TakEngine.Testing/TakEngine.Testing.csproj",
+      "tests/TakEngine.Transport.Tests/TakEngine.Transport.Tests.csproj",
+      "tools/TakTestPeer/TakTestPeer.csproj",
+      "tools/TakRelay.Local/TakRelay.Local.csproj"
     ]
   }
 }

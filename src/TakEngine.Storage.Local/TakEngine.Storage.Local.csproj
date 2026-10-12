@@ -3,7 +3,16 @@
   <!-- Local disk for CLI and desktop (pipeline/architecture.md "Modules"). Never referenced by the browser build. -->
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TakEngine.Storage.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\TakEngine.Abstractions\TakEngine.Abstractions.csproj" />
+    <ProjectReference Include="..\TakEngine.Core\TakEngine.Core.csproj" />
     <ProjectReference Include="..\TakEngine.Crypto\TakEngine.Crypto.csproj" />
   </ItemGroup>
 

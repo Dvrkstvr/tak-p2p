@@ -40,17 +40,18 @@ public sealed record LiveMatchSummary(
     DateTime LastActiveUtc,
     int DelaySeconds);
 
+/// <summary>
+/// A player's signed action relayed to spectators, with the time it was broadcast. The spectator verifies the action's own
+/// signature (<c>ActionDigest</c>), so the broadcaster is not trusted. <see cref="StateHash"/> is the broadcaster's claimed hash
+/// after the action and is checked when present.
+/// </summary>
 public sealed record BroadcastEnvelope(
-    Guid GameId,
-    int TurnIndex,
-    string PlayerPubKey,
-    string PrevStateHash,
+    SignedGameAction Action,
     DateTime TimestampUtc,
-    string PtnMove,
-    string Signature,
     string? StateHash = null,
     string? TournamentId = null)
 {
-    public string GetSigningPayload() =>
-        $"{GameId}:{TurnIndex}:{PlayerPubKey}:{PrevStateHash}:{PtnMove}:{TimestampUtc:O}";
+    public Guid GameId => Action.GameId;
+
+    public int TurnIndex => Action.Turn;
 }

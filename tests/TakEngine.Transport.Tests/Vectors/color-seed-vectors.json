@@ -1,0 +1,60 @@
+{
+  "host": "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+  "guest": "c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5",
+  "cases": [
+    {
+      "host_nonce": "8dc598f66b273b0cd5b083b350abc790c9891c3f9aab2366b22d00c07276c231",
+      "guest_nonce": "66cea4377ed46dffdb92c598df5a3740409277b04096d126e45ffb014b394398",
+      "seed_commit": "f1f02ba3bc6061d5dfc0bd863fe7ee2bb437bdc9e8d9f405c7664b154cf85a8d",
+      "join_proof": "fd3712574a78b4f8e5744f8a1a8515d8d578ae53c88351a98a195a45a80cb8da",
+      "seed": "733a3ae024fc8e71bece9beb2d306bcf2b85a737b76a6b334b123a52e0da46cf",
+      "host_colour": "White",
+      "guest_colour": "Black"
+    },
+    {
+      "host_nonce": "14f536cdb85022a45acf0e84a4dc501ce4ba672b597ffcb29e4562070787cfe2",
+      "guest_nonce": "d7a99d015fb2a010cd9a920789303103d3c77ea3671c6377a57f3158c4989cc4",
+      "seed_commit": "4cbc71215b37d583b0478cf0cf3adfca97f595029607d1e3dd872f0a6a52f1c6",
+      "join_proof": "9e2e8ced5c2f5a2c3bce7040ca59647f1de413e93123117063737e013645b0bf",
+      "seed": "67646b11aaf38e2d389a46c7503443c9598b891d6a11ae9fb1fcef663b20b725",
+      "host_colour": "Black",
+      "guest_colour": "White"
+    },
+    {
+      "host_nonce": "3665457a0f2ba33af7e74f0e2909e06a4b0bfe8d66d93d4e549881a20332de33",
+      "guest_nonce": "53e267f0f64365ac5481265c4c83180dd4db9ca51d06021cdda442413faf37ee",
+      "seed_commit": "cbaaecb430298ed8bd1776bb9a21a428f24e8c9a77c2240e64ffd2fb14483589",
+      "join_proof": "fef955a89992fd86e92ebbf4c6997d91d0cbc3512f5a417797625cb880ecff77",
+      "seed": "242887af8093f60b1cb6d2cfa6aa9f733d16e7e2779a1ada89b45e1714c61235",
+      "host_colour": "White",
+      "guest_colour": "Black"
+    },
+    {
+      "host_nonce": "f622ef3cb9b058a1a41bad25c6ffde3a3d5d9c3617880c5617b529cee56f7cfa",
+      "guest_nonce": "017102278d93cf76e108b0b3f998feeef7c2067c8f0f524929ff58bd788ad0ac",
+      "seed_commit": "ae51861e5001cdc23717f8b1f4357c0f1895447193d23e67ea7c5880d6e5f1dc",
+      "join_proof": "df6d6c9ab124660188e13c777c7676c7f4e9dcf2bf51516caa102ba652359595",
+      "seed": "906b0377dae3fa470b48acdb899b063448ab671248dd7a33ce2573896ba05456",
+      "host_colour": "White",
+      "guest_colour": "Black"
+    },
+    {
+      "host_nonce": "8c7f77c6332ff3a4e4e8774b80c0709e1e44df71973b368beffd73aeecf1b05c",
+      "guest_nonce": "4f23c2af7208fbec4da20a8b46dc170657623531e67083866aa536c81bf7d609",
+      "seed_commit": "f8da2e08962cab89bc8e8ce443d5141509cb58f6dec9f362cd046c5d6ebd3a01",
+      "join_proof": "f0e81ec0e7b9ebaf28e360c24ca117d420ee16fdf926287b9736f8cafc3c762d",
+      "seed": "41d10c2be4052202f190392f446bf2dfc11276492e5fe420b325b5835875e54a",
+      "host_colour": "White",
+      "guest_colour": "Black"
+    },
+    {
+      "host_nonce": "481e6478f96523cb32a7f3a979ea33e2fa0bfafeb471e318470e3caf41b197cb",
+      "guest_nonce": "6c4bd1e1bcfa87ecd99c60f8c0d2fa6820d1d07b94c525bdcd7c56d9901d7f5b",
+      "seed_commit": "d478dfb6f65de79d74f30453373b7b83cbc15935bc28ad788fa7a71326a54510",
+      "join_proof": "d4278497554ca9b8dcd145a866f094e431fd1bc363c19de36e3178c23cf51e9f",
+      "seed": "5dc918fa614795a7b0559c1a2e8564d35b6748fec83f96c8c18a2126977d4780",
+      "host_colour": "White",
+      "guest_colour": "Black"
+    }
+  ]
+}

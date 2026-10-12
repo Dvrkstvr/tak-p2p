@@ -1,6 +1,7 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using TakEngine.Crypto;
 
 namespace TakEngine.Transport.Nostr;
 
@@ -29,18 +30,11 @@ public sealed record NostrProfile(
         }
     }
 
-    public static NostrEvent CreateMetadataEvent(string pubKey, NostrProfile profile)
+    /// <summary>A signed kind-0 metadata event (NIP-01), built with <see cref="NostrEvents.Sign"/>. Pure: time and aux are arguments.</summary>
+    public static NostrEvent CreateMetadataEvent(SecretKey key, NostrProfile profile, long createdAt, ReadOnlySpan<byte> aux32)
     {
+        ArgumentNullException.ThrowIfNull(profile);
         string json = JsonSerializer.Serialize(profile);
-        var evt = new NostrEvent
-        {
-            Pubkey = pubKey,
-            CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            Kind = 0,
-            Tags = new(),
-            Content = json
-        };
-        evt.Id = Nip01Serializer.ComputeId(evt);
-        return evt;
+        return NostrEvents.Sign(key, createdAt, 0, [], json, aux32);
     }
 }

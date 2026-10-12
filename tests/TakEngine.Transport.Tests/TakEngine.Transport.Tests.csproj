@@ -27,6 +27,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\TakEngine.Abstractions\TakEngine.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\TakEngine.Transport\TakEngine.Transport.csproj" />
+    <ProjectReference Include="..\TakEngine.Testing\TakEngine.Testing.csproj" />
+    <ProjectReference Include="..\..\tools\TakRelay.Local\TakRelay.Local.csproj" />
   </ItemGroup>
 
 </Project>

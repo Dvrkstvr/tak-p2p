@@ -104,15 +104,15 @@ public class RulesEdgeCaseTests
     {
         SecretKey alice = TestKeys.Create(1);
         SecretKey bob = TestKeys.Create(2);
-        var bobSession = TakGameSession.CreateRemote(GameId.New(), BoardSize.Five, PlayerColor.Black, bob, alice.PublicKey);
+        var bobSession = TakGameSession.CreateRemote(GameId.New(), BoardSize.Five, PlayerColor.Black, bob, alice.PublicKey, () => new byte[32]);
         ProtocolViolationException? violation = null;
         bobSession.OnProtocolViolationDetected += ex => violation = ex;
         string hashBefore = bobSession.CurrentStateHash;
 
         // "Fa1" is a legal spelling of "a1", but the chain hashes the PTN string, so two spellings of one move would
         // give the two peers different hashes. Only the canonical form is accepted from a peer.
-        string sig = PayloadSignature.Sign(alice, $"{hashBefore}:Fa1");
-        var result = bobSession.ProcessRemoteMove(alice.PublicKey.ToHex(), hashBefore, "Fa1", sig);
+        var action = ActionDigest.Sign(alice, SignedGameAction.UnsignedMove(bobSession.Id.Value, 1, alice.PublicKey.ToHex(), hashBefore, "Fa1"), new byte[32]);
+        var result = bobSession.ProcessRemoteAction(action);
 
         Assert.False(result.IsSuccess);
         Assert.NotNull(violation);

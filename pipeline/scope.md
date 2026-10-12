@@ -135,10 +135,10 @@ The client never publishes more than 4 events in any 10 s window and retries `ra
 Every received event is checked for `id` and `sig` before it is decrypted (NIP-44 spec, spike R-002/R-003 item 5).
 
 ### Invite create and accept handshake (F-017, F-044, F-047)
-Roles: Host H, Guest G. The invite carries game id, H's pubkey, board size, komi, relay hints and a commitment to the host's colour nonce (D-038; an invite without one is rejected). JOIN carries the guest's nonce; ACCEPT reveals the host's nonce and repeats size and komi; seed = SHA-256(tag || host_nonce || guest_nonce).
+Roles: Host H, Guest G. The invite carries game id, H's pubkey, board size, komi, relay hints and a commitment to the host's colour nonce (D-038; an invite without one is rejected). JOIN carries the guest's nonce and an invite proof (D-043: a hash of the invite's seed commitment and the guest's key, so seeing a JOIN on a relay is not enough to join); ACCEPT reveals the host's nonce and repeats size and komi; seed = SHA-256(tag || host_nonce || guest_nonce).
 Host states: `Idle` -> `Inviting` -> `Locked(G)` -> `InGame` | `Cancelled`.
 - Idle -> Inviting: user chooses size and komi, host creates game id + host nonce, persists the game record (key, game id, host nonce, size, komi), subscribes on `#g=gid, #p=H`, shows the invite.
-- Inviting -> Locked(G): a valid JOIN (id, sig, decrypts, game id matches, author != H) from pubkey P. H locks to P and P's nonce, resolves colours with
+- Inviting -> Locked(G): a valid JOIN (id, sig, decrypts, game id matches, author != H, invite proof matches P) from pubkey P. A JOIN whose proof doesn't match is ignored and surfaced ("ignored join from npub1...: it does not match this invite"). H locks to P and P's nonce, resolves colours with
   `ColorResolver.ResolveColors(seed, H, G)` (AGENTS invariant 1), publishes ACCEPT (carries the resolved colours so a mismatch is visible), moves to InGame.
 - Locked: a JOIN from another pubkey is ignored and surfaced ("ignored join from npub1...: game already taken"). A repeated JOIN from P (its retry) re-sends ACCEPT (idempotent).
 - Host restart while Inviting or Locked: reload the record and resubscribe; nothing is lost; Cancelled invites stay dead.
@@ -151,7 +151,7 @@ Guest states: `Idle` -> `InviteParsed` -> `Joining` -> `InGame` | `Failed`.
   Colour mismatch -> `Failed` ("host and guest disagree on colours"), nothing played.
 - Joining, all relays unreachable: stay in Joining with "offline, retrying". Guest cancel -> `Idle`; nothing more is published, but a JOIN that already reached the host still locks the game to this guest
   (no un-join message in v1). The host's way out is cancel/resign, so a cancelled guest can strand the invite; accepted for v1 and listed under the bearer-invite gap below.
-- Known gap, accepted for v1: anyone holding the invite can win the race to JOIN; the invite is a bearer secret like a link to a private room (R-009 note in security review).
+- Known gap, accepted for v1: anyone holding the invite (not merely someone watching the relays, D-043) can win the race to JOIN; the invite is a bearer secret like a link to a private room (R-009 note in security review).
 
 ### Turn exchange, including out-of-order, duplicate and late events (F-033, F-035, F-016)
 Each client holds: `appliedTurn` n, current hash, a reorder buffer keyed by turn, `publishedTurn`, `maxCreatedAt` (used only for the `since` of subscriptions, never for ordering or trust).

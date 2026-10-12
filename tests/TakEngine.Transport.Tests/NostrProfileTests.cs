@@ -1,6 +1,7 @@
 using System;
 using System.Text.Json;
 using TakEngine.Abstractions;
+using TakEngine.Crypto;
 using TakEngine.Transport.Matchmaking;
 using TakEngine.Transport.Nostr;
 using Xunit;
@@ -12,18 +13,20 @@ public class NostrProfileTests
     [Fact]
     public void NostrProfile_CreateMetadataEvent_BuildsValidKind0Event()
     {
-        string pubKey = "3bf0c63fcb93463407af97b5e0918838e64edd9d071293ad011663f1d7b6af94";
+        var key = SecretKey.FromBytes(System.Security.Cryptography.SHA256.HashData("profile test key"u8));
+        string pubKey = key.PublicKey.ToHex();
         var profile = new NostrProfile(
             Name: "kvothe",
             DisplayName: "Kvothe the Bloodless",
             About: "Edema Ruh to my bones",
             Picture: "https://example.com/avatar.png");
 
-        var evt = NostrProfile.CreateMetadataEvent(pubKey, profile);
+        var evt = NostrProfile.CreateMetadataEvent(key, profile, createdAt: 1_760_000_000, aux32: new byte[32]);
 
         Assert.Equal(0, evt.Kind);
         Assert.Equal(pubKey, evt.Pubkey);
-        Assert.NotEmpty(evt.Id);
+        Assert.Equal(1_760_000_000, evt.CreatedAt);
+        Assert.True(NostrEvents.Verify(evt));
         Assert.NotEmpty(evt.Content);
 
         // Parse content back
@@ -59,8 +62,9 @@ public class NostrProfileTests
             GameId: gameId,
             HostPubKey: hostPub,
             BoardSize: BoardSize.Five,
+            KomiHalves: 0,
             Relays: relays,
-            SeedHex: "1234abcd",
+            SeedCommit: new string('a', 64),
             HostNickname: "Kvothe");
 
         // URI Roundtrip

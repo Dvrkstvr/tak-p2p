@@ -1,5 +1,6 @@
 """Regenerates nip01-vectors.json (F-032) with an implementation independent of the C# code under test:
-NIP-01 id = sha256 of json.dumps([0,pubkey,created_at,kind,tags,content], separators=(",",":"), ensure_ascii=False),
+NIP-01 id = sha256 of json.dumps([0,pubkey,created_at,kind,tags,content], separators=(",",":"), ensure_ascii=False)
+with DEL written as \u007f, as strfry (nos.lol, relay.damus.io) serializes it; a raw DEL is refused as a bad id there,
 sig = bitcoin/bips BIP-340 reference implementation (bip340_reference.py, next to this file) with a fixed aux per event
 (so the C# signature must match exactly).
 Run from the repo root: python tests/TakEngine.Transport.Tests/Vectors/make_nip01_vectors.py"""
@@ -38,7 +39,7 @@ out = {
 }
 for i, (name, kind, tags, content) in enumerate(cases):
     created_at = 1700000000 + i
-    serialized = json.dumps([0, pk, created_at, kind, tags, content], separators=(",", ":"), ensure_ascii=False)
+    serialized = json.dumps([0, pk, created_at, kind, tags, content], separators=(",", ":"), ensure_ascii=False).replace("\x7f", "\\u007f")
     event_id = hashlib.sha256(serialized.encode("utf-8")).digest()
     aux = hashlib.sha256(("aux-%d" % i).encode()).digest()
     sig = schnorr_sign(event_id, sk, aux)

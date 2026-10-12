@@ -53,23 +53,23 @@ Plan A1's and A2's constraints apply. In addition:
 
 **Files:** Transport `ColorSeed.cs`, `InviteCode.cs`; tests `ColorSeedTests.cs`, `InviteCodeTests.cs` (rewritten).
 
-- [ ] Red tests:
+- [x] Red tests:
   - `Derive_IsFixedByGoldenVector` (python-generated next to the json, like A2's digest vectors).
   - `Commit_VerifiesOnlyTheCommittedNonce`.
   - `Derive_DependsOnBothNonces`.
   - `Colours_ComeOutOpposite_ForAnyNonces` (seeded loop).
-- [ ] Invite tests:
+- [x] Invite tests:
   - Round trip through the compact code, the web URL and the `tak://` URI. Each carries `seed_commit`, `komi` and `size`.
   - Each of these fails with a specific message: a missing commitment, a commitment that is not 64 hex characters, size 2 or 9, komi -1 or 21, a host key off the curve or not 32 bytes, a self-invite (checked by the guest with its own key), relays that aren't `wss://` (or `ws://127.0.0.1`/`localhost` for tools).
   - An old `TAK1_` code is refused with "this invite is from an older version" instead of being half-parsed.
-- [ ] Implement, deleting the `seed` field. `ColorResolver` stays as is.
-- [ ] Commit `M0 F-017: commit-reveal colour seed and invite v2 (D-038)`.
+- [x] Implement, deleting the `seed` field. `ColorResolver` stays as is.
+- [x] Commit `M0 F-017: commit-reveal colour seed and invite v2 (D-038)`.
 
 ### Task 2: storage seam and fakes
 
 **Files:** Abstractions `IGameStore.cs` and records; Testing `InMemoryGameStore.cs`, `InMemoryKeyStore.cs`; tests in `tests/TakEngine.Testing` smoke class.
 
-- [ ] `IGameStore`:
+- [x] `IGameStore`:
   - `SaveNewGame(NetGameRecord)`
   - `UpdateHandshake(gameId, state, guestKey?, guestNonce?)`
   - `CommitApplied(gameId, SignedGameAction, eventId, tps, hash, ExchangeProgress)` (one call, atomic)
@@ -77,21 +77,21 @@ Plan A1's and A2's constraints apply. In addition:
   - `AddFlag(gameId, FlagEntry)`
   - `Load(gameId)` returns the record, the applied actions, the progress, the outbox and the flags.
   - `ListGames()`.
-- [ ] Red tests for the fake:
+- [x] Red tests for the fake:
   - The data survives `Dispose` of the coordinator that used it.
   - `FailNextWrite()` makes the next write throw and leaves nothing half-written.
-- [ ] `NetGameRecord` carries:
+- [x] `NetGameRecord` carries:
   - role, my key (pubkey only), opponent key
   - game id, size, komi
   - host nonce (host only), guest nonce, seed commitment
   - relays, handshake state, result
-- [ ] Commit `M0 F-035: IGameStore seam and in-memory fakes`.
+- [x] Commit `M0 F-035: IGameStore seam and in-memory fakes`.
 
 ### Task 3: F-035 — `IncomingClassifier`, `TurnExchange`, `LinkStatus`
 
 **Files:** Multiplayer `IncomingClassifier.cs`, `TurnExchange.cs`, `LinkStatus.cs`; tests one class each plus `TurnExchangePropertyTests.cs`.
 
-- [ ] Red tests for `TurnExchange`, following the scope.md table row by row:
+- [x] Red tests for `TurnExchange`, following the scope.md table row by row:
   - Own echo is ignored, and `maxCreatedAt` is updated.
   - A stranger is dropped and counted.
   - t == n+1 is applied, and the buffer is drained.
@@ -102,27 +102,27 @@ Plan A1's and A2's constraints apply. In addition:
   - An event after Completed is ignored.
   - A MOVE for my own turn is a violation.
   - RESIGN is accepted when `k <= appliedTurn + 1`, and a later MOVE is ignored.
-- [ ] Property tests, seeded:
+- [x] Property tests, seeded:
   - Every permutation of a 6-ply game, with each event duplicated, ends at the same hash.
   - 200 random permutations of the scripted 5x5 game, with duplicates, end at the same hash. The seed is printed on failure.
-- [ ] `IncomingClassifier`: rows 5-7 on top of the codec verdicts 1-4. It returns `Drop(count)` or `DropAndFlag(reason)`. Reason strings come from scope.md, e.g. "hash chain mismatch at turn t" and "illegal move from opponent: <engine reason>".
-- [ ] `LinkStatus`:
+- [x] `IncomingClassifier`: rows 5-7 on top of the codec verdicts 1-4. It returns `Drop(count)` or `DropAndFlag(reason)`. Reason strings come from scope.md, e.g. "hash chain mismatch at turn t" and "illegal move from opponent: <engine reason>".
+- [x] `LinkStatus`:
   - Opponent link: Unknown, Active (a verified event in the last 10 min), Quiet.
   - Own link: Online, Degraded, Offline, from the per-relay states.
-- [ ] Run Stryker on the three files (bar 80 %). Commit `M0 F-035: TurnExchange, IncomingClassifier, LinkStatus`.
+- [x] Run Stryker on the three files (bar 80 %). Commit `M0 F-035: TurnExchange, IncomingClassifier, LinkStatus`.
 
 ### Task 4: F-017 (part 2) — host and guest handshakes
 
 **Files:** Multiplayer `Handshake/HostHandshake.cs`, `GuestHandshake.cs`; tests one class each.
 
-- [ ] Red tests for the host, from scope.md's host states:
+- [x] Red tests for the host, from scope.md's host states:
   - `Idle -> Inviting` saves the record with the host nonce and komi. Its decision is to subscribe without `authors`.
   - A valid JOIN moves the host to `Locked(G)`, with the guest nonce stored. The host publishes ACCEPT with `{white, black, host_nonce, size, komi}` (D-041) and moves to InGame.
   - A second guest's JOIN is ignored and surfaced as "game already taken".
   - A repeated JOIN, even with a new nonce, gets the same ACCEPT.
   - A restart while Inviting or Locked loses nothing.
   - Cancel before Locked publishes nothing.
-- [ ] Red tests for the guest:
+- [x] Red tests for the guest:
   - Each invalid invite gives `Failed` with its message, and the fake relay frame counter stays at 0.
   - JOIN carries a fresh guest nonce, passed in by the caller. It is republished at 5, 15 and 45 s, then every 60 s (fake time).
   - An ACCEPT from a non-host key is dropped and flagged.
@@ -130,40 +130,40 @@ Plan A1's and A2's constraints apply. In addition:
   - An ACCEPT whose size or komi differs from the invite fails the guest.
   - A colour mismatch fails the guest with "host and guest disagree on colours".
   - A good ACCEPT moves the guest to InGame, with the session built from the invite's size and komi.
-- [ ] Commit `M0 F-017: host and guest handshakes`.
+- [x] Commit `M0 F-017: host and guest handshakes`.
 
 ### Task 5: `GameCoordinator` and `MultiplayerGame`
 
 **Files:** Multiplayer `GameCoordinator.cs`, `MultiplayerGame.cs`; tests `GameCoordinatorTests.cs`.
 
-- [ ] `MultiplayerGame`, the API heads call:
+- [x] `MultiplayerGame`, the API heads call:
   - `Host(size, komi)` returns the invite.
   - `Join(invite)`.
   - `Submit(move)` is refused locally when illegal, and then nothing is published.
   - `Resign()`.
   - Events: `ActionApplied`, `Flagged`, `LinkChanged`, `Ended`, `PublishStatus` (per relay).
-- [ ] The coordinator runs the pure decisions against `RelayPool`, `IGameStore` and `TimeProvider`.
+- [x] The coordinator runs the pure decisions against `RelayPool`, `IGameStore` and `TimeProvider`.
   - The order for a local move is: sign, then outbox, then publish.
   - The order for a remote action is: classify, then apply, then `CommitApplied`.
-- [ ] Red tests over `InMemoryRelay` and `FakeTimeProvider`:
+- [x] Red tests over `InMemoryRelay` and `FakeTimeProvider`:
   - `IllegalLocalMove_PublishesNothing` (frame counter).
   - `MovesEnteredOffline_AreSentOnReconnect`.
   - `PublishThenCrashBeforeSave_RepublishesTheSameTurn_PeerIgnoresTheDuplicate`. `FailNextWrite` simulates the crash.
-- [ ] Deliberate-break check: remove the outbox write and see the crash test fail, then revert. Record the result in the F-035 evidence.
-- [ ] Commit `M0 F-035: GameCoordinator and MultiplayerGame`.
+- [x] Deliberate-break check: remove the outbox write and see the crash test fail, then revert. Record the result in the F-035 evidence.
+- [x] Commit `M0 F-035: GameCoordinator and MultiplayerGame`.
 
 ### Task 6: F-016 — the headless full game (end of M0-A)
 
 **Files:** `tests/TakEngine.Multiplayer.Tests/HeadlessGameTests.cs`.
 
-- [ ] Red tests: two `MultiplayerGame`s, two keys, two stores and one `InMemoryRelay` exposing two relay endpoints.
+- [x] Red tests: two `MultiplayerGame`s, two keys, two stores and one `InMemoryRelay` exposing two relay endpoints.
   - `ScriptedFiveByFive_RoadWin_EqualResultAndFinalHash`.
   - The same game with `DuplicateDeliveries(2)` and `ReorderLive(seed)`, with seeds as a Theory.
   - The same game on 7x7 with komi 5, ending on flats or a road. This proves F-058 through the network path.
   - `IllegalMove_RefusedLocally_NothingPublished`.
-- [ ] Fill in `evidence` for F-035, F-017 and F-016: test names, Stryker scores, deliberate breaks and the CI run id. Update `pipeline/STATUS.md`: M0-A done, next M0-B.
-- [ ] Run the A1-style final review for A2 and A3 (code-review high over the M0-A range).
-- [ ] Commit `M0 F-016: headless 5x5 game to a road win over the fake relay`.
+- [x] Fill in `evidence` for F-035, F-017 and F-016: test names, Stryker scores, deliberate breaks and the CI run id. Update `pipeline/STATUS.md`: M0-A done, next M0-B.
+- [x] Run the A1-style final review for A2 and A3 (code-review high over the M0-A range).
+- [x] Commit `M0 F-016: headless 5x5 game to a road win over the fake relay`.
 
 ## Handed to M0-B (not in this plan)
 

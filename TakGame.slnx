@@ -9,13 +9,21 @@
     <Project Path="src/TakEngine.Abstractions/TakEngine.Abstractions.csproj" />
     <Project Path="src/TakEngine.Core/TakEngine.Core.csproj" />
     <Project Path="src/TakEngine.Crypto/TakEngine.Crypto.csproj" />
+    <Project Path="src/TakEngine.Multiplayer/TakEngine.Multiplayer.csproj" />
     <Project Path="src/TakEngine.Storage.Local/TakEngine.Storage.Local.csproj" />
     <Project Path="src/TakEngine.Transport/TakEngine.Transport.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/TakApp.Cli.Tests/TakApp.Cli.Tests.csproj" />
     <Project Path="tests/TakEngine.Core.Tests/TakEngine.Core.Tests.csproj" />
     <Project Path="tests/TakEngine.Crypto.Tests/TakEngine.Crypto.Tests.csproj" />
+    <Project Path="tests/TakEngine.Multiplayer.Tests/TakEngine.Multiplayer.Tests.csproj" />
     <Project Path="tests/TakEngine.Storage.Tests/TakEngine.Storage.Tests.csproj" />
+    <Project Path="tests/TakEngine.Testing/TakEngine.Testing.csproj" />
     <Project Path="tests/TakEngine.Transport.Tests/TakEngine.Transport.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/TakRelay.Local/TakRelay.Local.csproj" />
+    <Project Path="tools/TakTestPeer/TakTestPeer.csproj" />
   </Folder>
 </Solution>
