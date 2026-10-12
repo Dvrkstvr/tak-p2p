@@ -217,8 +217,8 @@
         "Illegal moves are not offered by the UI and are rejected by the engine if forced",
         "WebGameSessionManager's duplicate board and road logic is deleted (D-008); one rules implementation remains"
       ],
-      "passes": false,
-      "evidence": "verifier 2026-10-12: rows 1 and 3 pass, row 2 fails. Row 1: one-off Playwright run, human (White) beat the Easy AI on 5x5 by road a1-a5 (pipeline/evidence/m1-verify-2026-10-12/probes-and-human-win, run.txt + human-win-vs-ai.png). Row 3: WebGameSessionManager.cs gone, no road code in TakApp.Blazor. Row 2 FAILS: the slide bar keeps a stale move from an earlier origin (gestures.md Q-1; StackSlideBar.razor OnParametersSet does not reset SelectedMove when OriginCoord changes) and offers it as an enabled 'Confirm Move (c3+)' while c2 is the origin and c3 is empty; the engine refuses it ('No pieces to move at c3.'), so it is rejected if forced but it is offered (pipeline/evidence/m1-verify-2026-10-12/q1-stale-slide-bar). Also placement markers ignore the selected piece (Wall in the opening is offered, then refused)."
+      "passes": true,
+      "evidence": "verifier 2026-10-12, re-checked at 7d1a3a6: row 1, one-off Playwright run, human (White) beat the Easy AI on 5x5 by a road on the a-file (pipeline/evidence/m1-verify-2026-10-12/probes-and-human-win, again in pipeline/evidence/m1-verify-2026-10-12/reverify-probes-and-human-win; run.txt + human-win-vs-ai.png). Row 2: after D-050 the slide bar on a new stack names only that stack's move and Confirm sends a legal one; no square is marked for Wall or Cap in the opening, nor for Cap once the side has used its capstone (cap chip disabled); a forced cap with none left shows the engine's 'Insufficient reserves' error and changes nothing (pipeline/evidence/m1-verify-2026-10-12/reverify-f021-row2); slide targets and carry limit as in F-022. `node tests/e2e/play.mjs` SUMMARY PASS incl. G-04 and G-43 (pipeline/evidence/m1-verify-2026-10-12/reverify-play-run). Row 3: WebGameSessionManager.cs gone, no road code in TakApp.Blazor."
     },
     {
       "id": "F-022",
