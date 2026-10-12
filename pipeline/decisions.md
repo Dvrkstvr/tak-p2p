@@ -336,3 +336,13 @@ and scope.md's guest handshake now say "counted and dropped", as tamper row 2 al
   relays sees the game tag and both keys, so flagging a stranger's events would let a bystander raise warnings in someone else's
   game. An event that can't be attributed to the opponent can't be held against them
 - revisit if: players get an identity other than the key in the invite, so that such an event could be attributed
+
+## D-048 · 2026-10-12 · stage 8 · by: user
+The browser key stays in `localStorage` on the shared GitHub Pages origin `https://dvrkstvr.github.io` for now (review M0-security
+finding 2). Calvin chose "Accept for now" over moving the site to its own origin before M1. Any other Pages site of the account, or
+any XSS on that origin, can read the `nsec`; R-009 now holds the threat model. Moving the web app to an origin of its own (a custom
+domain or a dedicated account) is on the M7 release list.
+- why: the user's call on the review's decision card. The exposure needs script running on the account's own origin, and moving
+  costs a domain or account and a redeploy while the browser head is still changing
+- revisit if: another repo of the account publishes to Pages, the site starts holding keys with value beyond test games, or M2 adds
+  key backup or a persisted browser store

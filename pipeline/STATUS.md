@@ -4,12 +4,12 @@
 
 ## Now
 - track: deep · approach: spec-first (+ prototype-first: relay round-trip spikes)
-- stage: 7 Build — M0 features all pass (24/24, verified 2026-10-12); M0 milestone gate still needs the stage-8 review (code + security lenses) and curate
+- stage: 7 Build — M0 done: features all pass, review (pipeline/reviews/M0-code.md, M0-security.md) fixed or decided (D-047, D-048); M1 next
 - clarity: scope 5/5 · blocking 0 · assumed 9 · deferred 3
 - feasibility: amber · H-open 0 · M-open 3 · spiked 4
 - milestone: M0 → M1 (browser on the engine) · features passing 32/58 · owed checks 4
 - core promise: last ran end to end 2026-10-12, CLI host vs phone browser over nos.lol + damus (F-039, pipeline/evidence/live-relay-log.md)
-- next: M0 review + curate, then M1: F-041 (Blazor local/AI play through TakGameSession) with F-043 (Playwright harness), then F-042 row 2 (5 min backgrounded tab) → `/pipeline:run`
+- next: M1: F-041 (Blazor local/AI play through TakGameSession) with F-043 (Playwright harness), then F-042 row 2 (5 min backgrounded tab) → `/pipeline:run`
 
 ## Stages
 | # | Stage | State | Gate | Date |
@@ -25,7 +25,8 @@
 | 9 | Release | todo | — | — |
 
 ## Notes
-- Adopted 2026-09-30. Audit: pipeline/audit.md. Everything through M0 is on main (PRs #2, #5, #6).
+- Adopted 2026-09-30. Audit: pipeline/audit.md. M0 is on main (PRs #2, #5, #6) plus the review fixes (PR #7).
+- M0 review leftovers (nits, not blocking): unlimited "game already taken" notices, unbounded relay list in an invite, invite in the URL query (a #fragment keeps it out of logs), D-038 selective abort, the ACCEPT not naming the guest nonce.
 - The browser /online page (D-046) already covers parts of M2: host, join and rebuild over relays, sizes 3-8 and komi. M2 keeps
   invite link/QR UX (F-047), status (F-046), browser-vs-browser (F-044) and the cross-head run from the Pages site (F-045).
 - Owed hand-checks (5 min each): Blazor vs AI, M1.15.x tower-move controls, CLI game, Avalonia desktop → F-021, F-022, F-024, F-025.

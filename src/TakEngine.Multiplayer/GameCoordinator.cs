@@ -240,6 +240,9 @@ internal sealed class GameCoordinator : IAsyncDisposable
         {
             return "The rebuilt game could not be saved: " + ex.Message;
         }
+        // The opponent's events the rebuild dropped (equivocation, a second JOIN) persist like live flags; the resume counts them.
+        foreach (RebuildFlag dropped in rebuilt.Flags)
+            await _store.AddFlagAsync(record.GameId, new FlagEntry(dropped.Turn, dropped.Reason, dropped.EventId, dropped.Author, _time.GetUtcNow())).ConfigureAwait(false);
         _record = record;
         await ResumeAsync(record.GameId).ConfigureAwait(false);
         return null;

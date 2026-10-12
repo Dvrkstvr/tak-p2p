@@ -110,11 +110,19 @@ Status docs are the only status system and they overstate (README "Implemented" 
 - source: workflows; AGENTS.md L34/L44/L77; README badge
 
 ### R-009 · impact M · evidence platform
-Private keys (nsec) live in browser localStorage (BrowserStorage.cs, per AUDIT); npub/nsec shown/linked across devices via a "Link Devices" modal.
-Threat model (XSS on GitHub Pages origin, sharing keys between devices) is not written down. A leaked key lets someone play as the user.
-- check: security review lens at stage 8; decide on key export/backup UX
-- fallback: WebCrypto non-extractable key or explicit "device-local identity"
-- source: docs/AUDIT.md section 5; not re-read in code
+Private keys (nsec) live in browser localStorage (`tak.identity.v1`, `src/TakApp.Blazor/Services/BrowserStorage.cs`); npub/nsec are
+shown and linked across devices via a "Link Devices" modal. A leaked key lets someone play, sign and decrypt as the user (D-011).
+Threat model (review M0-security finding 2, accepted for now in D-048):
+- Who can read the key: any script on the origin `https://dvrkstvr.github.io`. `localStorage` is per origin, not per path, so that
+  is every Pages site of the account (the user site and every project page, or one built by a compromised dependency or Action in
+  another repo) and any XSS in this app.
+- Who can't: other sites, relays and the opponent. The key is never sent; relays see only the npub and NIP-44 ciphertext.
+- The modal's export puts the nsec on screen and in the clipboard, where the user carries it to other devices on purpose.
+- What a thief can do: play and resign the user's open games, read their game content, and pose as the npub in new games. They
+  cannot change finished games (both sides hold the signed history).
+- check: before M2's persisted browser store or key backup, and at M7 when the web app moves to an origin of its own
+- fallback: WebCrypto non-extractable key or an explicit "device-local identity"; an origin of its own (M7 list)
+- source: pipeline/reviews/M0-security.md finding 2; BrowserStorage.cs read 2026-10-12
 
 ### R-010 · impact M · evidence platform
 Android APK and iOS app have never run on a device; iOS build needs macOS/Xcode and Apple signing; release workflow builds Desktop/CLI only in the

@@ -105,7 +105,7 @@ process, seen in code MainViewModel.cs L21-25) is deleted. Features: F-025, F-05
 
 ## M7 — Release readiness and polish
 LICENSE file (Q-014), README device matrix matches features.json, CLI local game hand-checked, release workflow gated on tests, Android APK smoke on one phone
-(owed; relabelled experimental either way), key-storage threat model written (R-009), the small polish picks from Q-005. Features: F-054, F-055, F-056, F-024, F-028, F-026.
+(owed; relabelled experimental either way), key-storage threat model reviewed (R-009), the web app moved to an origin of its own so no other Pages site shares its `localStorage` (D-048), the small polish picks from Q-005. Features: F-054, F-055, F-056, F-024, F-028, F-026.
 
 ## Platform set proposal for v1 (answers Q-006; default recorded as D-018, user to confirm at sign-off)
 - In v1: Web (GitHub Pages, primary and zero-install), CLI (Windows, Linux, macOS via `dotnet publish`; Windows hand-verified, others "should work"), Desktop

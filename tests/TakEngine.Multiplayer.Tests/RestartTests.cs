@@ -1,5 +1,8 @@
 using TakEngine.Abstractions;
+using TakEngine.Core.Cryptography;
+using TakEngine.Crypto;
 using TakEngine.Testing;
+using TakEngine.Transport.Nostr;
 
 namespace TakEngine.Multiplayer.Tests;
 
@@ -76,6 +79,36 @@ public class RestartTests
         await Table.Eventually(() => rebuilt.Result is not null && other.Result is not null, "both games end");
         Assert.Equal(other.Result, rebuilt.Result);
         Assert.Equal(other.StateHash, rebuilt.StateHash);
+    }
+
+    [Fact]
+    public async Task Rebuild_WithAnEquivocationOnARelay_StoresTheFlag()
+    {
+        await using var t = new Table(seed: 12);
+        var (host, guest) = await t.Connect();
+        await t.Play(host, guest, Script.Take(4));
+        bool hostIsWhite = host.MyColor == PlayerColor.White;
+        MultiplayerGame black = hostIsWhite ? guest : host;
+        MultiplayerOptions blackOptions = hostIsWhite ? t.GuestOptions : t.HostOptions;
+        SecretKey white = (hostIsWhite ? t.HostOptions : t.GuestOptions).Key;
+        // White's second move for turn 1, validly signed: black's turn 2 chains from the real one, so this one is dropped.
+        NostrEvent forged = TamperForge.Forge(ForgeKind.Equivocate, white, blackOptions.Key.PublicKey, black.GameId, 1,
+            StateHasher.ComputeGenesisHash(BoardSize.Five), "c3", t.Time.GetUtcNow().ToUnixTimeSeconds(), t.Random32);
+        Assert.True(t.R1.Seed(forged));
+        await black.DisposeAsync();
+
+        var fresh = new InMemoryGameStore();
+        Task<JoinOutcome> rebuilding = MultiplayerGame.RebuildAsync(t.Options(blackOptions.Key, fresh), host.Invite.ToCompactCode());
+        await Table.Eventually(() => rebuilding.IsCompleted, "rebuild finishes", nudge: () => t.Time.Advance(TimeSpan.FromMilliseconds(100)));
+        JoinOutcome outcome = await rebuilding;
+
+        Assert.True(outcome.Game is not null, outcome.Error);
+        t.Track(outcome.Game);
+        FlagEntry flag = Assert.Single((await fresh.LoadAsync(black.GameId))!.Flags);
+        Assert.Equal(1, flag.Turn);
+        Assert.Equal(forged.Id, flag.EventId);
+        Assert.Equal(white.PublicKey.ToHex(), flag.Author);
+        Assert.Contains("conflicting move for turn 1", flag.Reason, StringComparison.Ordinal);
     }
 
     [Fact]
