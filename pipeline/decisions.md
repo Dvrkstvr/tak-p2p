@@ -346,3 +346,20 @@ domain or a dedicated account) is on the M7 release list.
   costs a domain or account and a redeploy while the browser head is still changing
 - revisit if: another repo of the account publishes to Pages, the site starts holding keys with value beyond test games, or M2 adds
   key backup or a persisted browser store
+
+## D-049 · 2026-10-12 · stage 7 · by: assumed (builder)
+F-041: the Blazor Play page plays local and vs-AI games through `LocalGameAdapter` (TakApp.Blazor/Services), a thin wrapper over
+`TakGameSession.CreateLocal` that also runs the bot's turn (350 ms pause, injectable for tests), keeps the PTN history and hands the
+views a `GameBoard` copy rebuilt from the session snapshot after each change. `WebGameSessionManager` is deleted. Road squares for the
+win highlight come from the new `RoadFinder.FindRoad` / `TakGameSession.WinningRoad`. The stepped tower gesture offers a square only
+when the engine's legal move list for the origin holds a move that starts with the drops so far (`SlideTargets.Fits`); placement
+markers come from the same list. The page still reads the board to choose a gesture (an empty square places, an own stack starts a
+move, any other stack is inspected; carry starts at min(height, size)), because that picks what a click means, not whether a move
+is legal; the engine judges every move sent. Adapter tests live in the new `tests/TakApp.Blazor.Tests`.
+- why: D-008 and F-041 ("no code in TakApp.Blazor decides legality or road wins") with the gestures frozen (pipeline/design/gestures.md):
+  the prefix rule offers exactly what the old hand-written enter-square check offered (SlideTargetsTests pin the wall, capstone and
+  edge cases), and the Playwright run passes unchanged before and after
+- side effects: the status SHA is now the engine's chain (pubkey input `local-player` where the old page used `local`), so its digits differ
+  from the old page's for the same moves; a bot move still pending when the player starts another game is dropped instead of being
+  played into the new game
+- revisit if: the slide bar (Q-1 in gestures.md) or gesture choice is redesigned, or M2 puts online play on the same page

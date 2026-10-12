@@ -36,6 +36,12 @@ public sealed class TakGameSession : ITakGameSession
     public GameResult? Result => _board.Result;
     public int KomiHalves => _board.KomiHalves;
 
+    /// <summary>The winner's road squares when the game ended on a road; empty otherwise.</summary>
+    public IReadOnlyCollection<Coord> WinningRoad =>
+        _board.Result is { Reason: GameEndReason.Road, Winner: PlayerColor winner }
+            ? RoadFinder.FindRoad(_board, winner)
+            : Array.Empty<Coord>();
+
     /// <summary>Plies applied so far (D-040); the next move carries <c>AppliedTurn + 1</c>.</summary>
     public int AppliedTurn => _appliedTurn;
 

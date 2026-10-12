@@ -218,7 +218,7 @@
         "WebGameSessionManager's duplicate board and road logic is deleted (D-008); one rules implementation remains"
       ],
       "passes": false,
-      "evidence": null
+      "evidence": "row 3, builder 2026-10-12, not verified: WebGameSessionManager.cs deleted (F-041, D-049); road squares come from RoadFinder.FindRoad in Core."
     },
     {
       "id": "F-022",
@@ -458,7 +458,7 @@
         "Failure: forcing an illegal move through the adapter returns the engine's error and the UI shows it"
       ],
       "passes": false,
-      "evidence": null
+      "evidence": "builder 2026-10-12, not verified: LocalGameAdapter over TakGameSession, WebGameSessionManager deleted, slide targets from the engine's legal moves (D-049). tests/TakApp.Blazor.Tests (LocalGameAdapterTests: illegal placement and slide return the engine error and change nothing; hash chain equals a reference session; bot answers through the session) and Core RoadFinder.FindRoad / TakGameSession.WinningRoad tests, red (missing types) then green. UI shows the engine error: Playwright row G-10b. `node tests/e2e/play.mjs` unchanged script, SUMMARY PASS before (pipeline/evidence/m1-f043-2026-10-12/before-f041) and after (.../after-f041)."
     },
     {
       "id": "F-042",

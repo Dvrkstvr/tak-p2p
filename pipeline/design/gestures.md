@@ -2,7 +2,8 @@
 
 Characterisation of what the page does today (F-043, M1 design task; scope.md "Stepped tower movement gesture"). Read from
 `src/TakApp.Blazor/Pages/Play.razor`, `Components/Board/TakBoardView.razor`, `PieceInventoryView.razor`, `StackSlideBar.razor`
-and confirmed by driving the page with `node tests/e2e/play.mjs` (2026-10-12). This describes behaviour, it does not propose any:
+and confirmed by driving the page with `node tests/e2e/play.mjs` (2026-10-12; the same run passes after F-041 moved the page onto
+`TakGameSession`). This describes behaviour, it does not propose any:
 M1 freezes it (D-006 spirit). Rows marked *driven* are checked by the Playwright script, which cites the row id in its log.
 
 ## Page state
