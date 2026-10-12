@@ -188,6 +188,10 @@ States per relay connection: `Connecting` -> `Subscribed` -> `CaughtUp` (EOSE se
   fork warning instead of continuing.
 - History is missing a turn (relay retention, or only one relay answered): stay in "waiting for move n+1", try the other relay, surface "move n+1 not found on any relay"; if the opponent is online it resends on its own reconnect;
   if not, the game waits. No guessing and no skipping.
+- Silent drop (the socket died with no close: a device slept, a NAT dropped the flow; D-051): any frame from the relay resets an idle clock. After 60 s with
+  nothing from a Subscribed/CaughtUp relay the client sends one probe (`REQ tak-probe` matching nothing, `limit: 0`; on its EOSE, `CLOSE tak-probe`). Nothing within
+  10 s: the socket counts as dropped -> Backoff -> reconnect, and the REQ above catches up; a move published into the dead socket is resent on the new one at once.
+  A browser tab that becomes visible again (or goes back online) probes at once instead of waiting the idle window. Probes are not EVENTs and don't use the publish budget.
 - Relay NOTICE / `CLOSED auth-required`: shown per relay, that relay is treated as read-impossible and the other relay carries on (damus AUTH is broken, seen running).
 
 ### A tampered, forged or illegal move is received (F-038, F-006, F-016)

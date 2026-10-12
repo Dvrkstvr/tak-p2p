@@ -107,6 +107,8 @@ ActionDigest = SHA-256(UTF-8("tak/action/v1\n" + pv + "\n" + action_type + "\n" 
   a host drops `authors` from the first filter for the whole game (D-042). `since = maxCreatedAt - 30 s`, absent on a cold rebuild;
   `maxCreatedAt` moves only on the opponent's accepted events, capped at our clock + 1 min (a stranger or our own clock can't hide moves).
   `ids` lookups chunked to <= 5 (nos.lol silently returns nothing for 20; spike, seen running).
+- Liveness probe (D-051): after 60 s with no frame from a relay, `["REQ","tak-probe",{"ids":[<64 zeros>],"kinds":[3825],"limit":0}]`, closed with
+  `CLOSE tak-probe` on its EOSE; no frame within 10 s = a drop and a reconnect.
 - Decode order = tamper rows: (1) id + sig, (2) author is the opponent (or any non-self author for a JOIN while Inviting),
   (3) decrypt, (4) JSON + `pv` + game id + inner signature + `player_pubkey == event.pubkey`, then in `TurnExchange`:
   (5) prev hash, (6) turn owner / PTN / legality, (7) equivocation. `pv != 1` from the opponent: drop and flag
@@ -146,7 +148,7 @@ ActionDigest = SHA-256(UTF-8("tak/action/v1\n" + pv + "\n" + action_type + "\n" 
 ## Seams
 | Seam | Real | Fake (tests / local multi-instance) |
 |---|---|---|
-| Relay WebSocket (R-001, R-004) | `ClientWebSocketRelaySocket : IRelaySocket` (text frames: connect, send, receive, close; `IRelaySocketFactory.Create(url)`) | `InMemoryRelay` in `tests/TakEngine.Testing`: NIP-01 subset (EVENT, REQ with ids/authors/kinds/#p/#g/since/limit, EOSE, CLOSE, OK, CLOSED, NOTICE); verifies id and sig and answers `OK false invalid` otherwise; stores history and returns it newest-first. Fault knobs, all deterministic from a seed: `Refuse(predicate, "rate-limited: …")`, `RejectUpgrade(503)`, `DropConnections()`, `ReorderLive()`, `DuplicateDeliveries(n)`, `Withhold(eventId)`, `AuthRequiredForReads()`, `Partition(relay)`, and a rate limit like damus (refuse the 6th event in a burst). Served over real sockets by `tools/TakRelay.Local`. |
+| Relay WebSocket (R-001, R-004) | `ClientWebSocketRelaySocket : IRelaySocket` (text frames: connect, send, receive, close; `IRelaySocketFactory.Create(url)`) | `InMemoryRelay` in `tests/TakEngine.Testing`: NIP-01 subset (EVENT, REQ with ids/authors/kinds/#p/#g/since/limit, EOSE, CLOSE, OK, CLOSED, NOTICE); verifies id and sig and answers `OK false invalid` otherwise; stores history and returns it newest-first. Fault knobs, all deterministic from a seed: `Refuse(predicate, "rate-limited: …")`, `RejectUpgrade(503)`, `DropConnections()`, `ReorderLive()`, `DuplicateDeliveries(n)`, `Withhold(eventId)`, `AuthRequiredForReads()`, `Partition(relay)`, `SilentDrop()` (open sockets go dead with no close, D-051), and a rate limit like damus (refuse the 6th event in a burst). Served over real sockets by `tools/TakRelay.Local`. |
 | Clock (R-011, backoff, 20 s gap, 8 s NoAnswer, 10 min Active) | `TimeProvider.System` (BCL, browser-safe) | `FakeTimeProvider` (Microsoft.Extensions.TimeProvider.Testing; NuGet lists 10.10.0 on 2026-10-02) advanced by tests |
 | Key store (R-009) | `FileKeyStore` (CLI/desktop); `BrowserKeyStore` over localStorage (M1+) | `InMemoryKeyStore` (can be pre-loaded with a corrupt blob) |
 | Game storage (R-004 retention, F-037) | `SqliteGameStore` (CLI/desktop); browser store at M3 | `InMemoryGameStore` that survives a coordinator being disposed (= a restart) and can fail the next write (crash between publish and save) |

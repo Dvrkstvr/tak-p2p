@@ -370,3 +370,22 @@ for an earlier stack, so after a move made by clicking the board, its Confirm bu
 the one behaviour change M1 makes on purpose; the Playwright harness pins it.
 - why: Confirm could send a move the player didn't mean; the engine refused it only if it was illegal
 - revisit if: the slide bar is redesigned (Calvin chose "Fix in M1" on the decision card)
+
+## D-051 · 2026-10-12 · stage 7 · by: assumed (builder)
+A relay socket that dies without a close (a phone or laptop that slept, a NAT that dropped the flow) is found by a probe. `RelayLink`
+(pure, time passed in) records when anything last arrived; a link that is Subscribed or CaughtUp and has heard nothing for 60 s asks
+for one probe: `["REQ","tak-probe",{"ids":["<64 zeros>"],"kinds":[3825],"limit":0}]`, which matches nothing and which a relay answers
+with EOSE (the pool then sends `CLOSE tak-probe`; CLOSED or NOTICE count as an answer too). Any frame resets the idle clock and
+answers the probe. No frame within 10 s of the probe: the shell cancels the read, disposes the socket and the link backs off as for any
+drop (1 s first), and the reconnect's REQ (`since = maxCreatedAt - 30 s`) catches up. A fresh socket makes a pending no-answer
+publish retry due at once (`PublishTracker.OnReconnected`; rate-limit backoffs stay). `RelayPool.CheckNow()` (via
+`MultiplayerGame.CheckConnections()`) probes at once: the Blazor head calls it from `visibilitychange` (visible) and `online`
+(`wwwroot/js/page-visibility.js`). The fake relay's `SilentDrop()` knob reproduces the fault.
+- why: the F-042 background run showed the client reconnects only when it sees a close; a silent drop would leave a game waiting for
+  ever. A REQ that matches nothing is the cheapest frame every NIP-01 relay must answer, it is not an EVENT so it costs nothing from
+  the 4-per-10-s budget, and one per 60 s idle per relay is far below any rate limit seen. 60 s keeps it rare (the coordinator's 20 s
+  gap catch-up already makes a busy link chatty); 10 s is above the 8 s no-answer used for publishes
+- side effects: the worst case from a silent drop to a reconnect is 71 s without a wake hook (11 s with one); the frame log of an idle
+  game gains one REQ/EOSE/CLOSE per relay per minute
+- revisit if: a relay rate-limits or refuses REQs at that pace, refuses `limit: 0` or the zero id without answering, or a live run
+  shows a NAT dropping flows that are quiet for less than 60 s

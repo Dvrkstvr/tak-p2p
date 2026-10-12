@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Microsoft.JSInterop;
 using TakEngine.Abstractions;
 using TakEngine.Core.Board;
 using TakEngine.Core.Serialization;
@@ -13,7 +14,7 @@ namespace TakApp.Blazor.Services;
 /// transcript in the CLI's <c>--plain</c> line format so two devices' runs can be compared. No rules or protocol here; the board shown
 /// is the TPS the game committed after each applied move.
 /// </summary>
-public sealed class OnlineGameService(BrowserStorage storage, TabGameLock tabLock) : IAsyncDisposable
+public sealed class OnlineGameService(BrowserStorage storage, TabGameLock tabLock, IJSRuntime js) : IAsyncDisposable
 {
     /// <summary>The refusal when another tab of this browser holds the game (M0 code review, finding 6).</summary>
     public const string OpenInAnotherTab =
@@ -30,6 +31,7 @@ public sealed class OnlineGameService(BrowserStorage storage, TabGameLock tabLoc
     private readonly HashSet<string> _reportedEvents = new(StringComparer.Ordinal);
     private readonly Dictionary<Uri, RelayLinkState> _links = [];
     private CancellationTokenSource? _watch;
+    private DotNetObjectReference<OnlineGameService>? _visibility;
     private Guid? _locked;
 
     public MultiplayerGame? Game { get; private set; }
@@ -177,7 +179,12 @@ public sealed class OnlineGameService(BrowserStorage storage, TabGameLock tabLoc
         Changed?.Invoke();
     }
 
-    public async ValueTask DisposeAsync() => await LeaveAsync();
+    public async ValueTask DisposeAsync()
+    {
+        await LeaveAsync();
+        _visibility?.Dispose();
+        _visibility = null;
+    }
 
     private async Task<string?> OpenAsync(string inviteText, bool rebuild)
     {
@@ -299,9 +306,33 @@ public sealed class OnlineGameService(BrowserStorage storage, TabGameLock tabLoc
                 Line($"FINAL {Result(result)} {game.StateHash}");
         }
         Board ??= new GameBoard(game.Record.Size, game.Record.KomiHalves);
+        await WatchVisibilityAsync();
         _watch = new CancellationTokenSource();
         _ = WatchRelaysAsync(game, _watch.Token);
         Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// A tab that was hidden (a phone locked, a laptop slept) may hold relay sockets that died without a close. When it becomes
+    /// visible again, or the browser says it is back online, the game probes its relays at once instead of after the idle window
+    /// (D-051). The hook lives in <c>wwwroot/js/page-visibility.js</c>; without it the idle-window probe still finds the drop.
+    /// </summary>
+    [JSInvokable]
+    public void OnPageVisible() => Game?.CheckConnections();
+
+    private async Task WatchVisibilityAsync()
+    {
+        if (_visibility is not null)
+            return;
+        _visibility = DotNetObjectReference.Create(this);
+        try
+        {
+            await js.InvokeVoidAsync("takVisibility.watch", _visibility);
+        }
+        catch (JSException)
+        {
+            // No hook: the idle-window probe still catches a silent drop, only later.
+        }
     }
 
     private async Task WatchRelaysAsync(MultiplayerGame game, CancellationToken stop)
