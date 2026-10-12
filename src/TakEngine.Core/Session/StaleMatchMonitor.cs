@@ -56,31 +56,4 @@ public sealed class StaleMatchMonitor
             IsWarning: isWarning,
             IsTimedOut: isTimedOut);
     }
-
-    public static async Task<IReadOnlyList<StaleEvaluationResult>> CheckAndUpdateActiveGamesAsync(
-        SqliteGameStorage storage,
-        INtpTimeService timeService,
-        CancellationToken cancellationToken = default)
-    {
-        DateTime currentUtc = await timeService.GetUtcNowAsync(cancellationToken);
-        var activeGames = await storage.GetActiveGamesAsync();
-        var results = new List<StaleEvaluationResult>(activeGames.Count);
-
-        foreach (var game in activeGames)
-        {
-            var result = EvaluateGame(game, currentUtc);
-            results.Add(result);
-
-            if (result.NewStatus != game.Status)
-            {
-                await storage.UpdateGameStatusAsync(
-                    game.Id,
-                    result.NewStatus,
-                    winnerPubKey: null,
-                    lastUpdatedAt: game.LastUpdatedAt);
-            }
-        }
-
-        return results;
-    }
 }

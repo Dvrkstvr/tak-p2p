@@ -20,6 +20,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\TakEngine.Storage.Local\TakEngine.Storage.Local.csproj" />
+    <ProjectReference Include="..\TakEngine.Testing\TakEngine.Testing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Fixtures\v0.db" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

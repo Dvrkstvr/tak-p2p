@@ -270,7 +270,10 @@
             GameId: Guid.NewGuid(),
             HostPubKey: pub,
             BoardSize: SelectedSize,
+            KomiHalves: 0,
             Relays: new[] { "wss://relay.damus.io", "wss://nos.lol" },
+            // Multiplayer is not wired in the browser yet (M2); this nonce is not kept, so nobody can be ACCEPTed from it.
+            SeedCommit: ColorSeed.Commit(System.Security.Cryptography.RandomNumberGenerator.GetBytes(ColorSeed.NonceLength)),
             HostNickname: PlayerNickname);
 
         GeneratedInviteCode = invite.ToCompactCode();

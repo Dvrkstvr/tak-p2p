@@ -154,7 +154,7 @@
         "Failure: a move that is illegal on the board is refused locally and nothing is published"
       ],
       "passes": false,
-      "evidence": null
+      "evidence": "Fake-relay rows seen running 2026-10-11 (Plan A3 task 6): HeadlessGameTests, two MultiplayerGames with their own keys and InMemoryGameStores over two InMemoryRelays: ScriptedFiveByFive_RoadWin_EqualResultAndFinalHash (both Completed, same White road result, same final hash, plies 1-9 stored, no flags); SameGame_WithDuplicatesAndReordering (DuplicateDeliveries(2) + ReorderLive(3), seeds 11/23/2026) same hash and no flags; SevenBySeven_WithKomi_RoadWin and ThreeByThree_FullBoard_KomiDecidesTheFlatWin (komi 0 White wins 5-4, komi 5 Black wins) prove F-058 through the network path; IllegalMove_RefusedLocally_NothingPublished (relay store unchanged). Still owed: the LiveRelay row (two OS processes over nos.lol + damus), M0-B."
     },
     {
       "id": "F-017",
@@ -167,8 +167,8 @@
         "Failure: a second guest with a different key is ignored and surfaced; an ACCEPT from a non-host key is dropped and flagged; a malformed invite, missing seed commitment, size 9, komi out of range or self-invite fails with a specific message and no network traffic",
         "Edge: host restarted before the guest joins still accepts the JOIN (invite persisted)"
       ],
-      "passes": false,
-      "evidence": null
+      "passes": true,
+      "evidence": "Seen running 2026-10-11 (Plan A3 tasks 1, 4, 5): Transport.Tests ColorSeedTests (seed_commit and seed equal to Python-generated color-seed-vectors.json with ColorResolver, both colours covered; commitment verifies only its nonce) and InviteCodeTests (TAK2_/URI/web URL round trips with size, komi, seed_commit; specific refusals for missing or non-hex commitment, size 2/9, komi -1/21, bad host key, non-wss relay, damaged code; TAK1_ refused as an older version; self-invite refused by the guest). Multiplayer.Tests HandshakeTests: host locks the first JOIN and ACCEPTs {white, black, host_nonce, size, komi}; RepeatedJoin_WithNewNonce_GetsTheSameAccept; second guest ignored and surfaced; Accept_WithNonceNotMatchingCommit_IsDroppedAndFails (checked before colours); size/komi mismatch and colour mismatch fail; non-host ACCEPT dropped and flagged; JOIN schedule 5/15/45/+60 s; host restart while inviting or locked loses nothing. GameCoordinatorTests over InMemoryRelay: both land InGame with opposite colours and White's first move shows on both; BadInvite_FailsWithNoStoreWriteAndNoTraffic; OwnInvite_Fails; HostRestartedBeforeTheGuestJoins_StillAcceptsTheJoin; SecondGuest_IsIgnoredAndSurfaced (needs D-042); GuestJoin_IsRepublishedOnSchedule; AcceptArrivingAfterTheFirstMove_StillPlaysThatMove. Stryker on Handshake/*.cs 96.85 % (survivors: null guards reached later anyway, one equivalent schedule boundary)."
     },
     {
       "id": "F-018",
@@ -352,8 +352,8 @@
         "The hash chain matches a fixed known sequence (golden vector), so a refactor cannot silently change it",
         "Edge: first-turn colour swap move round trips"
       ],
-      "passes": false,
-      "evidence": null
+      "passes": true,
+      "evidence": "Seen running 2026-10-11 (Plan A2 tasks 1-3, CI ci.yml green on each push of branch claude/project-thread-jtojtm, e.g. run 38155862524): Crypto.Tests ActionDigestTests (digest + BIP-340 signature equal to Python-generated action-digest-vectors.json for JOIN, ACCEPT, MOVE x3, RESIGN; any field change breaks verification; malformed input returns false). Core.Tests RemoteSessionTests: two sessions with independent keys play ScriptedGames' 5x5 road win to equal final hash; failure rows (wrong author, bad signature, wrong prev hash, wrong turn number, wrong game id, wrong pv, malformed/non-canonical PTN, illegal move, extra data, JOIN, local player's turn) each fail, raise OnProtocolViolationDetected and leave hash, TPS and ply unchanged; first-turn swap round trips; resign; Restore continues the chain; a spectator verifies the players' chain. HashChainGoldenTests pins the D-040 hash sequence (ply 1 cross-checked in Python). Transport.Tests EnvelopeCodecTests: rows 1-4, IncompatibleVersion, NotForUs, own echo, DecodeNeverDecryptsBeforeVerifying (spy). Stryker 5.0.0: EnvelopeCodec.cs 92.31 %, ActionDigest.cs 82.50 % (survivors: null guards, Guid \"D\" format equivalents). Deliberate break: ActionDigest domain v1->v2 turns 6 vector tests red."
     },
     {
       "id": "F-034",
@@ -367,7 +367,7 @@
         "LiveRelay (by hand): the same client works against nos.lol and damus together"
       ],
       "passes": false,
-      "evidence": null
+      "evidence": "Fake-relay rows seen running 2026-10-11 (Plan A2 tasks 4-6): RelayPoolTests over two InMemoryRelays + FakeTimeProvider: Sent when any relay says OK true, Failed when all refuse; rate-limited refused, retried with backoff and never more than 4 EVENT frames in any 10 s; dropped socket reconnects after 1 s backoff and resubscribes with since = max - 30; 503 upgrade retried 1 s, 2 s; CLOSED auth-required marks one relay read-impossible while the other delivers; same event from two relays and across reconnects delivered once; forged copies dropped and counted. RelayLinkTests (backoff 1,2,4,8,16,30,30), PublishTrackerTests, PublishBudgetTests, SubscriptionPlanTests, RelayMessageTests, InMemoryRelayTests. Stryker pure relay logic 95.38 %. Deliberate breaks: subscription evaluated once (no since on resubscribe) -> DroppedSocket_ReconnectsWithBackoff_AndResubscribesWithSince red; dedupe removed -> 4 RelayPool tests red; both reverted. Still owed: the LiveRelay row (nos.lol + damus together), M0-B with F-014."
     },
     {
       "id": "F-035",
@@ -381,8 +381,8 @@
         "Restart after publish-but-before-save republishes the same turn and the peer ignores the duplicate",
         "Own-key echoes from the relay are ignored; moves entered while all relays are down are sent on reconnect"
       ],
-      "passes": false,
-      "evidence": null
+      "passes": true,
+      "evidence": "Seen running 2026-10-11 (Plan A3 tasks 2, 3, 5): Multiplayer.Tests TurnExchangeTests row by row (own echo, n+1 applied, later turns buffered then applied in order, 64-entry cap dropping the furthest, a gap open 20 s asks for catch-up and again every 20 s, duplicate and re-signed duplicate ignored, conflicting move flagged with first seen winning, wrong turn owner, hash chain mismatch, illegal move with the engine reason, events after Completed ignored, RESIGN up to one turn ahead and a RESIGN ahead of missing moves waits); TurnExchangePropertyTests: all 720 orders of a 6-ply game with every event twice, and 3 x 200 seeded random orders of the scripted road win with duplicates, end at the same hash with no flags (seed printed on failure). GameCoordinatorTests: IllegalLocalMove_PublishesNothing, MovesEnteredOffline_AreSentOnReconnect, PublishThenCrashBeforeSave_RepublishesTheSameTurn_PeerIgnoresTheDuplicate (FailNextWrite on MarkOutboxSent), MoveNoRelayAccepted_IsSentAfterARestart. FakeStoreTests for InMemoryGameStore/InMemoryKeyStore. Stryker TurnExchange + IncomingClassifier + LinkStatus 99.03 % (one equivalent mutant). Deliberate break: without the outbox write the three restart/ordering tests go red; reverted."
     },
     {
       "id": "F-036",
@@ -395,7 +395,7 @@
         "grep of src/TakApp.Cli shows no 'simulation' / 'Connecting...' placeholder text and the local game still starts from the menu"
       ],
       "passes": false,
-      "evidence": null
+      "evidence": "Loopback rows seen running 2026-10-11 (Plan B1 task 6): TakApp.Cli.Tests TwoProcessTests, two real CLI processes (host --plain, join <invite> --plain, own --data-dir each) over tools/TakRelay.Local play the scripted 5x5 road win and print the same FINAL line; PlainOutputTests pin every --plain line; OnlineCommandTests: bad invite exits 2 with no relay traffic, unreachable relays print RELAY <url> backoff and keep retrying, a taken invite gives the host 'game already taken' while the second guest keeps waiting, corrupt key file exits 2 untouched. grep of src/TakApp.Cli for simulation/Connecting... is empty and the menu still starts a local game (printf '3' run, exit 0). Live row (nos.lol + damus, two terminals) owed: this container's network policy refuses the public relays."
     },
     {
       "id": "F-037",
@@ -408,7 +408,7 @@
         "Failure: a missing turn (relay lacks it) leaves the game in 'waiting for move n+1', never skips it; a rebuilt hash that differs from the surviving side's shows a fork warning"
       ],
       "passes": false,
-      "evidence": null
+      "evidence": "Fake-relay and loopback rows seen running 2026-10-11 (Plan B1 tasks 2, 3, 6): Multiplayer.Tests RestartTests (B crashes after turn 4, A plays 5, B resumes from InMemory and SQLite stores and the game ends at equal hashes; cold rebuild for guest and host from relay history labelled 'rebuilt from relays'; a move missing from every relay fails the rebuild with 'move n not found on any relay' and stores nothing), RebuildPlanTests (fork and illegal move fail as 'fork: ...'), TwoProcessTests (joiner process killed mid-game and resumed by rerunning its command). Storage.Tests: SQLite store contract, v0 fixture migration, newer version opens read-only. Live row (killed CLI over nos.lol + damus) owed: public relays unreachable from this container."
     },
     {
       "id": "F-038",
@@ -421,7 +421,7 @@
         "Failure of the check itself: the test suite goes red if the drop is removed (deliberate-break check)"
       ],
       "passes": false,
-      "evidence": null
+      "evidence": "Fake-relay rows seen running 2026-10-11 (Plan B1 task 4): Multiplayer.Tests TamperMatrixTests, one case per row (bad sig, stranger, undecryptable, bad envelope signature, fork, illegal move, wrong turn owner, equivocation) during a game: board and hash unchanged, rows 1-2 counted only, rows 3-7 flagged with the scope.md reason and still stored after a restart (SQLite), the opponent's next real move is accepted; three flags raise a notice suggesting resign and nothing is forfeited. Deliberate-break check: removing the prev-hash check turns the fork row red, letting row 4 through the classifier turns the bad-envelope row red. tools/TakTestPeer forges illegal and equivocating moves over the fake relays and the receiver flags them. Live row (TakTestPeer against nos.lol + damus) owed: public relays unreachable from this container."
     },
     {
       "id": "F-039",

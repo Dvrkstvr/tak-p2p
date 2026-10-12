@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using TakEngine.Abstractions;
+using TakEngine.Crypto;
 using TakEngine.Transport.Matchmaking;
 using Xunit;
 
@@ -11,11 +12,14 @@ public class MatchmakingHandshakeTests
     [Fact]
     public void CreateBroadcastEvent_HasCorrectKindTagsAndTtl()
     {
-        string pubkey = "3bf0c63fcb93463407af97b5e0918838e64edd9d071293ad011663f1d7b6af94";
+        var key = SecretKey.FromBytes(System.Security.Cryptography.SHA256.HashData("quick play test key"u8));
+        string pubkey = key.PublicKey.ToHex();
         var relays = new[] { "wss://relay.damus.io" };
 
-        var evt = QuickPlayMatchmaker.CreateBroadcastEvent(pubkey, BoardSize.Five, relays);
+        var evt = QuickPlayMatchmaker.CreateBroadcastEvent(key, BoardSize.Five, relays, createdAt: 1_760_000_000, aux32: new byte[32]);
 
+        Assert.True(TakEngine.Transport.Nostr.NostrEvents.Verify(evt));
+        Assert.Contains(evt.Tags, t => t.Count == 2 && t[0] == "expiration" && t[1] == "1760000060");
         Assert.Equal(QuickPlayMatchmaker.EphemeralQuickPlayKind, evt.Kind);
         Assert.Equal(pubkey, evt.Pubkey);
         Assert.Contains(evt.Tags, t => t.Count >= 2 && t[0] == "t" && t[1] == QuickPlayMatchmaker.QuickPlayTag);

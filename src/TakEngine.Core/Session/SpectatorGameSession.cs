@@ -4,12 +4,13 @@ using TakEngine.Abstractions;
 using TakEngine.Core.Board;
 using TakEngine.Core.Cryptography;
 using TakEngine.Core.Serialization;
+using TakEngine.Crypto;
 
 namespace TakEngine.Core.Session;
 
 public sealed class SpectatorGameSession : ISpectatorGameSession
 {
-    private readonly GameBoard _board;
+    private GameBoard _board;
     private readonly List<TakMove> _moveHistory = [];
     private readonly Dictionary<int, TakBoardSnapshot> _historicalSnapshots = [];
     private string _lastStateHash;
@@ -19,7 +20,8 @@ public sealed class SpectatorGameSession : ISpectatorGameSession
     public string? TournamentId { get; }
     public BoardSize Size => _board.Size;
     public PlayerColor CurrentTurnColor => _board.ActivePlayer;
-    public int CurrentTurnIndex => _board.TurnNumber;
+    /// <summary>Plies applied so far (D-040); the next MOVE carries <c>CurrentTurnIndex + 1</c>.</summary>
+    public int CurrentTurnIndex => _moveHistory.Count;
 
     public string WhitePlayerPubKey { get; }
     public string BlackPlayerPubKey { get; }
@@ -42,7 +44,8 @@ public sealed class SpectatorGameSession : ISpectatorGameSession
         string blackPlayerPubKey,
         string? tournamentId = null,
         int? whitePlayerElo = null,
-        int? blackPlayerElo = null)
+        int? blackPlayerElo = null,
+        int komiHalves = 0)
     {
         GameId = gameId;
         WhitePlayerPubKey = whitePlayerPubKey ?? throw new ArgumentNullException(nameof(whitePlayerPubKey));
@@ -51,7 +54,7 @@ public sealed class SpectatorGameSession : ISpectatorGameSession
         WhitePlayerElo = whitePlayerElo;
         BlackPlayerElo = blackPlayerElo;
 
-        _board = new GameBoard(size);
+        _board = new GameBoard(size, komiHalves);
         _lastStateHash = StateHasher.ComputeGenesisHash(size);
         _historicalSnapshots[0] = _board.ToSnapshot();
     }
@@ -64,89 +67,92 @@ public sealed class SpectatorGameSession : ISpectatorGameSession
         throw new ArgumentOutOfRangeException(nameof(turnIndex), $"No historical snapshot for turn {turnIndex}.");
     }
 
+    /// <summary>
+    /// Verifies and applies one player action (D-040: <c>turn</c> is the 1-based ply). Returns false and raises
+    /// <see cref="OnStateDesyncDetected"/> on any failed check; the board and hash are then unchanged.
+    /// </summary>
     public bool IngestEnvelope(BroadcastEnvelope envelope)
     {
         ObjectDisposedException.ThrowIf(_isDisposed, this);
         ArgumentNullException.ThrowIfNull(envelope);
+        SignedGameAction action = envelope.Action;
 
-        // 1. Verify GameId match
-        if (envelope.GameId != GameId)
+        if (action.GameId != GameId)
+            return RaiseDesync($"GameId mismatch: expected {GameId}, got {action.GameId}");
+
+        if (_board.Phase == GamePhase.Completed)
+            return RaiseDesync("Game has already completed.");
+
+        int expectedTurn = action.ActionType == GameActionType.Resign ? CurrentTurnIndex : CurrentTurnIndex + 1;
+        if (action.Turn != expectedTurn)
+            return RaiseDesync($"Turn sequence error: expected turn {expectedTurn}, got {action.Turn}");
+
+        if (action.ActionType == GameActionType.Move)
         {
-            RaiseDesync($"GameId mismatch: expected {GameId}, got {envelope.GameId}");
-            return false;
+            string expectedPubKey = CurrentTurnColor == PlayerColor.White ? WhitePlayerPubKey : BlackPlayerPubKey;
+            if (!string.Equals(action.PlayerPubKey, expectedPubKey, StringComparison.Ordinal))
+                return RaiseDesync($"Player pubkey mismatch for {CurrentTurnColor}: expected {expectedPubKey}, got {action.PlayerPubKey}");
+        }
+        else if (action.ActionType == GameActionType.Resign)
+        {
+            if (!string.Equals(action.PlayerPubKey, WhitePlayerPubKey, StringComparison.Ordinal)
+                && !string.Equals(action.PlayerPubKey, BlackPlayerPubKey, StringComparison.Ordinal))
+                return RaiseDesync($"Player pubkey mismatch: {action.PlayerPubKey} is not a player in this game");
+        }
+        else
+        {
+            return RaiseDesync($"A {action.ActionType.ToWire()} action is not a game move.");
         }
 
-        // 2. Verify Turn index
-        if (envelope.TurnIndex != CurrentTurnIndex)
+        if (!string.Equals(action.PrevStateHash, _lastStateHash, StringComparison.Ordinal))
+            return RaiseDesync($"State hash chain broken: expected previous hash {_lastStateHash}, got {action.PrevStateHash}");
+
+        if (!ActionDigest.Verify(action))
+            return RaiseDesync($"Invalid cryptographic signature on turn {action.Turn} from {action.PlayerPubKey}");
+
+        if (action.ActionType == GameActionType.Resign)
         {
-            RaiseDesync($"Turn sequence error: expected turn {CurrentTurnIndex}, got {envelope.TurnIndex}");
-            return false;
+            PlayerColor resigner = string.Equals(action.PlayerPubKey, WhitePlayerPubKey, StringComparison.Ordinal) ? PlayerColor.White : PlayerColor.Black;
+            _board.Resign(resigner);
+            if (_board.Result != null)
+                OnGameCompleted?.Invoke(_board.ToSnapshot(), _board.Result);
+            return true;
         }
 
-        // 3. Verify Active Player PubKey
-        string expectedPubKey = CurrentTurnColor == PlayerColor.White ? WhitePlayerPubKey : BlackPlayerPubKey;
-        if (!string.Equals(envelope.PlayerPubKey, expectedPubKey, StringComparison.OrdinalIgnoreCase))
-        {
-            RaiseDesync($"Player pubkey mismatch for {CurrentTurnColor}: expected {expectedPubKey}, got {envelope.PlayerPubKey}");
-            return false;
-        }
-
-        // 4. Verify PrevStateHash links to current _lastStateHash
-        if (!string.Equals(envelope.PrevStateHash, _lastStateHash, StringComparison.OrdinalIgnoreCase))
-        {
-            RaiseDesync($"State hash chain broken: expected previous hash {_lastStateHash}, got {envelope.PrevStateHash}");
-            return false;
-        }
-
-        // 5. Verify Cryptographic Signature
-        string signingPayload = envelope.GetSigningPayload();
-        if (!PayloadSignature.Verify(envelope.PlayerPubKey, signingPayload, envelope.Signature))
-        {
-            RaiseDesync($"Invalid cryptographic signature on turn {envelope.TurnIndex} from {envelope.PlayerPubKey}");
-            return false;
-        }
-
-        // 6. Parse and apply the move
+        string? ptnMove = action.Ptn;
         TakMove move;
         try
         {
-            move = PtnParser.ParseMove(envelope.PtnMove);
+            move = PtnParser.ParseMove(ptnMove ?? throw new FormatException("missing ptn"));
         }
         catch (Exception ex)
         {
-            RaiseDesync($"Malformed PTN move '{envelope.PtnMove}': {ex.Message}");
-            return false;
+            return RaiseDesync($"Malformed PTN move '{ptnMove}': {ex.Message}");
         }
 
-        var result = _board.Execute(move);
+        if (!string.Equals(move.ToPtn(), ptnMove, StringComparison.Ordinal))
+            return RaiseDesync($"PTN move '{ptnMove}' is not in canonical form '{move.ToPtn()}'.");
+
+        GameBoard next = _board.Clone();
+        var result = next.Execute(move);
         if (!result.IsSuccess)
-        {
-            RaiseDesync($"Illegal move attempted: {result.ErrorMessage}");
-            return false;
-        }
+            return RaiseDesync($"Illegal move attempted: {result.ErrorMessage}");
 
-        // 7. Update state hash
-        string currentTps = TpsSerializer.Serialize(_board);
-        string computedStateHash = StateHasher.ComputeStateHash(
-            _lastStateHash,
-            envelope.TurnIndex,
-            envelope.PlayerPubKey,
-            envelope.PtnMove,
-            currentTps);
+        string currentTps = TpsSerializer.Serialize(next);
+        string computedStateHash = StateHasher.ComputeStateHash(_lastStateHash, action.Turn, action.PlayerPubKey, ptnMove, currentTps);
 
         if (!string.IsNullOrEmpty(envelope.StateHash) &&
             !string.Equals(envelope.StateHash, computedStateHash, StringComparison.OrdinalIgnoreCase))
         {
-            RaiseDesync($"State hash verification failed: expected {computedStateHash}, got {envelope.StateHash}");
-            return false;
+            return RaiseDesync($"State hash verification failed: expected {computedStateHash}, got {envelope.StateHash}");
         }
 
+        _board = next;
         _lastStateHash = computedStateHash;
         _moveHistory.Add(move);
         var snapshot = _board.ToSnapshot();
         _historicalSnapshots[_moveHistory.Count] = snapshot;
 
-        // 8. Fire events
         OnMoveReceived?.Invoke(snapshot, move);
 
         if (_board.Phase == GamePhase.Completed && _board.Result != null)
@@ -157,10 +163,11 @@ public sealed class SpectatorGameSession : ISpectatorGameSession
         return true;
     }
 
-    private void RaiseDesync(string message)
+    private bool RaiseDesync(string message)
     {
         OnSpectatorStatusChanged?.Invoke($"Desync: {message}");
         OnStateDesyncDetected?.Invoke(new ProtocolViolationException(message));
+        return false;
     }
 
     public void Dispose()

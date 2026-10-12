@@ -24,7 +24,7 @@ public partial class MainViewModel : ViewModelBase
             // Simulated remote mode (two throwaway keys in one process) until M6 replaces it.
             var localKey = SecretKey.Generate(() => RandomNumberGenerator.GetBytes(SecretKey.Length));
             var opponentKey = SecretKey.Generate(() => RandomNumberGenerator.GetBytes(SecretKey.Length));
-            session = TakGameSession.CreateRemote(GameId.New(), size, PlayerColor.White, localKey, opponentKey.PublicKey);
+            session = TakGameSession.CreateRemote(GameId.New(), size, PlayerColor.White, localKey, opponentKey.PublicKey, () => RandomNumberGenerator.GetBytes(Schnorr.AuxLength));
         }
         else
         {

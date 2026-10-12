@@ -5,7 +5,9 @@ using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
 using TakEngine.Abstractions;
 
-namespace TakEngine.Core.Storage;
+using TakEngine.Core.Storage;
+
+namespace TakEngine.Storage.Local.Legacy;
 
 public sealed class SqliteGameStorage : IAsyncDisposable
 {

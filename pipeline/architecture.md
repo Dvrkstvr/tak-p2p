@@ -46,7 +46,7 @@ Transport does not reference Core and Core does not reference Transport (seen in
 | F-031 identity | Crypto (`SecretKey`, `PublicKey`, Nip19), Abstractions (`IKeyStore`), Storage.Local (`FileKeyStore`), compile fixes in Core/Blazor/Avalonia/CLI |
 | F-032 NIP-01 id + BIP-340 | Transport (`Nip01Serializer`, `NostrEvents`), Crypto (Schnorr) |
 | F-015 NIP-44 two-peer | Crypto (`Nip44`) |
-| F-033 signed envelope + chain | Core (`ActionDigest`, `TakGameSession`, `StateHasher`), Abstractions (`SignedGameAction`), Transport (`EnvelopeCodec`) |
+| F-033 signed envelope + chain | Crypto (`ActionDigest`, D-041), Core (`TakGameSession`, `StateHasher`), Abstractions (`SignedGameAction`), Transport (`EnvelopeCodec`) |
 | F-034 relay client | Transport (`RelayLink`, `PublishTracker`, `PublishBudget`, `SubscriptionPlan`, `RelayConnection`, `RelayPool`, `IRelaySocket`), Testing (`InMemoryRelay`) |
 | F-035 turn exchange | Multiplayer (`TurnExchange`, `IncomingClassifier`, `GameCoordinator`), Abstractions (`IGameStore`) |
 | F-017 invite handshake | Multiplayer (`HostHandshake`, `GuestHandshake`), Transport (`InviteCode`, `ColorResolver`, `EnvelopeCodec`) |
@@ -90,7 +90,8 @@ plaintext (UTF-8 JSON, <= 64 KiB) = {
   "action_type": "JOIN" | "ACCEPT" | "MOVE" | "RESIGN",
   "game_id": <uuid>, "turn": <int>, "player_pubkey": <x-only hex = event pubkey>,
   "prev_state_hash": <hex>,                  // genesis hash for JOIN/ACCEPT
-  "action_data": { "ptn": <PTN> }            // MOVE;  ACCEPT: { "white": <hex>, "black": <hex> };  JOIN/RESIGN: {}
+  "action_data": { "ptn": <PTN> }            // MOVE; RESIGN: {}; JOIN: { "guest_nonce", "invite_proof" } (D-043);
+                                             // ACCEPT: { "white", "black", "host_nonce", "size", "komi" } (D-041)
   "signature": <BIP-340 over ActionDigest> }
 ActionDigest = SHA-256(UTF-8("tak/action/v1\n" + pv + "\n" + action_type + "\n" + game_id + "\n" + turn + "\n"
                + player_pubkey + "\n" + prev_state_hash + "\n" + canonical(action_data)))   // pinned by a golden vector
@@ -103,7 +104,8 @@ ActionDigest = SHA-256(UTF-8("tak/action/v1\n" + pv + "\n" + action_type + "\n" 
   Receivers still treat "same turn + same action digest" as a duplicate, because a peer that lost its outbox re-signs.
 - Subscription, one REQ per relay per (re)connect, sub id `tak-<first 8 of game id>`:
   `{kinds:[3825], authors:[opponent], "#p":[me], "#g":[gid], since, limit:500}` and `{kinds:[3825], authors:[me], "#g":[gid], since, limit:500}`;
-  a host still `Inviting` drops `authors` from the first filter. `since = maxCreatedAt - 30 s`, absent on a cold rebuild.
+  a host drops `authors` from the first filter for the whole game (D-042). `since = maxCreatedAt - 30 s`, absent on a cold rebuild;
+  `maxCreatedAt` moves only on the opponent's accepted events, capped at our clock + 1 min (a stranger or our own clock can't hide moves).
   `ids` lookups chunked to <= 5 (nos.lol silently returns nothing for 20; spike, seen running).
 - Decode order = tamper rows: (1) id + sig, (2) author is the opponent (or any non-self author for a JOIN while Inviting),
   (3) decrypt, (4) JSON + `pv` + game id + inner signature + `player_pubkey == event.pubkey`, then in `TurnExchange`:
@@ -121,15 +123,15 @@ ActionDigest = SHA-256(UTF-8("tak/action/v1\n" + pv + "\n" + action_type + "\n" 
 | Secret key (32-byte scalar) | CLI/desktop: `<data-dir>/identity.json` = `{"v":1,"nsec":"nsec1…"}`; browser (M1+): localStorage `tak.identity.v1` | `v` | never (only the pubkey, in events) |
 | Game record: role, my/opponent pubkey, game id, seed, size, relays, handshake state, result | `SqliteGameStore` table `NetGames` | db `PRAGMA user_version` | no (game id + pubkeys are visible as event metadata) |
 | Progress `{appliedTurn, currentHash, publishedTurn, maxCreatedAt}` | `NetGames`, written in the same transaction as the applied move | same | no |
-| Applied actions (turn, pubkey, ptn, tps, hash, prev, signature, event id, `SigScheme`) | existing `Moves` table + new columns | same | yes, as encrypted events |
+| Applied actions (pv, type, turn, pubkey, prev, action data, signature, event id, tps, hash) | `NetMoves` (D-044; legacy `Moves` only gains `SigScheme`, `EventId`) | same | yes, as encrypted events |
 | Outbox (signed event JSON, attempts, next attempt) | `Outbox` | same | yes when sent |
 | Flag log (turn, reason, event id, author, seen at) | `Flags` | same | no |
 - `<data-dir>` = `--data-dir`, else `LocalApplicationData/tak-p2p/<profile>` with `--profile` (default `default`).
   Two profiles on one machine are two players (the verify method needs this). The old `tak.db` next to the CLI binary is
   not read by multiplayer code.
 - **Migration rule.** `user_version` 0 = the pre-M0 schema (Games, Moves). M0 ships version 2 via one forward step in one
-  transaction: add `Moves.SigScheme TEXT NOT NULL DEFAULT 'legacy-ed25519'` and `Moves.EventId TEXT NULL`, create
-  `NetGames`, `Outbox`, `Flags`. Additive change = new numbered step + bump + a test that migrates a committed v0 fixture
+  transaction: add `Moves.SigScheme TEXT NOT NULL DEFAULT 'legacy-ed25519'` and `Moves.EventId TEXT NULL` (when the legacy
+  tables exist), create `NetGames`, `NetMoves`, `Outbox`, `Flags`. The file is `<data-dir>/games.db` (`SqliteGameStore`). Additive change = new numbered step + bump + a test that migrates a committed v0 fixture
   db. Shape change (rename, drop, re-encode) = a decision record, a step that reads the raw old rows, and a test named
   for its trap. Never down-migrate. A db with a higher `user_version` than the build knows is opened read-only with an
   error ("written by a newer version"), never rewritten. JSON blobs (identity file, browser keys) carry `v` with the same rule.
