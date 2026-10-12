@@ -41,7 +41,8 @@ const outDir = path.resolve(arg('--out', path.join(repoRoot, 'pipeline', 'eviden
 const headed = args.includes('--headed');
 
 fs.mkdirSync(outDir, { recursive: true });
-const logPath = path.join(outDir, 'run.log');
+// .txt, not .log: the repo ignores *.log and the log is the evidence.
+const logPath = path.join(outDir, 'run.txt');
 fs.writeFileSync(logPath, '');
 const log = (line) => {
   const stamped = `${new Date().toISOString()} ${line}`;

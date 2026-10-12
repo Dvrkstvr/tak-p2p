@@ -1,0 +1,50 @@
+2026-10-12T22:32:50.086Z SERVER starting dotnet run --project src/TakApp.Blazor/TakApp.Blazor.csproj --urls http://127.0.0.1:5199
+2026-10-12T22:32:57.312Z SERVER up (pid 10622)
+2026-10-12T22:32:57.430Z SCENARIO local pass-and-play 5x5: place, rotate, quick wall, inspect, slides 1-1-1 and 2-1, cancels, road win
+2026-10-12T22:33:00.405Z PASS G-01 new local game opens in the opening phase
+2026-10-12T22:33:00.408Z PASS G-01 Flat is the selected piece at start
+2026-10-12T22:33:00.415Z PASS G-01 every empty square is marked as a placement target
+2026-10-12T22:33:00.595Z PASS G-04 Wall tab selects Wall
+2026-10-12T22:33:00.786Z PASS G-10b refused placement shows the engine error
+2026-10-12T22:33:00.789Z PASS G-10b history is [] (got [])
+2026-10-12T22:33:00.830Z SHOT 01-opening-wall-refused.png
+2026-10-12T22:33:00.977Z PASS G-05 key F selects Flat
+2026-10-12T22:33:01.176Z PASS G-10 a successful click clears the error
+2026-10-12T22:33:01.365Z PASS G-10 history is [a1 e5] (got [a1 e5])
+2026-10-12T22:33:01.367Z PASS G-10 after both opening plies it is White to play
+2026-10-12T22:33:01.550Z PASS G-13 left-click on an opponent stack opens the inspector
+2026-10-12T22:33:01.597Z SHOT 02-inspect-a1.png
+2026-10-12T22:33:01.769Z FAIL G-15 a square click dismisses the inspector
+2026-10-12T22:33:01.772Z FAIL G-15/G-10 history is [a1 e5 b3] (got [a1 e5])
+2026-10-12T22:33:01.932Z PASS G-02 clicking the selected Flat chip rotates to Wall
+2026-10-12T22:33:02.112Z PASS G-02 clicking the Flat chip when Wall is selected selects Flat
+2026-10-12T22:33:02.293Z PASS G-03 right-clicking the Flat chip rotates to Wall
+2026-10-12T22:33:03.124Z FAIL G-12 clicking an own stack selects it as slide origin
+2026-10-12T22:33:03.129Z FAIL G-12 HUD shows 1 of 1 carried
+2026-10-12T22:33:03.287Z FAIL G-21 (carry 1) history is [a1 e5 b3 a5 b2 b5 b2+] (got [a1 e5 a5])
+2026-10-12T22:33:04.315Z FAIL G-21 history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1] (got [a1 e5 a5 d5 a4 e1])
+2026-10-12T22:33:04.490Z FAIL G-12 3-stack: carry starts at min(height, size) = 3
+2026-10-12T22:33:04.494Z FAIL G-12 adjacent enterable squares are marked (got )
+2026-10-12T22:33:04.675Z FAIL G-20 clicking the origin leaves one tile: 2 of 3
+2026-10-12T22:33:04.839Z FAIL G-20 again: 1 of 3
+2026-10-12T22:33:04.990Z FAIL G-20 below 1 wraps to the maximum: 3 of 3
+2026-10-12T22:33:05.031Z SHOT 03-slide-origin-b3.png
+2026-10-12T22:33:05.220Z FAIL G-24 out-of-range click cancels the move
+2026-10-12T22:33:05.223Z FAIL G-24 nothing placed history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1] (got [a1 e5 a5 d5 a4 e1])
+2026-10-12T22:33:05.568Z FAIL G-21 first step drops 1, 2 in hand
+2026-10-12T22:33:05.619Z SHOT 04-mid-slide.png
+2026-10-12T22:33:05.822Z FAIL G-32 click outside the path mid-move cancels the whole move
+2026-10-12T22:33:05.824Z FAIL G-32 board unchanged history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1] (got [a1 e5 a5 d5 a4 e1 c3])
+2026-10-12T22:33:06.350Z PASS G-33 right-click mid-move cancels
+2026-10-12T22:33:06.355Z FAIL G-33 board unchanged history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1] (got [a1 e5 a5 d5 a4 e1 c3 Sd3])
+2026-10-12T22:33:06.664Z PASS G-06 Esc cancels a started move
+2026-10-12T22:33:06.817Z FAIL G-40 the slide bar opens with a started move
+2026-10-12T22:33:36.819Z FAIL localGame threw: page.click: Timeout 30000ms exceeded.
+2026-10-12T22:33:36.868Z SHOT 05-localGame-error.png
+2026-10-12T22:33:36.869Z SCENARIO vs AI (Easy) 5x5: the human places flats on the first empty square until the game ends
+2026-10-12T22:33:39.400Z PASS G-52 the status names the AI mode
+2026-10-12T22:33:39.899Z SHOT 06-ai-first-reply.png
+2026-10-12T22:34:11.377Z FAIL aiGame threw: page.waitForFunction: Timeout 30000ms exceeded.
+2026-10-12T22:34:11.438Z SHOT 07-aiGame-error.png
+2026-10-12T22:34:11.494Z SERVER stopped (pid 10622)
+2026-10-12T22:34:11.497Z SUMMARY FAIL checks=37 failed=20 evidence=pipeline/evidence/m1-f043-2026-10-12/deliberate-break

@@ -88,7 +88,7 @@ dotnet test TakGame.Ci.slnf --no-build --filter "Category!=LiveRelay"
   at the end; `--url <base>` drives a site that is already up, `--out <dir>` picks the evidence folder (default
   `pipeline/evidence/m1-f043-<date>`), `--headed` shows the browser. It drives local pass-and-play (place, refused placement,
   inspect, reserve rotate, quick wall, slides 1-1-1 and 2-1 on 5×5, cancel by out-of-range click / right-click / Esc / slide bar,
-  road win) and a vs-AI game to a result, writes `run.log` (one `PASS`/`FAIL <row> …` line per check, citing
+  road win) and a vs-AI game to a result, writes `run.txt` (one `PASS`/`FAIL <row> …` line per check, citing
   `pipeline/design/gestures.md` rows) and numbered screenshots, and exits 0 only when every check passed.
 - Every WebSocket the page opens is stubbed (`page.routeWebSocket`), so a run sends nothing to a relay.
 - A 404 on `dotnet.<hash>.js` means stale `bin`/`obj` in `src/TakApp.Blazor`: delete both and rerun.
