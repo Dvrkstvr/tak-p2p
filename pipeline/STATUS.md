@@ -4,12 +4,12 @@
 
 ## Now
 - track: deep · approach: spec-first (+ prototype-first: relay round-trip spikes)
-- stage: 7 Build — M0-A built on branch m0a-crypto-fake-relay-game; M0-B (plan B1) built on claude/project-thread-jtojtm (PR #3); live runs done 2026-10-12 on claude/project-thread-eldgs6; F-039 and the browser /online page (D-046) on claude/project-thread-tkdan9 (PR #6)
+- stage: 7 Build — M0 features all pass (24/24, verified 2026-10-12); M0 milestone gate still needs the stage-8 review (code + security lenses) and curate
 - clarity: scope 5/5 · blocking 0 · assumed 9 · deferred 3
 - feasibility: amber · H-open 0 · M-open 3 · spiked 4
-- milestone: M0-B (live relays, storage, CLI) · features passing 29/58 · M0 21/24 passing · owed checks 4
-- next: F-039 passed 2026-10-12: CLI host on the user's PC vs the user's phone browser over nos.lol + damus, same FINAL hash, host restart and one forged move flagged (57 of 150 events, pipeline/evidence/live-relay-log.md). D-046 lifted the UI freeze for the web /online page only. M0 still open: F-031, F-057, F-058
-- autopilot: M0-A · round 10/12 · A1 done, F-057/F-058 built · stall 0
+- milestone: M0 → M1 (browser on the engine) · features passing 32/58 · owed checks 4
+- core promise: last ran end to end 2026-10-12, CLI host vs phone browser over nos.lol + damus (F-039, pipeline/evidence/live-relay-log.md)
+- next: M0 review + curate, then M1: F-041 (Blazor local/AI play through TakGameSession) with F-043 (Playwright harness), then F-042 row 2 (5 min backgrounded tab) → `/pipeline:run`
 
 ## Stages
 | # | Stage | State | Gate | Date |
@@ -25,10 +25,11 @@
 | 9 | Release | todo | — | — |
 
 ## Notes
-- Adopted 2026-09-30. Audit: pipeline/audit.md. Core promise does NOT work end to end today (risks.md R-001..R-004); every frontend fakes the join.
-- 114 tests pass (Core 95 + Transport 19), but CI doesn't run them (D-010 = first build task).
+- Adopted 2026-09-30. Audit: pipeline/audit.md. Everything through M0 is on main (PRs #2, #5, #6).
+- The browser /online page (D-046) already covers parts of M2: host, join and rebuild over relays, sizes 3-8 and komi. M2 keeps
+  invite link/QR UX (F-047), status (F-046), browser-vs-browser (F-044) and the cross-head run from the Pages site (F-045).
 - Owed hand-checks (5 min each): Blazor vs AI, M1.15.x tower-move controls, CLI game, Avalonia desktop → F-021, F-022, F-024, F-025.
 - Retired rituals (D-013): DEVLOG, mirrored milestone tables, test counts in docs. AGENTS.md section 2 still mandates them; edit it on a separate branch with D-009 (lean CLAUDE.md).
-- UI/new-frontend freeze until M0 passes (D-006).
-- Owed from spikes: re-run spikes/R-001-R-004-relay-roundtrip/check-retention.mjs after 24 h and 7 d (from 2026-09-30), and retry primal from another network.
-- Transport: custom kind 3825, NIP-44 v2, p+g tags, nos.lol+damus (D-025). Checks: playbook.md (TakGame.Ci.slnf, LiveRelay excluded). Permissions: pushes allowed except main (D-031); M0 live relay budget ≤150 events, logged (D-032).
+- UI freeze (D-006) ends with M0; D-046 lifted it early for /online only.
+- Owed from spikes: re-run spikes/R-001-R-004-relay-roundtrip/check-retention.mjs (7-day result is F-040's acceptance), and retry primal from another network.
+- Transport: custom kind 3825, NIP-44 v2, p+g tags, nos.lol+damus (D-025). Checks: playbook.md (TakGame.Ci.slnf, LiveRelay excluded). Permissions: pushes allowed except main (D-031); M0 live relay budget ≤150 events, 57 used (D-032).

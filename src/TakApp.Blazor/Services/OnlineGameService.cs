@@ -74,12 +74,12 @@ public sealed class OnlineGameService(BrowserStorage storage) : IAsyncDisposable
         }
     }
 
-    public async Task<string?> HostAsync(BoardSize size)
+    public async Task<string?> HostAsync(BoardSize size, int komiHalves)
     {
         MultiplayerOptions options = await OptionsAsync();
         try
         {
-            MultiplayerGame game = await MultiplayerGame.HostAsync(options, size, 0);
+            MultiplayerGame game = await MultiplayerGame.HostAsync(options, size, komiHalves);
             InviteCode = game.Invite.ToCompactCode();
             Line($"INVITE {InviteCode}");
             await BeginAsync(game);

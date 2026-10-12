@@ -21,13 +21,24 @@
             <div class="feature-title">HOST</div>
             <div class="controls-row" style="margin: 0.75rem 0;">
                 <div class="toggle-btn-group">
-                    @foreach (BoardSize size in new[] { BoardSize.Four, BoardSize.Five, BoardSize.Six })
+                    @foreach (BoardSize size in Enum.GetValues<BoardSize>())
                     {
                         <button class="toggle-btn @(HostSize == size ? "active" : "")" @onclick="() => HostSize = size">
                             @((int)size)×@((int)size)
                         </button>
                     }
                 </div>
+            </div>
+            <div class="controls-row" style="margin: 0.75rem 0;">
+                <label style="font-size: 0.8rem; color: var(--text-secondary);">
+                    Komi (flats added to Black's count)
+                    <select class="online-komi" @bind="HostKomiHalves">
+                        @for (int halves = 0; halves <= GameBoard.MaxKomiHalves; halves++)
+                        {
+                            <option value="@halves">@PtnParser.FormatKomi(halves)</option>
+                        }
+                    </select>
+                </label>
             </div>
             <button class="btn-tak btn-white" disabled="@Busy" @onclick="HostAsync">Host a game</button>
         </div>
@@ -124,6 +135,7 @@
 
 @code {
     private BoardSize HostSize { get; set; } = BoardSize.Five;
+    private int HostKomiHalves { get; set; }
     private string InviteText { get; set; } = "";
     private string PtnText { get; set; } = "";
     private PieceType Piece { get; set; } = PieceType.Flat;
@@ -184,7 +196,7 @@
         }
     }
 
-    private Task HostAsync() => RunAsync(() => Online.HostAsync(HostSize));
+    private Task HostAsync() => RunAsync(() => Online.HostAsync(HostSize, HostKomiHalves));
 
     private Task JoinAsync() => RunAsync(() => Online.JoinAsync(InviteText));
 
