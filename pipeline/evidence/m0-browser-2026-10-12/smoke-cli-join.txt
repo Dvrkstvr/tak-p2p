@@ -1,0 +1,31 @@
+WAITING for the host to answer
+RELAY wss://nos.lol connecting
+RELAY wss://relay.damus.io connecting
+RELAY wss://nos.lol subscribed
+RELAY wss://nos.lol caught-up
+WAITING opponent move turn 1
+RELAY wss://relay.damus.io subscribed
+RELAY wss://relay.damus.io caught-up
+APPLIED turn 1 e5 ff71d4cb6f5c0e021cfb3cc16bfc0e2667bfe8d526fdea4e70342c5db180c914
+WAITING your move turn 2
+APPLIED turn 2 a1 ef84d05d8c05bf2743981306fb472ebee5c390bb39328c475864dc93441ab324
+WAITING opponent move turn 3
+SENT turn 2 wss://nos.lol:ok wss://relay.damus.io:pending
+APPLIED turn 3 b1 fe24e03af00eed2c4de9e6ae098f6c8034593da770cfec01761d2a8429c5e653
+WAITING your move turn 4
+APPLIED turn 4 e4 1fbd8854dfeb00fabaf1fb07cda06d1b3d4094cb04288f7776fb0cc2b997a6c8
+WAITING opponent move turn 5
+SENT turn 4 wss://nos.lol:ok wss://relay.damus.io:pending
+APPLIED turn 5 c1 80274c60e5dc883a22f3af71a7813a64a3244230364bc87de1b84b23bb860c07
+WAITING your move turn 6
+APPLIED turn 6 e3 46c343fc7d363f964d5ed028b960b76f4d7438a03e268fffef0440d09e30a88f
+WAITING opponent move turn 7
+SENT turn 6 wss://nos.lol:ok wss://relay.damus.io:pending
+APPLIED turn 7 d1 81c5cb961e15d4f1dd5e4e6aa512c5b4b9f2860b87276aaaa3dcdd6a9d9b6140
+WAITING your move turn 8
+APPLIED turn 8 e2 1b92ef762a01cc395052f936d299a77ad058479dd451649a606f8bfa168c60f0
+WAITING opponent move turn 9
+SENT turn 8 wss://nos.lol:ok wss://relay.damus.io:pending
+APPLIED turn 9 e1 0a1ef4667a8f4137d2e8b14b8f4db727506d45b07d201dec84da007cd42e15e4
+WAITING your move turn 10
+FINAL white-road 0a1ef4667a8f4137d2e8b14b8f4db727506d45b07d201dec84da007cd42e15e4
