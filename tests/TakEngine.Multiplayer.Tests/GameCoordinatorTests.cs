@@ -555,8 +555,7 @@ public sealed class GameCoordinatorTests : IAsyncDisposable
         var flags = new List<FlagEntry>();
         guest.Flagged += flags.Add;
         await Table.Eventually(() => host.Record.State == HandshakeState.InGame && guest.OwnLink == OwnLink.Online, "host locked, guest online");
-        _t.R1.WithholdWhere(null);
-        _t.R2.WithholdWhere(null);
+        // The host keeps answering the guest's JOIN republishes, so its events stay withheld until the guest's state is checked.
         string acceptId = (await _t.HostStore.LoadAsync(host.GameId))!.Outbox.Single(o => o.ActionType == GameActionType.Accept).EventId;
 
         SecretKey stranger = TestKeys.Create("stranger");
@@ -573,6 +572,8 @@ public sealed class GameCoordinatorTests : IAsyncDisposable
         Assert.Empty((await _t.GuestStore.LoadAsync(guest.GameId))!.Flags);
         Assert.Equal(HandshakeState.Joining, guest.Record.State);
 
+        _t.R1.WithholdWhere(null);
+        _t.R2.WithholdWhere(null);
         _t.R1.Release(acceptId);
         await Table.Eventually(() => guest.Record.State == HandshakeState.InGame, "the host's ACCEPT starts the game");
         await _t.Play(host, guest, ["e5", "a1"]);
