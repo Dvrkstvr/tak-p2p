@@ -56,6 +56,7 @@ internal sealed class GameCoordinator : IAsyncDisposable
     private (OwnLink, OpponentLink)? _lastLinks;
     private int _dropped;
     private readonly Dictionary<string, int> _flagsBy = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _flaggedEvents = new(StringComparer.Ordinal);
     private bool _broken;
 
     public GameCoordinator(MultiplayerOptions options, MultiplayerGame owner)
@@ -130,7 +131,11 @@ internal sealed class GameCoordinator : IAsyncDisposable
         _publishedTurn = stored.Progress.PublishedTurn;
         _maxCreatedAt = stored.Progress.MaxCreatedAt;
         foreach (FlagEntry flag in stored.Flags)
+        {
             _flagsBy[flag.Author] = _flagsBy.GetValueOrDefault(flag.Author) + 1;
+            if (flag.EventId is not null)
+                _flaggedEvents.Add(flag.EventId);
+        }
         if (_record.Role == NetRole.Host)
         {
             _host = HostHandshake.Restore(_record);
@@ -511,6 +516,9 @@ internal sealed class GameCoordinator : IAsyncDisposable
 
     private async Task FlagAsync(int turn, string reason, string? eventId, string author)
     {
+        // Relays redeliver: an event flagged once (live, or by a rebuild before this resume) is flagged once.
+        if (eventId is not null && !_flaggedEvents.Add(eventId))
+            return;
         var flag = new FlagEntry(turn, reason, eventId, author, _time.GetUtcNow());
         await _store.AddFlagAsync(_record.GameId, flag).ConfigureAwait(false);
         _owner.RaiseFlagged(flag);

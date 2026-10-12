@@ -104,6 +104,9 @@ public class RestartTests
 
         Assert.True(outcome.Game is not null, outcome.Error);
         t.Track(outcome.Game);
+        // The live subscription then delivers the same forged event again: it is still one flag.
+        for (int i = 0; i < 30; i++)
+            await t.Advance(TimeSpan.FromMilliseconds(100));
         FlagEntry flag = Assert.Single((await fresh.LoadAsync(black.GameId))!.Flags);
         Assert.Equal(1, flag.Turn);
         Assert.Equal(forged.Id, flag.EventId);
