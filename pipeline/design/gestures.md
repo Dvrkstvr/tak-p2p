@@ -67,6 +67,7 @@ A sent move that the engine refuses leaves the board unchanged and shows the err
 | G-40 | Slide/Stepping | — | shows direction buttons (only directions with a legal move are enabled) and every legal drop split for the chosen direction, from the engine's move list | yes (opens) |
 | G-41 | Slide/Stepping | ✕ Cancel | back to Idle | yes |
 | G-42 | Slide/Stepping | pick direction, pick split, Confirm Move | sends that move | no (see quirk Q-1) |
+| G-43 | Slide/Stepping, new origin | — | the slide bar shows that stack's first direction and split; nothing is kept from an earlier origin | yes |
 
 ## Game end and AI
 | id | in state | gesture | result | driven |
@@ -76,7 +77,7 @@ A sent move that the engine refuses leaves the board unchanged and shows the err
 | G-52 | vs AI, after the human's move | — | "AI is thinking..." for ~350 ms, then the AI's move is applied; the game runs to a result | yes |
 
 ## Quirks seen while characterising (kept as they are in M1)
-- Q-1: the slide bar keeps its chosen direction and split from an earlier origin until its own Cancel/Confirm is used, so after a
+- Q-1 (fixed in M1, G-43, D-050): the slide bar kept its chosen direction and split from an earlier origin until its own Cancel/Confirm is used, so after a
   board-click move its Confirm button can name a move of another square (seen: "Confirm Move (b2+)" while b3 is the origin).
   Confirm sends that stale move to the engine, which refuses it if illegal. Not driven by the script.
 - Q-2: the vs-AI result line reads "YOU WINS (ROAD)" when the human wins (name upper-cased into a fixed sentence).

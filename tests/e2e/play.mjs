@@ -304,7 +304,12 @@ async function localGame(page) {
   await expectHistory(page, ['a1', 'e5', 'b3', 'a5', 'b2', 'b5', 'b2+', 'd5', 'b4', 'a4', 'b4-', 'e1', '3b3>111', 'Sa2'], 'G-11 right-click empty places a wall');
   check((await selectedTab(page)).startsWith('Flat'), 'G-11 quick wall leaves the selected piece unchanged');
 
-  await click(page, 'c3'); await click(page, 'd3'); // 15. W c3>
+  // 15. W c3> : the slide bar must describe c3, not the b3 move it showed before (Q-1, fixed in M1).
+  await click(page, 'c3');
+  const confirm = (await page.textContent(`${D} .slide-control-box`).catch(() => '')) ?? '';
+  const named = (confirm.match(/Confirm Move \(([^)]*)\)/) ?? [])[1] ?? '';
+  check(/^\d?c3/.test(named), `G-43 a new origin resets the slide bar to that stack (Confirm names "${named}")`);
+  await click(page, 'd3');
   await click(page, 'b1'); // 16. B
   await click(page, 'e3'); await click(page, 'd3'); // 17. W e3< : d3 is three white flats
   await click(page, 'e2'); // 18. B
