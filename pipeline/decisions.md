@@ -364,9 +364,9 @@ is legal; the engine judges every move sent. Adapter tests live in the new `test
   played into the new game
 - revisit if: the slide bar (Q-1 in gestures.md) or gesture choice is redesigned, or M2 puts online play on the same page
 
-## D-050 · 2026-10-12 · stage 7 · by: assumed (conductor), pending the user's card
+## D-050 · 2026-10-12 · stage 7 · by: user
 The slide bar starts afresh whenever its origin changes (gestures.md Q-1, now G-43). Before, it kept the direction and split chosen
 for an earlier stack, so after a move made by clicking the board, its Confirm button could name a move from another square. This is
 the one behaviour change M1 makes on purpose; the Playwright harness pins it.
 - why: Confirm could send a move the player didn't mean; the engine refused it only if it was illegal
-- revisit if: the user picks "Leave for later" on the decision card (then revert StackSlideBar's reset and G-43)
+- revisit if: the slide bar is redesigned (Calvin chose "Fix in M1" on the decision card)
