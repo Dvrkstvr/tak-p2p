@@ -52,7 +52,7 @@ Tak P2P is engineered with a strict **Separation of Concerns**—the determinist
 
 | Device / Platform | Method of Play | Technology | Implementation Status | Quick Launch / Access |
 | :--- | :--- | :--- | :--- | :--- |
-| **🌐 Web Browser** | Zero-Install Web Client | Blazor WebAssembly (.NET 10) | 🟡 **Online play verified from a dev build, deployed site not verified** (phone browser vs CLI over relays, F-039; the Pages site itself not yet checked; no PWA/offline) | [Launch Web Client](https://dvrkstvr.github.io/tak-p2p/) |
+| **🌐 Web Browser** | Zero-Install Web Client | Blazor WebAssembly (.NET 10) | 🟡 **Local, vs-AI and online play verified from a dev build, deployed site not verified** (local and AI games on the engine, F-021/F-041; phone browser vs CLI over relays, F-039; the Pages site itself not yet checked; no PWA/offline) | [Launch Web Client](https://dvrkstvr.github.io/tak-p2p/) |
 | **🪟 Windows PC** | Native Desktop App & Terminal CLI | Avalonia UI + Spectre.Console | 🟡 **Released, not verified** (archives published; desktop and CLI not yet verified running) | [GitHub Releases](https://github.com/Dvrkstvr/tak-p2p/releases) (`tak-desktop-windows-x64.zip`) |
 | **🐧 Linux** | Native Desktop App & Terminal CLI | Avalonia UI (X11/Wayland) + CLI | 🟡 **Released, not verified** (archives published; desktop and CLI not yet verified running) | [GitHub Releases](https://github.com/Dvrkstvr/tak-p2p/releases) (`tak-desktop-linux-x64.tar.gz`) |
 | **💻 MacBook / macOS** | Native Desktop App & Terminal CLI | Avalonia Desktop + Terminal CLI | 🔴 **Not released** (no macOS build published; never run on macOS) | Build from source, or use the [Web Client](https://dvrkstvr.github.io/tak-p2p/) |

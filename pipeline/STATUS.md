@@ -7,9 +7,9 @@
 - stage: 7 Build — M0 done: features all pass, review (pipeline/reviews/M0-code.md, M0-security.md) fixed or decided (D-047, D-048); M1 next
 - clarity: scope 5/5 · blocking 0 · assumed 9 · deferred 3
 - feasibility: amber · H-open 0 · M-open 3 · spiked 4
-- milestone: M0 → M1 (browser on the engine) · features passing 32/58 · owed checks 4
+- milestone: M1 (browser on the engine) · M1 features all pass except F-042 row 2 · owed checks 4
 - core promise: last ran end to end 2026-10-12, CLI host vs phone browser over nos.lol + damus (F-039, pipeline/evidence/live-relay-log.md)
-- next: M1: F-041 (Blazor local/AI play through TakGameSession) with F-043 (Playwright harness), then F-042 row 2 (5 min backgrounded tab) → `/pipeline:run`
+- next: F-042 row 2 (5 min backgrounded tab, then catch-up), then the M1 review and M2 → `/pipeline:run`. Browser regression: `node tests/e2e/play.mjs`
 
 ## Stages
 | # | Stage | State | Gate | Date |
