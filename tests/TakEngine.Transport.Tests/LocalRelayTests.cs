@@ -58,8 +58,9 @@ public sealed class LocalRelayTests : IAsyncLifetime
         ReceivedEvent received = await bob.Events.ReadAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10));
         Assert.Equal(evt.Id, received.Event.Id);
         Assert.Equal("hello over loopback", received.Event.Content);
+        // "Sent" needs one OK true, so the second relay may still be storing it.
         foreach (string name in new[] { "r1", "r2" })
-            Assert.Contains(_host.Relays[name].StoredEvents, e => e.Id == evt.Id);
+            await Until(() => _host.Relays[name].StoredEvents.Any(e => e.Id == evt.Id), name + " stored the event");
         await Task.Delay(100);
         Assert.False(bob.Events.TryRead(out _), "the second relay's copy is deduped");
     }
