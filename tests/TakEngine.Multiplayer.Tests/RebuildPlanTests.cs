@@ -1,5 +1,6 @@
 using TakEngine.Abstractions;
 using TakEngine.Crypto;
+using TakEngine.Multiplayer.Handshake;
 using TakEngine.Testing;
 using TakEngine.Transport.Envelope;
 using TakEngine.Transport.Matchmaking;
@@ -165,5 +166,128 @@ public class RebuildPlanTests
         RebuildResult r = RebuildPlan.Build(p.Invite, p.Host.PublicKey, h);
 
         Assert.Contains("answer to a guest is not on any relay", r.Error, StringComparison.Ordinal);
+    }
+
+    /// <summary>A second, validly signed move for <paramref name="turn"/> by its owner, on the same prev hash as the real one.</summary>
+    private static HistoryEntry Equivocate(Played p, List<HistoryEntry> h, int turn, string eventId)
+    {
+        SignedGameAction real = h.First(e => e.Action.ActionType == GameActionType.Move && e.Action.Turn == turn).Action;
+        SignedGameAction other = SignedScript.Sign(Owner(p, turn),
+            SignedGameAction.UnsignedMove(p.Invite.GameId, turn, real.PlayerPubKey, real.PrevStateHash, "c3")); // c3 is empty through turn 4
+        return new HistoryEntry(other, eventId, "{}");
+    }
+
+    private static SecretKey Opponent(Played p, SecretKey me) => me == p.Host ? p.Guest : p.Host;
+
+    [Fact]
+    public async Task AnEquivocationMidGame_RebuildsTheGameOurNextMoveChainsFrom_AndFlagsTheTurn()
+    {
+        Played p = await PlayFour();
+
+        foreach (SecretKey me in new[] { p.Guest, p.Host })
+        {
+            // The opponent's turn followed by one of ours: our signed move t+1 pins which move t we applied.
+            int t = Enumerable.Range(1, 3).First(turn => Owner(p, turn) == Opponent(p, me));
+            List<HistoryEntry> h = History(p, me);
+            HistoryEntry forged = Equivocate(p, h, t, new string('0', 64)); // sorts first, and the relays return it first
+            h.Insert(0, forged);
+
+            RebuildResult r = RebuildPlan.Build(p.Invite, me.PublicKey, h);
+
+            Assert.Null(r.Error);
+            Assert.Equal(4, r.Progress!.AppliedTurn);
+            Assert.Equal(p.Hash, r.Progress.StateHash);
+            RebuildFlag flag = Assert.Single(r.Flags);
+            Assert.Equal(t, flag.Turn);
+            Assert.Equal(forged.EventId, flag.EventId);
+            Assert.Equal(Opponent(p, me).PublicKey.ToHex(), flag.Author);
+            Assert.Contains($"conflicting move for turn {t}", flag.Reason, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public async Task AnEquivocationOnTheLastTurn_RebuildsDeterministically_AndFlagsTheTurn()
+    {
+        Played p = await PlayFour();
+        SecretKey me = Opponent(p, Owner(p, 4)); // the opponent owns turn 4, and nothing follows it
+        List<HistoryEntry> h = History(p, me);
+        string realId = h.First(e => e.Action.ActionType == GameActionType.Move && e.Action.Turn == 4).EventId;
+
+        foreach (string forgedId in new[] { new string('0', 64), new string('f', 64) })
+        {
+            HistoryEntry forged = Equivocate(p, h, 4, forgedId);
+            string chosen = string.CompareOrdinal(forgedId, realId) < 0 ? forgedId : realId;
+            string? hash = null;
+            for (int seed = 0; seed < 8; seed++)
+            {
+                var rng = new Random(seed);
+                List<HistoryEntry> shuffled = [.. h.Append(forged).OrderBy(_ => rng.Next())];
+
+                RebuildResult r = RebuildPlan.Build(p.Invite, me.PublicKey, shuffled);
+
+                Assert.True(r.Error is null, $"{r.Error} (seed {seed})");
+                Assert.Equal(4, r.Progress!.AppliedTurn);
+                Assert.Equal(chosen, r.Applied[3].EventId);
+                hash ??= r.Progress.StateHash;
+                Assert.Equal(hash, r.Progress.StateHash);
+                RebuildFlag flag = Assert.Single(r.Flags);
+                Assert.Equal(4, flag.Turn);
+                Assert.Equal(chosen == forgedId ? realId : forgedId, flag.EventId);
+                Assert.Contains("conflicting move for turn 4", flag.Reason, StringComparison.Ordinal);
+            }
+            Assert.Equal(chosen == realId, hash == p.Hash);
+        }
+    }
+
+    [Fact]
+    public async Task ARepublishedMove_IsADuplicate_NotAnEquivocation()
+    {
+        Played p = await PlayFour();
+        List<HistoryEntry> h = History(p, p.Guest);
+        HistoryEntry real = h.First(e => e.Action.ActionType == GameActionType.Move && e.Action.Turn == 2);
+        SignedGameAction resigned = SignedScript.Sign(Owner(p, 2), real.Action with { Signature = "" });
+        h.Insert(0, new HistoryEntry(resigned, new string('0', 64), "{}"));
+
+        RebuildResult r = RebuildPlan.Build(p.Invite, p.Guest.PublicKey, h);
+
+        Assert.Null(r.Error);
+        Assert.Equal(p.Hash, r.Progress!.StateHash);
+        Assert.Empty(r.Flags);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(7)]
+    [InlineData(8)]
+    public async Task ASecondJoinFromTheGuest_RebuildsEveryTime(int seed)
+    {
+        Played p = await PlayFour();
+        var rng = new Random(seed);
+        byte[] nonce = new byte[ColorSeed.NonceLength];
+        rng.NextBytes(nonce);
+        SignedGameAction second = SignedScript.Sign(p.Guest, HandshakeMessages.UnsignedJoin(p.Invite.GameId, p.Guest.PublicKey.ToHex(),
+            p.Invite.BoardSize, nonce, p.Invite.SeedCommit));
+        PlayerColor hostColor = p.GuestColor == PlayerColor.White ? PlayerColor.Black : PlayerColor.White;
+
+        foreach (SecretKey me in new[] { p.Host, p.Guest })
+        {
+            foreach (string id in new[] { new string('0', 64), new string('f', 64) })
+            {
+                List<HistoryEntry> h = History(p, me);
+                h.Insert(0, new HistoryEntry(second, id, "{}"));
+
+                RebuildResult r = RebuildPlan.Build(p.Invite, me.PublicKey, h);
+
+                string who = me == p.Host ? "host" : "guest";
+                Assert.True(r.Error is null, $"{r.Error} (seed {seed}, {who}, second join id {id[0]}…)");
+                Assert.Equal(p.Hash, r.Progress!.StateHash);
+                Assert.Equal(me == p.Host ? hostColor : p.GuestColor, r.Record!.MyColor);
+            }
+        }
     }
 }
