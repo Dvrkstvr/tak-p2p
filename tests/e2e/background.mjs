@@ -120,8 +120,19 @@ function stopChildren() {
 }
 
 // ---------- the CLI peer ----------
+// The page's invite names its public relays, and a guest joins the invite's relays as well as its own. Rewrite the hints
+// to the local relays so the CLI never dials a public relay, whatever the network allows.
+function localInvite(invite) {
+  const prefix = 'TAK2_';
+  if (!invite.startsWith(prefix)) throw new Error(`unexpected invite ${invite.slice(0, 8)}...`);
+  const json = JSON.parse(Buffer.from(invite.slice(prefix.length), 'base64url').toString('utf8'));
+  json.relays = relayUrls;
+  return prefix + Buffer.from(JSON.stringify(json), 'utf8').toString('base64url');
+}
+
 class Cli {
-  constructor(invite) {
+  constructor(pageInvite) {
+    const invite = localInvite(pageInvite);
     this.lines = [];
     this.dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tak-e2e-bg-'));
     const cliArgs = ['run', '--project', 'src/TakApp.Cli', '--no-build', '--', 'join', invite, '--data-dir', this.dataDir,
