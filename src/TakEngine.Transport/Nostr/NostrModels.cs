@@ -29,38 +29,6 @@ public sealed class NostrEvent
 
     [JsonPropertyName("sig")]
     public string Sig { get; set; } = "";
-
-    public string ComputeId()
-    {
-        // NIP-01 serialized event: [0, pubkey, created_at, kind, tags, content]
-        using var stream = new System.IO.MemoryStream();
-        using var writer = new Utf8JsonWriter(stream);
-
-        writer.WriteStartArray();
-        writer.WriteNumberValue(0);
-        writer.WriteStringValue(Pubkey);
-        writer.WriteNumberValue(CreatedAt);
-        writer.WriteNumberValue(Kind);
-
-        writer.WriteStartArray();
-        foreach (var tag in Tags)
-        {
-            writer.WriteStartArray();
-            foreach (var item in tag)
-            {
-                writer.WriteStringValue(item);
-            }
-            writer.WriteEndArray();
-        }
-        writer.WriteEndArray();
-
-        writer.WriteStringValue(Content);
-        writer.WriteEndArray();
-        writer.Flush();
-
-        byte[] hash = SHA256.HashData(stream.ToArray());
-        return Convert.ToHexStringLower(hash);
-    }
 }
 
 public sealed class NostrFilter

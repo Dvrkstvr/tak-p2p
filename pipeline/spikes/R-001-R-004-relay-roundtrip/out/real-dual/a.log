@@ -1,0 +1,23 @@
+{"t_ms":1790725509858,"who":"A","ev":"start","d":{"myPub":"f83d2a1f38b9a17ca775b7be47d355449713dee6268847ceacb17dc98a733d65","peerPub":"eb490a07005cedf3b0de8a8a215e4926030e725fc501befbc0964203f2cf0ad8","game":"spike-ac97888913b6","role":"first","kind":9999,"replay":false,"resumedFromState":false,"Applied":0,"Published":0,"MaxCreatedAt":0}}
+{"t_ms":1790725509973,"who":"A","ev":"relay-connected","d":{"url":"wss://nos.lol","ms":93,"attempt":0}}
+{"t_ms":1790725509975,"who":"A","ev":"REQ-sent","d":{"url":"wss://nos.lol","since":1790725449}}
+{"t_ms":1790725509992,"who":"A","ev":"EOSE","d":{"url":"wss://nos.lol"}}
+{"t_ms":1790725510275,"who":"A","ev":"RECV-OWN (rehydrate)","d":{"relay":"wss://nos.lol","turn":1,"id":"cbd5983f06e0","latency_ms":71,"created_at":1790725510,"expected_next":1}}
+{"t_ms":1790725510278,"who":"A","ev":"APPLIED","d":{"turn":1,"hash":"70d32112158e","by":"me(from relay)"}}
+{"t_ms":1790725510548,"who":"A","ev":"relay-connected","d":{"url":"wss://relay.damus.io","ms":660,"attempt":0}}
+{"t_ms":1790725510548,"who":"A","ev":"REQ-sent","d":{"url":"wss://relay.damus.io","since":1790725480}}
+{"t_ms":1790725510701,"who":"A","ev":"EOSE","d":{"url":"wss://relay.damus.io"}}
+{"t_ms":1790725510816,"who":"A","ev":"RECV","d":{"relay":"wss://relay.damus.io","turn":2,"id":"e503f0794b7f","latency_ms":220,"created_at":1790725510,"expected_next":2}}
+{"t_ms":1790725510816,"who":"A","ev":"APPLIED","d":{"turn":2,"hash":"e7e0076dd8d2","by":"peer"}}
+{"t_ms":1790725510889,"who":"A","ev":"PUBLISHED","d":{"turn":1,"id":"cbd5983f06e077570a7468b544143915ab568d9c995857cb20142431fad87113","kind":9999,"relaysTried":2,"bytes":905,"ok_ms":687,"results":["ok:true:","ok:true:"]}}
+{"t_ms":1790725511274,"who":"A","ev":"RECV-OWN (rehydrate)","d":{"relay":"wss://nos.lol","turn":3,"id":"b76cc6cbcdc3","latency_ms":79,"created_at":1790725511,"expected_next":3}}
+{"t_ms":1790725511274,"who":"A","ev":"APPLIED","d":{"turn":3,"hash":"793f07f87a1b","by":"me(from relay)"}}
+{"t_ms":1790725511360,"who":"A","ev":"PUBLISHED","d":{"turn":3,"id":"b76cc6cbcdc3bb86ca811b2e2dd79c09c1739b75c3860a482bafca6e153d7bc9","kind":9999,"relaysTried":2,"bytes":989,"ok_ms":164,"results":["ok:true:","ok:true:"]}}
+{"t_ms":1790725511686,"who":"A","ev":"RECV","d":{"relay":"wss://nos.lol","turn":4,"id":"f2acc492e53c","latency_ms":103,"created_at":1790725511,"expected_next":4}}
+{"t_ms":1790725511686,"who":"A","ev":"APPLIED","d":{"turn":4,"hash":"9ef108202f24","by":"peer"}}
+{"t_ms":1790725512070,"who":"A","ev":"RECV-OWN (rehydrate)","d":{"relay":"wss://nos.lol","turn":5,"id":"74a93b11d230","latency_ms":69,"created_at":1790725512,"expected_next":5}}
+{"t_ms":1790725512071,"who":"A","ev":"APPLIED","d":{"turn":5,"hash":"7a4368a2d63c","by":"me(from relay)"}}
+{"t_ms":1790725512159,"who":"A","ev":"PUBLISHED","d":{"turn":5,"id":"74a93b11d2304aef481dd5c512aecb324776973d7bae0aa7df5ba080ac39f7b4","kind":9999,"relaysTried":2,"bytes":989,"ok_ms":156,"results":["ok:true:","ok:true:"]}}
+{"t_ms":1790725518564,"who":"A","ev":"RECV","d":{"relay":"wss://nos.lol","turn":6,"id":"71ce6ca13f36","latency_ms":82,"created_at":1790725518,"expected_next":6}}
+{"t_ms":1790725518565,"who":"A","ev":"APPLIED","d":{"turn":6,"hash":"70128b87f758","by":"peer"}}
+{"t_ms":1790725518565,"who":"A","ev":"DONE","d":{"Applied":6,"Published":5,"finalHash":"70128b87f7580e59c7ad19a6f616d93973065c4f0bf920b15a9a2959a69697ab","arrivalOutOfOrder":0,"dupes":5,"dropped":0}}

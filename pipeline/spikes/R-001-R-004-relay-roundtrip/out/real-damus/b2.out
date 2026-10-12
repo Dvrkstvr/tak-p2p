@@ -1,0 +1,14 @@
+{"t_ms":1790724711964,"who":"B","ev":"start","d":{"myPub":"8341377917203ec7772ac8b25438dc40c9103b197df4ad3cc166889dba0280d0","peerPub":"d20f97bcf14b2addc399093c6931562ee8deab28ac593b394b81dacc69509428","game":"spike-bc47802969d8","role":"second","kind":9999,"replay":false,"resumedFromState":true,"Applied":4,"Published":4,"MaxCreatedAt":1790724704}}
+{"t_ms":1790724712513,"who":"B","ev":"relay-connected","d":{"url":"wss://relay.damus.io","ms":534,"attempt":0}}
+{"t_ms":1790724712516,"who":"B","ev":"REQ-sent","d":{"url":"wss://relay.damus.io","since":1790724674}}
+{"t_ms":1790724712689,"who":"B","ev":"RECV","d":{"relay":"wss://relay.damus.io","turn":5,"id":"77e97e53e676","latency_ms":6602,"created_at":1790724706,"expected_next":5}}
+{"t_ms":1790724712691,"who":"B","ev":"APPLIED","d":{"turn":5,"hash":"91633e6333c3","by":"peer"}}
+{"t_ms":1790724712693,"who":"B","ev":"RECV","d":{"relay":"wss://relay.damus.io","turn":3,"id":"47976ea03e83","latency_ms":7743,"created_at":1790724704,"expected_next":6}}
+{"t_ms":1790724712694,"who":"B","ev":"RECV","d":{"relay":"wss://relay.damus.io","turn":1,"id":"03b07793e625","latency_ms":9142,"created_at":1790724703,"expected_next":6}}
+{"t_ms":1790724712694,"who":"B","ev":"EOSE","d":{"url":"wss://relay.damus.io"}}
+{"t_ms":1790724713175,"who":"B","ev":"PUBLISHED","d":{"turn":6,"id":"22e0bb618fa523246873fac776844a106627520333b34874b2124e763f66a8a5","kind":9999,"relaysTried":1,"bytes":989,"ok_ms":166,"results":["ok:false:rate-limited: you are noting too much"]}}
+{"t_ms":1790724713176,"who":"B","ev":"PUBLISH-FAILED-EVERYWHERE","d":{"n":6}}
+{"t_ms":1790724714659,"who":"B","ev":"PUBLISHED","d":{"turn":6,"id":"5ea4d7cc1c4aac08311650c9ca623e6c98c9c4d364900021ad3e48304f020425","kind":9999,"relaysTried":1,"bytes":989,"ok_ms":160,"results":["ok:false:rate-limited: you are noting too much"]}}
+{"t_ms":1790724714660,"who":"B","ev":"PUBLISH-FAILED-EVERYWHERE","d":{"n":6}}
+{"t_ms":1790724714660,"who":"B","ev":"ABORT after 2 failed publishes (event budget)"}
+{"t_ms":1790724714660,"who":"B","ev":"DONE","d":{"Applied":5,"Published":4,"finalHash":"91633e6333c3e0edbf1f995b932a74cc94a0f3070f934a16bb8a20685171070e","arrivalOutOfOrder":2,"dupes":2,"dropped":0}}

@@ -1,7 +1,8 @@
+using System.Security.Cryptography;
 using CommunityToolkit.Mvvm.ComponentModel;
 using TakEngine.Abstractions;
-using TakEngine.Core.Cryptography;
 using TakEngine.Core.Session;
+using TakEngine.Crypto;
 
 namespace TakApp.Avalonia.ViewModels;
 
@@ -20,9 +21,10 @@ public partial class MainViewModel : ViewModelBase
         ITakGameSession session;
         if (isRemote)
         {
-            var (pubA, privA) = CryptoSigner.GenerateKeyPair();
-            var (pubB, privB) = CryptoSigner.GenerateKeyPair();
-            session = TakGameSession.CreateRemote(GameId.New(), size, PlayerColor.White, privA, pubB);
+            // Simulated remote mode (two throwaway keys in one process) until M6 replaces it.
+            var localKey = SecretKey.Generate(() => RandomNumberGenerator.GetBytes(SecretKey.Length));
+            var opponentKey = SecretKey.Generate(() => RandomNumberGenerator.GetBytes(SecretKey.Length));
+            session = TakGameSession.CreateRemote(GameId.New(), size, PlayerColor.White, localKey, opponentKey.PublicKey);
         }
         else
         {

@@ -1,0 +1,88 @@
+{"t_ms":1790725509865,"who":"B","ev":"start","d":{"myPub":"eb490a07005cedf3b0de8a8a215e4926030e725fc501befbc0964203f2cf0ad8","peerPub":"f83d2a1f38b9a17ca775b7be47d355449713dee6268847ceacb17dc98a733d65","game":"spike-ac97888913b6","role":"second","kind":9999,"replay":false,"resumedFromState":false,"Applied":0,"Published":0,"MaxCreatedAt":0}}
+{"t_ms":1790725509978,"who":"B","ev":"relay-connected","d":{"url":"wss://nos.lol","ms":91,"attempt":0}}
+{"t_ms":1790725509980,"who":"B","ev":"REQ-sent","d":{"url":"wss://nos.lol","since":1790725449}}
+{"t_ms":1790725509999,"who":"B","ev":"EOSE","d":{"url":"wss://nos.lol"}}
+{"t_ms":1790725510282,"who":"B","ev":"RECV","d":{"relay":"wss://nos.lol","turn":1,"id":"cbd5983f06e0","latency_ms":74,"created_at":1790725510,"expected_next":1}}
+{"t_ms":1790725510285,"who":"B","ev":"APPLIED","d":{"turn":1,"hash":"70d32112158e","by":"peer"}}
+{"t_ms":1790725510551,"who":"B","ev":"relay-connected","d":{"url":"wss://relay.damus.io","ms":656,"attempt":0}}
+{"t_ms":1790725510551,"who":"B","ev":"REQ-sent","d":{"url":"wss://relay.damus.io","since":1790725480}}
+{"t_ms":1790725510711,"who":"B","ev":"EOSE","d":{"url":"wss://relay.damus.io"}}
+{"t_ms":1790725510812,"who":"B","ev":"RECV-OWN (rehydrate)","d":{"relay":"wss://relay.damus.io","turn":2,"id":"e503f0794b7f","latency_ms":216,"created_at":1790725510,"expected_next":2}}
+{"t_ms":1790725510812,"who":"B","ev":"APPLIED","d":{"turn":2,"hash":"e7e0076dd8d2","by":"me(from relay)"}}
+{"t_ms":1790725510833,"who":"B","ev":"PUBLISHED","d":{"turn":2,"id":"e503f0794b7f20624c791e23c11fdfaee116ca0ad8f3218c6b788e098eaffd95","kind":9999,"relaysTried":2,"bytes":989,"ok_ms":235,"results":["ok:true:","ok:true:"]}}
+{"t_ms":1790725511276,"who":"B","ev":"RECV","d":{"relay":"wss://nos.lol","turn":3,"id":"b76cc6cbcdc3","latency_ms":81,"created_at":1790725511,"expected_next":3}}
+{"t_ms":1790725511277,"who":"B","ev":"APPLIED","d":{"turn":3,"hash":"793f07f87a1b","by":"peer"}}
+{"t_ms":1790725511681,"who":"B","ev":"RECV-OWN (rehydrate)","d":{"relay":"wss://nos.lol","turn":4,"id":"f2acc492e53c","latency_ms":99,"created_at":1790725511,"expected_next":4}}
+{"t_ms":1790725511682,"who":"B","ev":"APPLIED","d":{"turn":4,"hash":"9ef108202f24","by":"me(from relay)"}}
+{"t_ms":1790725511747,"who":"B","ev":"PUBLISHED","d":{"turn":4,"id":"f2acc492e53c091e71eaee6f1706cf386939d17da85641979eb190bc4d823879","kind":9999,"relaysTried":2,"bytes":989,"ok_ms":164,"results":["ok:true:","ok:true:"]}}
+{"t_ms":1790725511748,"who":"B","ev":"SIMULATED-KILL (self kill -9 after publishing turn 4)"}
+Process terminated.
+die-after-publish
+   at System.Environment.FailFast(System.Runtime.CompilerServices.StackCrawlMarkHandle, System.String, System.Runtime.CompilerServices.ObjectHandleOnStack, System.String)
+   at System.Environment.FailFast(System.Threading.StackCrawlMark ByRef, System.String, System.Exception, System.String)
+   at System.Environment.FailFast(System.String)
+   at Spike.Peer.Program+<MaybePlayAsync>d__37.MoveNext()
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1+AsyncStateMachineBox`1[[System.Threading.Tasks.VoidTaskResult, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Spike.Peer.Program+<MaybePlayAsync>d__37, Peer, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]].ExecutionContextCallback(System.Object)
+   at System.Threading.ExecutionContext.RunInternal(System.Threading.ExecutionContext, System.Threading.ContextCallback, System.Object)
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1+AsyncStateMachineBox`1[[System.Threading.Tasks.VoidTaskResult, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Spike.Peer.Program+<MaybePlayAsync>d__37, Peer, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]].MoveNext(System.Threading.Thread)
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1+AsyncStateMachineBox`1[[System.Threading.Tasks.VoidTaskResult, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Spike.Peer.Program+<MaybePlayAsync>d__37, Peer, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]].MoveNext()
+   at System.Threading.Tasks.AwaitTaskContinuation.RunOrScheduleAction(System.Runtime.CompilerServices.IAsyncStateMachineBox, Boolean)
+   at System.Threading.Tasks.Task.RunContinuations(System.Object)
+   at System.Threading.Tasks.Task`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]].TrySetResult(System.__Canon)
+   at System.Threading.Tasks.Task+WhenAllPromise`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]].Invoke(System.Threading.Tasks.Task)
+   at System.Threading.Tasks.Task.RunContinuations(System.Object)
+   at System.Threading.Tasks.Task`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]].TrySetResult(System.__Canon)
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]].SetExistingTaskResult(System.Threading.Tasks.Task`1<System.__Canon>, System.__Canon)
+   at Spike.Peer.Program+Relay+<PublishAsync>d__8.MoveNext()
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1+AsyncStateMachineBox`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Spike.Peer.Program+Relay+<PublishAsync>d__8, Peer, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]].ExecutionContextCallback(System.Object)
+   at System.Threading.ExecutionContext.RunInternal(System.Threading.ExecutionContext, System.Threading.ContextCallback, System.Object)
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1+AsyncStateMachineBox`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Spike.Peer.Program+Relay+<PublishAsync>d__8, Peer, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]].MoveNext(System.Threading.Thread)
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1+AsyncStateMachineBox`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Spike.Peer.Program+Relay+<PublishAsync>d__8, Peer, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]].MoveNext()
+   at System.Threading.Tasks.AwaitTaskContinuation.RunOrScheduleAction(System.Runtime.CompilerServices.IAsyncStateMachineBox, Boolean)
+   at System.Threading.Tasks.Task.RunContinuations(System.Object)
+   at System.Threading.Tasks.Task`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]].TrySetResult(System.__Canon)
+   at System.Threading.Tasks.Task+TwoTaskWhenAnyPromise`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]].Invoke(System.Threading.Tasks.Task)
+   at System.Threading.Tasks.Task.RunContinuations(System.Object)
+   at System.Threading.Tasks.Task`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]].TrySetResult(System.__Canon)
+   at System.Threading.Tasks.TaskCompletionSource`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]].TrySetResult(System.__Canon)
+   at Spike.Peer.Program+Relay+<RunAsync>d__9.MoveNext()
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1+AsyncStateMachineBox`1[[System.Threading.Tasks.VoidTaskResult, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Spike.Peer.Program+Relay+<RunAsync>d__9, Peer, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]].ExecutionContextCallback(System.Object)
+   at System.Threading.ExecutionContext.RunInternal(System.Threading.ExecutionContext, System.Threading.ContextCallback, System.Object)
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1+AsyncStateMachineBox`1[[System.Threading.Tasks.VoidTaskResult, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Spike.Peer.Program+Relay+<RunAsync>d__9, Peer, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]].MoveNext(System.Threading.Thread)
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1+AsyncStateMachineBox`1[[System.Threading.Tasks.VoidTaskResult, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Spike.Peer.Program+Relay+<RunAsync>d__9, Peer, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]].MoveNext()
+   at System.Threading.Tasks.AwaitTaskContinuation.RunOrScheduleAction(System.Runtime.CompilerServices.IAsyncStateMachineBox, Boolean)
+   at System.Threading.Tasks.Task.RunContinuations(System.Object)
+   at System.Threading.Tasks.Task`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]].TrySetResult(System.__Canon)
+   at System.Threading.Tasks.ValueTask`1+ValueTaskSourceAsTask+<>c[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]].<.cctor>b__4_0(System.Object)
+   at System.Net.WebSockets.ManagedWebSocket+<ReceiveAsyncPrivate>d__61`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]].MoveNext()
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1+StateMachineBox`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Net.WebSockets.ManagedWebSocket+<ReceiveAsyncPrivate>d__61`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Net.WebSockets, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a]].ExecutionContextCallback(System.Object)
+   at System.Threading.ExecutionContext.RunInternal(System.Threading.ExecutionContext, System.Threading.ContextCallback, System.Object)
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1+StateMachineBox`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Net.WebSockets.ManagedWebSocket+<ReceiveAsyncPrivate>d__61`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Net.WebSockets, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a]].MoveNext()
+   at System.Net.WebSockets.ManagedWebSocket+<EnsureBufferContainsAsync>d__72.MoveNext()
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1+StateMachineBox`1[[System.Threading.Tasks.VoidTaskResult, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Net.WebSockets.ManagedWebSocket+<EnsureBufferContainsAsync>d__72, System.Net.WebSockets, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a]].ExecutionContextCallback(System.Object)
+   at System.Threading.ExecutionContext.RunInternal(System.Threading.ExecutionContext, System.Threading.ContextCallback, System.Object)
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1+StateMachineBox`1[[System.Threading.Tasks.VoidTaskResult, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Net.WebSockets.ManagedWebSocket+<EnsureBufferContainsAsync>d__72, System.Net.WebSockets, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a]].MoveNext()
+   at System.IO.Stream+<ReadAtLeastAsyncCore>d__49.MoveNext()
+   at System.Threading.ExecutionContext.RunInternal(System.Threading.ExecutionContext, System.Threading.ContextCallback, System.Object)
+   at System.Net.Http.HttpConnection+RawConnectionStream+<ReadAsync>d__6.MoveNext()
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1+StateMachineBox`1[[System.Int32, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Net.Http.HttpConnection+RawConnectionStream+<ReadAsync>d__6, System.Net.Http, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a]].ExecutionContextCallback(System.Object)
+   at System.Threading.ExecutionContext.RunInternal(System.Threading.ExecutionContext, System.Threading.ContextCallback, System.Object)
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1+StateMachineBox`1[[System.Int32, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Net.Http.HttpConnection+RawConnectionStream+<ReadAsync>d__6, System.Net.Http, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a]].MoveNext()
+   at System.Net.Http.HttpConnection+<ReadBufferedAsyncCore>d__89.MoveNext()
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1+StateMachineBox`1[[System.Int32, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Net.Http.HttpConnection+<ReadBufferedAsyncCore>d__89, System.Net.Http, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a]].ExecutionContextCallback(System.Object)
+   at System.Threading.ExecutionContext.RunInternal(System.Threading.ExecutionContext, System.Threading.ContextCallback, System.Object)
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1+StateMachineBox`1[[System.Int32, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Net.Http.HttpConnection+<ReadBufferedAsyncCore>d__89, System.Net.Http, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a]].MoveNext()
+   at System.Net.Security.SslStream+<ReadAsyncInternal>d__172`1[[System.Net.AsyncReadWriteAdapter, System.Net.Security, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a]].MoveNext()
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1+StateMachineBox`1[[System.Int32, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Net.Security.SslStream+<ReadAsyncInternal>d__172`1[[System.Net.AsyncReadWriteAdapter, System.Net.Security, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a]], System.Net.Security, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a]].ExecutionContextCallback(System.Object)
+   at System.Threading.ExecutionContext.RunInternal(System.Threading.ExecutionContext, System.Threading.ContextCallback, System.Object)
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1+StateMachineBox`1[[System.Int32, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Net.Security.SslStream+<ReadAsyncInternal>d__172`1[[System.Net.AsyncReadWriteAdapter, System.Net.Security, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a]], System.Net.Security, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a]].MoveNext()
+   at System.Net.Security.SslStream+<EnsureFullTlsFrameAsync>d__170`1[[System.Net.AsyncReadWriteAdapter, System.Net.Security, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a]].MoveNext()
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1+StateMachineBox`1[[System.Int32, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Net.Security.SslStream+<EnsureFullTlsFrameAsync>d__170`1[[System.Net.AsyncReadWriteAdapter, System.Net.Security, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a]], System.Net.Security, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a]].ExecutionContextCallback(System.Object)
+   at System.Threading.ExecutionContext.RunInternal(System.Threading.ExecutionContext, System.Threading.ContextCallback, System.Object)
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1+StateMachineBox`1[[System.Int32, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Net.Security.SslStream+<EnsureFullTlsFrameAsync>d__170`1[[System.Net.AsyncReadWriteAdapter, System.Net.Security, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a]], System.Net.Security, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a]].MoveNext()
+   at System.Net.Sockets.SocketAsyncEventArgs+<>c.<.cctor>b__174_0(UInt32, UInt32, System.Threading.NativeOverlapped*)
+   at System.Threading.PortableThreadPool+IOCompletionPoller+Event.Invoke()
+   at System.Threading.ThreadPoolTypedWorkItemQueue.System.Threading.IThreadPoolWorkItem.Execute()
+   at System.Threading.ThreadPoolWorkQueue.Dispatch()
+   at System.Threading.PortableThreadPool+WorkerThread.WorkerThreadStart()
+   at System.Threading.Thread.StartCallback()

@@ -4,6 +4,7 @@ using TakEngine.Abstractions;
 using TakEngine.Core.Cryptography;
 using TakEngine.Core.Serialization;
 using TakEngine.Core.Session;
+using TakEngine.Crypto;
 using Xunit;
 
 namespace TakEngine.Core.Tests;
@@ -70,15 +71,15 @@ public class SpectatorTests
     [Fact]
     public void SpectatorGameSession_IngestsValidMoves_AndAdvancesBoard()
     {
-        var whiteKeys = CryptoSigner.GenerateKeyPair();
-        var blackKeys = CryptoSigner.GenerateKeyPair();
+        var whiteKeys = TestKeys.Create(1);
+        var blackKeys = TestKeys.Create(2);
         var gameId = Guid.NewGuid();
 
         using var session = new SpectatorGameSession(
             gameId,
             BoardSize.Five,
-            whiteKeys.PublicKeyHex,
-            blackKeys.PublicKeyHex,
+            whiteKeys.PublicKey.ToHex(),
+            blackKeys.PublicKey.ToHex(),
             tournamentId: "swiss_round_1",
             whitePlayerElo: 1750,
             blackPlayerElo: 1810);
@@ -115,15 +116,15 @@ public class SpectatorTests
     [Fact]
     public void SpectatorGameSession_DetectsTamperedSignature_AndFiresDesync()
     {
-        var whiteKeys = CryptoSigner.GenerateKeyPair();
-        var blackKeys = CryptoSigner.GenerateKeyPair();
+        var whiteKeys = TestKeys.Create(1);
+        var blackKeys = TestKeys.Create(2);
         var gameId = Guid.NewGuid();
 
         using var session = new SpectatorGameSession(
             gameId,
             BoardSize.Five,
-            whiteKeys.PublicKeyHex,
-            blackKeys.PublicKeyHex);
+            whiteKeys.PublicKey.ToHex(),
+            blackKeys.PublicKey.ToHex());
 
         ProtocolViolationException? caughtViolation = null;
         session.OnStateDesyncDetected += ex => caughtViolation = ex;
@@ -132,7 +133,7 @@ public class SpectatorTests
         var env = new BroadcastEnvelope(
             gameId,
             1,
-            whiteKeys.PublicKeyHex,
+            whiteKeys.PublicKey.ToHex(),
             session.LastStateHash,
             DateTime.UtcNow,
             "a1",
@@ -147,15 +148,15 @@ public class SpectatorTests
     [Fact]
     public void SpectatorGameSession_DetectsBrokenHashChain_AndFiresDesync()
     {
-        var whiteKeys = CryptoSigner.GenerateKeyPair();
-        var blackKeys = CryptoSigner.GenerateKeyPair();
+        var whiteKeys = TestKeys.Create(1);
+        var blackKeys = TestKeys.Create(2);
         var gameId = Guid.NewGuid();
 
         using var session = new SpectatorGameSession(
             gameId,
             BoardSize.Five,
-            whiteKeys.PublicKeyHex,
-            blackKeys.PublicKeyHex);
+            whiteKeys.PublicKey.ToHex(),
+            blackKeys.PublicKey.ToHex());
 
         ProtocolViolationException? caughtViolation = null;
         session.OnStateDesyncDetected += ex => caughtViolation = ex;
@@ -172,16 +173,16 @@ public class SpectatorTests
     [Fact]
     public void SpectatorGameSession_DetectsWrongPlayerPubKey_AndFiresDesync()
     {
-        var whiteKeys = CryptoSigner.GenerateKeyPair();
-        var blackKeys = CryptoSigner.GenerateKeyPair();
-        var imposterKeys = CryptoSigner.GenerateKeyPair();
+        var whiteKeys = TestKeys.Create(1);
+        var blackKeys = TestKeys.Create(2);
+        var imposterKeys = TestKeys.Create(3);
         var gameId = Guid.NewGuid();
 
         using var session = new SpectatorGameSession(
             gameId,
             BoardSize.Five,
-            whiteKeys.PublicKeyHex,
-            blackKeys.PublicKeyHex);
+            whiteKeys.PublicKey.ToHex(),
+            blackKeys.PublicKey.ToHex());
 
         ProtocolViolationException? caughtViolation = null;
         session.OnStateDesyncDetected += ex => caughtViolation = ex;
@@ -198,15 +199,15 @@ public class SpectatorTests
     [Fact]
     public void SpectatorGameSession_DetectsIllegalMove_AndFiresDesync()
     {
-        var whiteKeys = CryptoSigner.GenerateKeyPair();
-        var blackKeys = CryptoSigner.GenerateKeyPair();
+        var whiteKeys = TestKeys.Create(1);
+        var blackKeys = TestKeys.Create(2);
         var gameId = Guid.NewGuid();
 
         using var session = new SpectatorGameSession(
             gameId,
             BoardSize.Four,
-            whiteKeys.PublicKeyHex,
-            blackKeys.PublicKeyHex);
+            whiteKeys.PublicKey.ToHex(),
+            blackKeys.PublicKey.ToHex());
 
         ProtocolViolationException? caughtViolation = null;
         session.OnStateDesyncDetected += ex => caughtViolation = ex;
@@ -223,7 +224,7 @@ public class SpectatorTests
     private static BroadcastEnvelope CreateSignedEnvelope(
         Guid gameId,
         int turnIndex,
-        KeyPair keys,
+        SecretKey keys,
         string prevStateHash,
         string ptnMove,
         DateTime timestamp)
@@ -231,14 +232,14 @@ public class SpectatorTests
         var dummy = new BroadcastEnvelope(
             gameId,
             turnIndex,
-            keys.PublicKeyHex,
+            keys.PublicKey.ToHex(),
             prevStateHash,
             timestamp,
             ptnMove,
             "");
 
         string payload = dummy.GetSigningPayload();
-        string signature = CryptoSigner.Sign(keys.PrivateKeyHex, payload);
+        string signature = PayloadSignature.Sign(keys, payload);
 
         return dummy with { Signature = signature };
     }

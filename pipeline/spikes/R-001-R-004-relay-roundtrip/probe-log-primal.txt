@@ -1,0 +1,8 @@
+[wss://relay.primal.net] NIP-11: {"limitation":{}}
+[wss://relay.primal.net] live sub EOSE: EOSE-timeout
+[wss://relay.primal.net] kind4 -> {"ok":null,"msg":"TIMEOUT no OK in 8000ms"}
+[wss://relay.primal.net] kind1059 -> {"ok":null,"msg":"TIMEOUT no OK in 8000ms"}
+[wss://relay.primal.net] kind20001 -> {"ok":null,"msg":"TIMEOUT no OK in 8000ms"}
+[wss://relay.primal.net] live fanout latency ms (null = not delivered): {"k4":null,"k1059":null,"k20001":null}
+[wss://relay.primal.net] history refetch on fresh connection: {"k4_by_p":false,"k4_by_p_eose":"EOSE-timeout","k4_by_g":false,"k4_by_g_eose":"EOSE-timeout","k4_by_author":false,"k4_by_author_eose":"EOSE-timeout","k1059_by_p":false,"k1059_by_p_eose":"EOSE-timeout","k20001_stored":false,"k20001_eose":"EOSE-timeout"}
+done

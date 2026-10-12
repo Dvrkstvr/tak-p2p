@@ -1,0 +1,92 @@
+{
+  "wss://relay.damus.io": {
+    "url": "wss://relay.damus.io",
+    "nip11": {
+      "contact": "jb55@jb55.com",
+      "description": "Damus strfry relay",
+      "icon": "https://damus.io/img/logo.png",
+      "limitation": {
+        "max_limit": 500,
+        "max_message_length": 1000000,
+        "max_subscriptions": 200
+      },
+      "name": "damus.io",
+      "negentropy": 1,
+      "pubkey": "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245",
+      "software": "git+https://github.com/hoytech/strfry.git",
+      "supported_nips": [
+        1,
+        2,
+        4,
+        9,
+        11,
+        28,
+        40,
+        45,
+        59,
+        70
+      ],
+      "version": "1.1.0-158-gb705403ddf49"
+    },
+    "connectMs": [
+      498,
+      475
+    ],
+    "liveSubEose": "EOSE",
+    "k4": {
+      "ok": true,
+      "msg": "",
+      "at": 1790723974598,
+      "ms": 166
+    },
+    "k1059": {
+      "ok": true,
+      "msg": "",
+      "at": 1790723974784,
+      "ms": 166
+    },
+    "k20001": {
+      "ok": true,
+      "msg": "",
+      "at": 1790723974953,
+      "ms": 165
+    },
+    "live": {
+      "k4": null,
+      "k1059": null,
+      "k20001": 255
+    },
+    "history": {
+      "k4_by_p": false,
+      "k4_by_p_eose": "CLOSED:ERROR: auth-required: requested filter requires authentication",
+      "k4_by_g": false,
+      "k4_by_g_eose": "CLOSED:ERROR: auth-required: requested filter requires authentication",
+      "k4_by_author": false,
+      "k4_by_author_eose": "CLOSED:ERROR: auth-required: requested filter requires authentication",
+      "k1059_by_p": false,
+      "k1059_by_p_eose": "CLOSED:ERROR: auth-required: requested filter requires authentication",
+      "k20001_stored": true,
+      "k20001_eose": "EOSE"
+    },
+    "notices": [],
+    "closed": [
+      [
+        "h-k4p",
+        "ERROR: auth-required: requested filter requires authentication"
+      ],
+      [
+        "h-k4g",
+        "ERROR: auth-required: requested filter requires authentication"
+      ],
+      [
+        "h-k4a",
+        "ERROR: auth-required: requested filter requires authentication"
+      ],
+      [
+        "h-wrap",
+        "ERROR: auth-required: requested filter requires authentication"
+      ]
+    ],
+    "authChallenge": "FKtXdxytn79CnBWJpMzeM7"
+  }
+}

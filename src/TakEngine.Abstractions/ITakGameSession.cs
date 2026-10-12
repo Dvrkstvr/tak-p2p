@@ -9,7 +9,7 @@ public interface ITakGameSession
     BoardSize Size { get; }
     PlayerColor LocalColor { get; }
     GamePhase CurrentPhase { get; }
-    
+
     // Read-only snapshots
     TakBoardSnapshot CurrentBoard { get; }
     IReadOnlyList<TakMove> GetLegalMovesForSquare(Coord coord);

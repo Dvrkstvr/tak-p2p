@@ -1,0 +1,11 @@
+# Read by dotnet format (checked in CI) and IDEs. Keep it small: only what the format check enforces.
+root = true
+
+[*]
+end_of_line = lf
+
+[*.{cs,razor,axaml,csproj,props,targets,slnf,json,yml,md}]
+indent_style = space
+
+[*.cs]
+indent_size = 4

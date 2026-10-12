@@ -1,0 +1,10 @@
+game=spike-945fc109de1b A=c0af47c9f4f27ec06a9ca8f56ab248ae790bc3e2169329076d614102347aca5a B=2a891a46073422b0470f00c2aa53cd90b33ca824553876de4236e2cd2587673f relay=wss://nos.lol kind=9999 turns=12
+B first run exited with code 35 (expected non-zero: killed after publishing turn 4)
+--- restarting B (same key, same state file) at 01:31:31
+B second run exit 0
+A exit 0
+--- cold replay of B's view (fresh process, B's key, NO state file)
+replay exit 0
+{"t_ms":1790724694903,"who":"A","ev":"DONE","d":{"Applied":12,"Published":11,"finalHash":"20b8899be55873d2ec8a1886edfb71fbf8256a5c3cc90c5d4d1643bc27da4bb0","arrivalOutOfOrder":0,"dupes":0,"dropped":0}}
+{"t_ms":1790724694866,"who":"B","ev":"DONE","d":{"Applied":12,"Published":12,"finalHash":"20b8899be55873d2ec8a1886edfb71fbf8256a5c3cc90c5d4d1643bc27da4bb0","arrivalOutOfOrder":2,"dupes":2,"dropped":0}}
+{"t_ms":1790724695774,"who":"B-replay","ev":"DONE","d":{"Applied":12,"Published":0,"finalHash":"20b8899be55873d2ec8a1886edfb71fbf8256a5c3cc90c5d4d1643bc27da4bb0","arrivalOutOfOrder":10,"dupes":0,"dropped":0}}

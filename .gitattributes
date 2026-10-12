@@ -1,0 +1,6 @@
+# LF in the repo and in every checkout, so `dotnet format --verify-no-changes` gives the same answer on Windows and ubuntu CI.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
+*.apk binary

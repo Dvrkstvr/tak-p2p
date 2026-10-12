@@ -1,0 +1,12 @@
+[wss://nos.lol] kind 9999: {"sub_eose":"EOSE","publish_ok":true,"publish_msg":"","publish_ms":24,"live_ms":96,"hist_by_p":true,"hist_by_p_status":"EOSE","hist_by_g":true,"hist_by_g_status":"EOSE","hist_by_author":true,"hist_by_author_status":"EOSE"}
+[wss://nos.lol] WS close 1005
+[wss://nos.lol] kind 30078: {"sub_eose":"EOSE","publish_ok":true,"publish_msg":"","publish_ms":20,"live_ms":83,"hist_by_p":true,"hist_by_p_status":"EOSE","hist_by_g":true,"hist_by_g_status":"EOSE","hist_by_author":true,"hist_by_author_status":"EOSE"}
+[wss://relay.damus.io] kind 9999: {"sub_eose":"EOSE","publish_ok":true,"publish_msg":"","publish_ms":159,"live_ms":241,"hist_by_p":true,"hist_by_p_status":"EOSE","hist_by_g":true,"hist_by_g_status":"EOSE","hist_by_author":true,"hist_by_author_status":"EOSE"}
+[wss://relay.damus.io] WS close 1005
+[wss://relay.damus.io] kind 30078: {"sub_eose":"EOSE","publish_ok":true,"publish_msg":"","publish_ms":165,"live_ms":273,"hist_by_p":true,"hist_by_p_status":"EOSE","hist_by_g":true,"hist_by_g_status":"EOSE","hist_by_author":true,"hist_by_author_status":"EOSE"}
+[wss://relay.primal.net] connect attempt 1 failed: connect timeout wss://relay.primal.net
+[wss://relay.primal.net] connect attempt 2 failed: connect timeout wss://relay.primal.net
+[wss://relay.primal.net] connect attempt 3 failed: connect timeout wss://relay.primal.net
+[wss://relay.primal.net] connect attempt 4 failed: connect timeout wss://relay.primal.net
+[wss://relay.primal.net] connect attempt 5 failed: connect timeout wss://relay.primal.net
+[wss://relay.primal.net] CONNECT FAIL connect timeout wss://relay.primal.net

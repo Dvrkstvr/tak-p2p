@@ -1,0 +1,5 @@
+{
+  "wss://relay.primal.net": {
+    "error": "connect timeout wss://relay.primal.net"
+  }
+}

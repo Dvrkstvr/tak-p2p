@@ -1,0 +1,9 @@
+{"t_ms":1790725269386,"who":"B","ev":"start","d":{"myPub":"ae503c45d7a3fb2f3d9bc83cd33213248742744dba28f0a9566cd0cf566a2930","peerPub":"4f118436f579bbb2e9d013ba80ed66ff3ec1fac3bd78b042f17411792c3af4a5","game":"spike-714b526a4aea","role":"second","kind":9999,"replay":false,"resumedFromState":true,"Applied":2,"Published":2,"MaxCreatedAt":1790725114}}
+{"t_ms":1790725269499,"who":"B","ev":"relay-connected","d":{"url":"wss://nos.lol","ms":104,"attempt":0}}
+{"t_ms":1790725269502,"who":"B","ev":"REQ-sent","d":{"url":"wss://nos.lol","since":1790725084}}
+{"t_ms":1790725269547,"who":"B","ev":"RECV","d":{"relay":"wss://nos.lol","turn":1,"id":"47756f3cd209","latency_ms":156071,"created_at":1790725113,"expected_next":3}}
+{"t_ms":1790725269548,"who":"B","ev":"EOSE","d":{"url":"wss://nos.lol"}}
+{"t_ms":1790725269933,"who":"B","ev":"relay-connected","d":{"url":"wss://relay.damus.io","ms":530,"attempt":0}}
+{"t_ms":1790725269934,"who":"B","ev":"REQ-sent","d":{"url":"wss://relay.damus.io","since":1790725084}}
+{"t_ms":1790725270097,"who":"B","ev":"EOSE","d":{"url":"wss://relay.damus.io"}}
+{"t_ms":1790725419414,"who":"B","ev":"TIMEOUT","d":{"Applied":2,"Published":2,"finalHash":"2b275ac302f1bf92aa6df79617eaacedde367344a59c84dae3794ce0fa3b6e00","arrivalOutOfOrder":1,"dupes":3,"dropped":0}}

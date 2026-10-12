@@ -1,0 +1,8 @@
+[ws://127.0.0.1:7777] NIP-11: {"limitation":{}}
+[ws://127.0.0.1:7777] live sub EOSE: EOSE
+[ws://127.0.0.1:7777] kind4 -> {"ok":true,"msg":"","at":1790724441733,"ms":3}
+[ws://127.0.0.1:7777] kind1059 -> {"ok":true,"msg":"","at":1790724441753,"ms":3}
+[ws://127.0.0.1:7777] kind20001 -> {"ok":true,"msg":"","at":1790724441760,"ms":4}
+[ws://127.0.0.1:7777] live fanout latency ms (null = not delivered): {"k4":20,"k1059":6,"k20001":4}
+[ws://127.0.0.1:7777] history refetch on fresh connection: {"k4_by_p":true,"k4_by_p_eose":"EOSE","k4_by_g":true,"k4_by_g_eose":"EOSE","k4_by_author":true,"k4_by_author_eose":"EOSE","k1059_by_p":true,"k1059_by_p_eose":"EOSE","k20001_stored":false,"k20001_eose":"EOSE"}
+done

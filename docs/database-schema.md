@@ -1,5 +1,7 @@
 # SQLite Storage Schema Specification
 
+> **Superseded where it differs (2026-10-02):** schema version 2 and the migration rule are in `pipeline/architecture.md` "Data" and `docs/decisions/0010`.
+
 The game client maintains an offline-first local SQLite database for active matches, historical move logs, state verification, and tournament records.
 
 ---

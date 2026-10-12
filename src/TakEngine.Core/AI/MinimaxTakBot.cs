@@ -13,6 +13,9 @@ public sealed class MinimaxTakBot : ITakBot
 {
     private readonly Random _random = new();
 
+    // Search bounds. Negating int.MinValue overflows back to int.MinValue, so the bounds stay well inside int.
+    private const int Infinity = 1_000_000_000;
+
     public BotDifficulty Difficulty { get; }
 
     public MinimaxTakBot(BotDifficulty difficulty = BotDifficulty.Medium)
@@ -78,9 +81,9 @@ public sealed class MinimaxTakBot : ITakBot
 
         // Medium / Hard: Alpha-Beta Minimax
         TakMove bestMove = legalMoves[0];
-        int bestScore = int.MinValue;
-        int alpha = int.MinValue;
-        int beta = int.MaxValue;
+        int bestScore = -Infinity;
+        int alpha = -Infinity;
+        int beta = Infinity;
 
         var orderedMoves = OrderMoves(board, legalMoves, perspective);
 
@@ -143,7 +146,7 @@ public sealed class MinimaxTakBot : ITakBot
         }
 
         var orderedMoves = OrderMoves(board, legalMoves, currentPerspective);
-        int maxScore = int.MinValue;
+        int? maxScore = null;
 
         foreach (var move in orderedMoves)
         {
@@ -159,14 +162,14 @@ public sealed class MinimaxTakBot : ITakBot
 
             int score = -Minimax(clone, depth - 1, -beta, -alpha, GetOpponent(currentPerspective), cancellationToken);
 
-            if (score > maxScore)
+            if (maxScore is null || score > maxScore)
             {
                 maxScore = score;
             }
 
             if (maxScore > alpha)
             {
-                alpha = maxScore;
+                alpha = maxScore.Value;
             }
 
             if (alpha >= beta)
@@ -175,7 +178,7 @@ public sealed class MinimaxTakBot : ITakBot
             }
         }
 
-        return maxScore;
+        return maxScore ?? TakEvaluator.Evaluate(board, currentPerspective);
     }
 
     private TakMove SelectEasyMove(

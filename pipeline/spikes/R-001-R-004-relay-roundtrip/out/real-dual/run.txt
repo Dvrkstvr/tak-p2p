@@ -1,0 +1,10 @@
+game=spike-ac97888913b6 A=f83d2a1f38b9a17ca775b7be47d355449713dee6268847ceacb17dc98a733d65 B=eb490a07005cedf3b0de8a8a215e4926030e725fc501befbc0964203f2cf0ad8 relay=wss://nos.lol,wss://relay.damus.io kind=9999 turns=6
+B first run exited with code 35 (expected non-zero: killed after publishing turn 4)
+--- restarting B (same key, same state file) at 01:45:17
+B second run exit 0
+A exit 0
+--- cold replay of B's view (fresh process, B's key, NO state file)
+replay exit 0
+{"t_ms":1790725518565,"who":"A","ev":"DONE","d":{"Applied":6,"Published":5,"finalHash":"70128b87f7580e59c7ad19a6f616d93973065c4f0bf920b15a9a2959a69697ab","arrivalOutOfOrder":0,"dupes":5,"dropped":0}}
+{"t_ms":1790725518916,"who":"B","ev":"DONE","d":{"Applied":6,"Published":6,"finalHash":"70128b87f7580e59c7ad19a6f616d93973065c4f0bf920b15a9a2959a69697ab","arrivalOutOfOrder":2,"dupes":7,"dropped":0}}
+{"t_ms":1790725519809,"who":"B-replay","ev":"DONE","d":{"Applied":6,"Published":0,"finalHash":"70128b87f7580e59c7ad19a6f616d93973065c4f0bf920b15a9a2959a69697ab","arrivalOutOfOrder":4,"dupes":0,"dropped":0}}
