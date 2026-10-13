@@ -356,6 +356,21 @@ public class PublishBudgetTests
     }
 
     [Fact]
+    public void ARetry_LeavesTheLastSlotForAFirstSend()
+    {
+        var budget = new PublishBudget();
+        for (int i = 0; i < 3; i++)
+            Assert.True(budget.TryTake(T0.AddSeconds(i), reserve: PublishBudget.FirstSendReserve));
+
+        Assert.False(budget.TryTake(T0.AddSeconds(3), reserve: PublishBudget.FirstSendReserve));
+        Assert.Equal(T0.AddSeconds(10), budget.NextAvailable(T0.AddSeconds(3), reserve: PublishBudget.FirstSendReserve));
+        Assert.Equal(T0.AddSeconds(3), budget.NextAvailable(T0.AddSeconds(3)));
+        Assert.True(budget.TryTake(T0.AddSeconds(3))); // a first send still goes out at once
+        Assert.False(budget.TryTake(T0.AddSeconds(4)));
+        Assert.Equal(T0.AddSeconds(11), budget.NextAvailable(T0.AddSeconds(4), reserve: PublishBudget.FirstSendReserve));
+    }
+
+    [Fact]
     public void NeverMoreThanFourInAnyWindow_Randomised()
     {
         int seed = 1234;

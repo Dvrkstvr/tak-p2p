@@ -397,3 +397,17 @@ session takes either, an online session refuses any colour but its own (`Resign(
 - why: M1 code review finding 1: pressing Resign during the bot's 350 ms pause resigned the bot, so the human won by giving up.
   Refusing Resign while the bot thinks would leave a click that does nothing; resigning the human is what the player asked for
 - revisit if: the Play page gets a resign confirmation or an undo, or vs-AI moves to the online page (M2)
+
+## D-053 · 2026-10-13 · stage 7 · by: assumed (builder)
+A retry never holds back a first send. The pool's pump sends first sends first (oldest first), then retries (newest first), and a
+retry may take a slot of the 4-per-10-s budget only while one more slot stays free (`PublishBudget.FirstSendReserve`); a first send
+may take any slot. A first send is an (event, relay) pair with no rate limit and no unanswered send yet. Retries still run for ever
+at their backoff (30 s at most); nothing is given up.
+- why: M1 security finding 2: a relay that takes EVENTs and never answers OK (an invite can name it) kept about 12 old events
+  retrying, which spent the whole budget, so a new move reached the honest relay 94 s late. A cap on retries would give up on a
+  relay that may come back; a reserved slot keeps every retry and bounds the cost: retries use at most 3 slots per 10 s, a new move
+  goes out at once, and the total stays at 4 per 10 s
+- side effects: two first sends in a burst behind three retries wait for the window as before; retries to a swallowing relay are
+  at most 3 per 10 s instead of 4
+- revisit if: a game needs more than one new event per 10 s while retries run, or a relay is seen that answers OK only after
+  several resends

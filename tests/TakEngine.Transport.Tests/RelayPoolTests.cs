@@ -512,6 +512,51 @@ public sealed class RelayPoolTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task RetriesToASwallowingRelay_DoNotHoldBackANewMove()
+    {
+        // M1 security finding 2: r1 takes EVENTs and never answers OK, r2 is honest. Twelve earlier moves stay Pending on r1 and
+        // are retried for the rest of the game; a new move must still reach r2 at once, inside the 4-per-10-s budget.
+        var budget = new PublishBudget();
+        await using var pool = new RelayPool([_r1.Url, _r2.Url], new FakeRelaySocketFactory(_r1, _r2), _time, Me.PublicKey.ToHex(), budget: budget);
+        _r1.IgnorePublishes();
+        pool.Start(Subscription);
+        await Eventually(() => pool.Links.All(l => l.State == RelayLinkState.CaughtUp), "both relays caught up");
+        var earlier = new List<NostrEvent>();
+        for (int i = 0; i < 12; i++)
+        {
+            NostrEvent e = Evt(Me);
+            earlier.Add(e);
+            pool.Publish(e);
+            for (int s = 0; s < 200 && pool.PerRelay(e.Id)[_r2.Url].Status != RelayPublishStatus.Sent; s++)
+                await Advance(TimeSpan.FromSeconds(1));
+            Assert.Equal(RelayPublishStatus.Sent, pool.PerRelay(e.Id)[_r2.Url].Status);
+            for (int s = 0; s < 3; s++)
+                await Advance(TimeSpan.FromSeconds(1));
+        }
+
+        // Let the retries to r1 run, and stop the clock at the worst moment: when they have spent the whole window (if they can).
+        for (int s = 0; s < 120 || (s < 240 && budget.NextAvailable(_time.GetUtcNow()) <= _time.GetUtcNow()); s++)
+            await Advance(TimeSpan.FromSeconds(1));
+        Assert.All(earlier, e => Assert.Equal(RelayPublishStatus.Pending, pool.PerRelay(e.Id)[_r1.Url].Status));
+        int retries = _r1.ReceivedFrames.Count(f => f.StartsWith("[\"EVENT\"", StringComparison.Ordinal));
+        Assert.True(retries > 40, $"only {retries} sends to r1: the retries are not running");
+
+        NostrEvent move = Evt(Me);
+        pool.Publish(move);
+        await Eventually(() => pool.Outcome(move.Id) == PublishOutcome.Sent, "the new move is sent without waiting for the clock");
+
+        var slots = _r1.FrameLog.Concat(_r2.FrameLog)
+            .Where(f => f.Frame.StartsWith("[\"EVENT\"", StringComparison.Ordinal))
+            .Select(f => (f.At, Id: ((RelayMessage.Publish)RelayMessage.Parse(f.Frame)).NostrEvent.Id))
+            .Distinct()
+            .Select(f => f.At)
+            .ToList();
+        // Relay-side stamps can lag the budget's clock by a step under load (see RateLimited_...), so allow one extra.
+        foreach (DateTimeOffset start in slots)
+            Assert.True(slots.Count(t => t >= start && t < start + PublishBudget.Window) <= PublishBudget.MaxEvents + 1, $"burst at {start}");
+    }
+
+    [Fact]
     public async Task Withdraw_StopsAnEventThatHasNotGoneOut()
     {
         _r1.Partition();
