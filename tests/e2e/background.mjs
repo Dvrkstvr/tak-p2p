@@ -4,13 +4,17 @@
 // move, and agree with the CLI on every state hash. Local relays only: nothing reaches a public relay.
 //
 // One command:   node tests/e2e/background.mjs
-// Options:       --url <base>          Blazor site (default http://127.0.0.1:5199; started here if nothing answers there)
-//                --relay-port <n>      TakRelay.Local port (default 7447; started here if nothing answers there)
+// Options:       --url <base>          use a Blazor site that is already running (default: start one from this checkout on a
+//                                      free port)
+//                --relay-port <n>      use a TakRelay.Local already running on this port (default: start one on a free port)
 //                --freeze-seconds <n>  how long the tab stays frozen (default 300)
 //                --out <dir>           evidence folder (default pipeline/evidence/m1-f042-<yyyy-mm-dd>)
 //                --headed              show the browser
 //                --silent              the sockets die silently instead (no close reaches the page, ever: a NAT dropped the
-//                                      flow); the page must notice by its own liveness probe (D-051) and reconnect
+//                                      flow); the page must notice by its own liveness probe (D-051) and reconnect. The page
+//                                      is marked hidden at the freeze and visible at the thaw (visibilitychange), so the wake
+//                                      hook probes at once; with --freeze-seconds under 50 the idle-window probe can't be the
+//                                      one that answers, so the run checks the hook itself (M1 code review 3)
 // Exit code 0 = every check passed; 1 = a check failed (run.txt names it); 2 = the harness could not start.
 //
 // How the page reaches the local relay without any product change: the page always dials wss://nos.lol and wss://relay.damus.io
@@ -23,8 +27,9 @@
 // relay connections right after the freeze (the page is told of the close at the thaw, see `frozen` below). It approximates a phone backgrounding a tab; it is not one.
 
 import { createRequire } from 'node:module';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -46,9 +51,22 @@ const arg = (name, fallback) => {
   const i = args.indexOf(name);
   return i >= 0 && i + 1 < args.length ? args[i + 1] : fallback;
 };
-const DEFAULT_URL = 'http://127.0.0.1:5199';
-const baseUrl = arg('--url', DEFAULT_URL).replace(/\/$/, '');
-const relayPort = Number(arg('--relay-port', '7447'));
+// Without --url / --relay-port the script starts its own site and relay from this checkout on free ports, so the evidence is this
+// tree's (M1 code review 6: servers already on 5199/7447 may be another worktree's or a stale build).
+function freePort() {
+  return new Promise((resolve, reject) => {
+    const s = net.createServer();
+    s.on('error', reject);
+    s.listen(0, '127.0.0.1', () => {
+      const { port } = s.address();
+      s.close(() => resolve(port));
+    });
+  });
+}
+const explicitUrl = arg('--url', null);
+const explicitRelayPort = arg('--relay-port', null);
+const baseUrl = (explicitUrl ?? `http://127.0.0.1:${await freePort()}`).replace(/\/$/, '');
+const relayPort = Number(explicitRelayPort ?? await freePort());
 const freezeSeconds = Number(arg('--freeze-seconds', '300'));
 const today = new Date().toISOString().slice(0, 10);
 const outDir = path.resolve(arg('--out', path.join(repoRoot, 'pipeline', 'evidence', `m1-f042-${today}`)));
@@ -90,10 +108,15 @@ async function reachable(url) {
   }
 }
 
-async function startIfNeeded(name, probe, cmdArgs, logFile) {
-  if (await reachable(probe)) {
-    log(`${name} using the one already running (${probe})`);
-    return;
+async function startIfNeeded(name, probe, cmdArgs, logFile, explicit) {
+  if (explicit) {
+    if (await reachable(probe)) {
+      log(`${name} using the one given on the command line (${probe}; not necessarily built from this tree)`);
+      return;
+    }
+    log(`${name} nothing answers at ${probe}`);
+    stopChildren();
+    process.exit(2);
   }
   log(`${name} starting dotnet ${cmdArgs.join(' ')}`);
   const out = fs.openSync(path.join(outDir, logFile), 'w');
@@ -306,6 +329,16 @@ function thawPipes() {
 }
 
 // ---------- page helpers ----------
+/** Emulates the tab being hidden or shown: headless Chromium keeps the page "visible", so set the state and fire the event. */
+async function setVisibility(page, state) {
+  await page.evaluate((s) => {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => s });
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => s === 'hidden' });
+    document.dispatchEvent(new Event('visibilitychange'));
+  }, state);
+  log(`VISIBILITY ${state}`);
+}
+
 async function transcript(page) {
   return ((await page.textContent('pre.online-transcript').catch(() => '')) ?? '').split('\n').filter(Boolean);
 }
@@ -357,8 +390,10 @@ async function playTurn(page, cli, turn, browserIsWhite) {
 
 // ---------- main ----------
 log(`F-042 row 2 background run: freeze ${freezeSeconds} s, relays ${relayUrls.join(' ')}, site ${baseUrl}`);
-await startIfNeeded('RELAY', `http://127.0.0.1:${relayPort}/r1`, ['run', '--project', 'tools/TakRelay.Local', '--', '--port', String(relayPort)], 'relay-server.txt');
-await startIfNeeded('SERVER', baseUrl + '/', ['run', '--project', 'src/TakApp.Blazor/TakApp.Blazor.csproj', '--urls', baseUrl], 'blazor-server.txt');
+const head = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repoRoot, encoding: 'utf8' });
+log(`TREE ${repoRoot} at ${head.status === 0 ? head.stdout.trim() : 'unknown commit'}`);
+await startIfNeeded('RELAY', `http://127.0.0.1:${relayPort}/r1`, ['run', '--project', 'tools/TakRelay.Local', '--', '--port', String(relayPort)], 'relay-server.txt', explicitRelayPort !== null);
+await startIfNeeded('SERVER', baseUrl + '/', ['run', '--project', 'src/TakApp.Blazor/TakApp.Blazor.csproj', '--urls', baseUrl], 'blazor-server.txt', explicitUrl !== null);
 
 let browser;
 let cli;
@@ -407,6 +442,7 @@ try {
   // Page.setWebLifecycleState frozen is sent as a phone/desktop browser would freeze a background tab, but in Playwright's
   // headless Chromium it does not stop the page's timers (seen 2026-10-12), so the main thread is also paused with the
   // debugger: no JS, no timer, no socket callback runs until the thaw. Blazor WASM runs on that thread.
+  await setVisibility(page, 'hidden');
   const cdp = await context.newCDPSession(page);
   await cdp.send('Page.setWebLifecycleState', { state: 'frozen' });
   await cdp.send('Debugger.enable');
@@ -438,6 +474,7 @@ try {
   thawPipes();
   const thawAt = nowSec();
   log(`THAW at ${thawAt} (${thawAt - freezeAt} s after the freeze)`);
+  await setVisibility(page, 'visible');
   // Read at the thaw, not after the catch-up: a silent drop takes the tab up to 70 s more to notice, with its timers running.
   const ticksAfter = await page.evaluate(() => window.__ticks);
   await waitPage(page, (t) => (document.querySelector('pre.online-transcript')?.textContent ?? '').includes(`APPLIED turn ${t} `), frozenTurn,
@@ -448,6 +485,9 @@ try {
   if (silentDrop) {
     const silentProbes = probes.slice(probesBeforeFreeze).filter((p) => p.silent);
     check(silentProbes.length > 0, `the tab probed its silent sockets after the thaw (${silentProbes.map((p) => `WS#${p.n} at ${p.at}`).join(', ')})`);
+    const prompt = silentProbes.filter((p) => p.at >= thawAt && p.at <= thawAt + 5);
+    check(prompt.length > 0, `a probe went out within 5 s of the tab becoming visible (${prompt.map((p) => `WS#${p.n} at ${p.at}`).join(', ') || 'none'})`);
+    if (thawAt - freezeAt < 50) log('WAKE HOOK the freeze was shorter than the idle window, so that probe came from the visibilitychange hook');
     // Informational: whether Playwright reports the page closing (aborting) a socket it gave up on varies; the reconnect below is the check.
     log(`SILENT sockets the page closed itself: ${pipes.filter((p) => p.silent && p.pageClosed).map((p) => `WS#${p.n}`).join(' ') || 'none reported'}`);
   }

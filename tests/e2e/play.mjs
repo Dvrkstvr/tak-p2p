@@ -3,8 +3,8 @@
 // Gesture rows (G-xx) are defined in pipeline/design/gestures.md; every step below cites the row it exercises.
 //
 // One command:   node tests/e2e/play.mjs
-// Options:       --url <base>       site to drive (default http://127.0.0.1:5199). If nothing answers there and the URL is
-//                                   the default, the script builds and starts the Blazor dev server itself and stops it at the end.
+// Options:       --url <base>       drive a site that is already running (it must answer). Without it the script builds and
+//                                   starts the Blazor dev server from this checkout on a free port and stops it at the end.
 //                --out <dir>        evidence folder (default pipeline/evidence/m1-f043-<yyyy-mm-dd>)
 //                --headed           show the browser
 // Exit code 0 = every check passed; 1 = a check failed (the log names it); 2 = the harness could not start.
@@ -12,8 +12,9 @@
 // No public traffic: every WebSocket the page opens is routed to a stub that never answers (page.routeWebSocket).
 
 import { createRequire } from 'node:module';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import net from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -34,8 +35,10 @@ const arg = (name, fallback) => {
   const i = args.indexOf(name);
   return i >= 0 && i + 1 < args.length ? args[i + 1] : fallback;
 };
-const DEFAULT_URL = 'http://127.0.0.1:5199';
-const baseUrl = arg('--url', DEFAULT_URL).replace(/\/$/, '');
+// Without --url the script starts its own dev server from this checkout on a free port, so the evidence is this tree's (M1 code
+// review 6: a server already on 5199 may be another worktree's or a stale build).
+const explicitUrl = arg('--url', null);
+const baseUrl = (explicitUrl ?? `http://127.0.0.1:${await freePort()}`).replace(/\/$/, '');
 const today = new Date().toISOString().slice(0, 10);
 const outDir = path.resolve(arg('--out', path.join(repoRoot, 'pipeline', 'evidence', `m1-f043-${today}`)));
 const headed = args.includes('--headed');
@@ -64,6 +67,22 @@ const check = (ok, what) => {
 };
 
 // ---------- server ----------
+function freePort() {
+  return new Promise((resolve, reject) => {
+    const s = net.createServer();
+    s.on('error', reject);
+    s.listen(0, '127.0.0.1', () => {
+      const { port } = s.address();
+      s.close(() => resolve(port));
+    });
+  });
+}
+
+function gitHead() {
+  const r = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repoRoot, encoding: 'utf8' });
+  return r.status === 0 ? r.stdout.trim() : 'unknown commit';
+}
+
 async function reachable(url) {
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(2000) });
@@ -74,11 +93,12 @@ async function reachable(url) {
 }
 
 async function startServerIfNeeded() {
-  if (await reachable(baseUrl + '/')) {
-    log(`SERVER using running site at ${baseUrl}`);
-    return null;
-  }
-  if (baseUrl !== DEFAULT_URL) {
+  log(`TREE ${repoRoot} at ${gitHead()}`);
+  if (explicitUrl) {
+    if (await reachable(baseUrl + '/')) {
+      log(`SERVER using the site given by --url ${baseUrl} (not necessarily built from this tree)`);
+      return null;
+    }
     log(`SERVER nothing answers at ${baseUrl}`);
     process.exit(2);
   }
