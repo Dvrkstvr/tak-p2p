@@ -1,3 +1,4 @@
+using System.Linq;
 using TakEngine.Abstractions;
 using TakEngine.Core.Board;
 using TakEngine.Core.Rules;
@@ -149,6 +150,52 @@ public class RoadFinderTests
         Assert.NotNull(board.Result);
         Assert.Equal(PlayerColor.White, board.Result!.Winner);
         Assert.Equal(GameEndReason.Road, board.Result!.Reason);
+    }
+
+    [Fact]
+    public void FindRoad_ReturnsTheSquaresOfABentRoad()
+    {
+        var board = new GameBoard(BoardSize.Five);
+        // a1 b1 b2 b3 c3 d3 e3 is an east-west road for White; a5 is a stray flat that is not on it.
+        foreach (var c in new[] { "a1", "b1", "b2", "b3", "c3", "d3", "e3", "a5" })
+        {
+            board.GetStack(Coord.FromAlgebraic(c)).Push(new Piece(PlayerColor.White, PieceType.Flat));
+        }
+
+        var road = RoadFinder.FindRoad(board, PlayerColor.White);
+
+        Assert.Equal(
+            new[] { "a1", "b1", "b2", "b3", "c3", "d3", "e3" }.Select(Coord.FromAlgebraic).ToHashSet(),
+            road.ToHashSet());
+        Assert.Empty(RoadFinder.FindRoad(board, PlayerColor.Black));
+    }
+
+    [Fact]
+    public void FindRoad_IgnoresWallsAndCountsCapstones()
+    {
+        var board = new GameBoard(BoardSize.Four);
+        board.GetStack(Coord.FromAlgebraic("a2")).Push(new Piece(PlayerColor.Black, PieceType.Flat));
+        board.GetStack(Coord.FromAlgebraic("b2")).Push(new Piece(PlayerColor.Black, PieceType.Capstone));
+        board.GetStack(Coord.FromAlgebraic("c2")).Push(new Piece(PlayerColor.Black, PieceType.Standing));
+        board.GetStack(Coord.FromAlgebraic("d2")).Push(new Piece(PlayerColor.Black, PieceType.Flat));
+        Assert.Empty(RoadFinder.FindRoad(board, PlayerColor.Black));
+
+        board.GetStack(Coord.FromAlgebraic("c2")).FlattenTop();
+        Assert.Equal(4, RoadFinder.FindRoad(board, PlayerColor.Black).Count);
+    }
+
+    [Fact]
+    public void FindRoad_ReturnsBothRoadsWhenOneMoveMakesTwo()
+    {
+        var board = new GameBoard(BoardSize.Four);
+        foreach (var c in new[] { "a2", "b2", "c2", "d2", "c1", "c3", "c4" })
+        {
+            board.GetStack(Coord.FromAlgebraic(c)).Push(new Piece(PlayerColor.White, PieceType.Flat));
+        }
+
+        var road = RoadFinder.FindRoad(board, PlayerColor.White);
+
+        Assert.Equal(7, road.Count);
     }
 
     private static PieceStack[,] GetGrid(GameBoard board)

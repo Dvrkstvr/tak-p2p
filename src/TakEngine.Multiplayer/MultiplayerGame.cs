@@ -147,6 +147,9 @@ public sealed class MultiplayerGame : IAsyncDisposable
     /// <summary>Cancels an invite no guest has joined, or a join not yet accepted. False once the game has started.</summary>
     public Task<bool> CancelAsync() => _coordinator.CancelAsync();
 
+    /// <summary>Checks every relay socket now instead of after the idle window (the app or tab came back to the foreground, D-051).</summary>
+    public void CheckConnections() => _coordinator.CheckConnections();
+
     public ValueTask DisposeAsync() => _coordinator.DisposeAsync();
 
     internal void RaiseStarted(PlayerColor color) => Started?.Invoke(color);

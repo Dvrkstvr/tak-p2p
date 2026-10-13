@@ -2,7 +2,7 @@
 @using TakEngine.Abstractions
 @using TakEngine.Core.Board
 @using TakEngine.Core.Rules
-@inject WebGameSessionManager Session
+@inject LocalGameAdapter Session
 @inject NavigationManager Nav
 @inject BrowserStorage Storage
 @implements IDisposable
@@ -49,7 +49,7 @@
                 </div>
             }
             <div class="status-sha">
-                SHA: #@(Session.PrevStateHash?.Length > 16 ? Session.PrevStateHash[..16] : (Session.PrevStateHash ?? "GENESIS"))...
+                SHA: #@(Session.StateHash?.Length > 16 ? Session.StateHash[..16] : (Session.StateHash ?? "GENESIS"))...
             </div>
 
             <button class="btn-tak btn-outline btn-sm" style="width: 100%; margin-top: 0.8rem;" @onclick="() => ShowControlsModal = true">
@@ -318,6 +318,9 @@
         public List<int> Drops { get; set; } = new();
         public List<Piece> OriginalPieces { get; set; } = new();
 
+        /// <summary>The engine's legal moves from the origin, read when the move started.</summary>
+        public List<SlideMove> Legal { get; set; } = new();
+
         public int PiecesInHand => CarriedCount - Drops.Sum();
         public int CurrentStepIndex => Drops.Count; // 1-indexed
 
@@ -342,7 +345,6 @@
     private PieceType? SelectedPieceType { get; set; } = PieceType.Flat;
     private HashSet<Coord> LegalPlacementTargets { get; set; } = new();
     private HashSet<Coord> LegalSlideTargets { get; set; } = new();
-    private List<SlideMove> CurrentLegalSlideMoves { get; set; } = new();
     private string? ErrorMessage { get; set; }
     private bool Is25D { get; set; } = true;
     private bool IsMobileMovesExpanded { get; set; } = false;
@@ -391,13 +393,10 @@
     {
         get
         {
-            if (SlideBuilder != null && SlideBuilder.Direction.HasValue && SlideBuilder.PiecesInHand > 0 && Session.Board != null)
+            if (SlideBuilder != null && SlideBuilder.Direction.HasValue && SlideBuilder.PiecesInHand > 0 &&
+                SlideTargets.Fits(SlideBuilder.Legal, SlideBuilder.CarriedCount, SlideBuilder.Direction.Value, [.. SlideBuilder.Drops, 1]))
             {
-                var nextC = SlideBuilder.GetCoordAtStep(SlideBuilder.Drops.Count + 1);
-                if (CanEnterSquare(SlideBuilder.Origin, nextC, isFinalDrop: SlideBuilder.PiecesInHand == 1))
-                {
-                    return nextC;
-                }
+                return SlideBuilder.GetCoordAtStep(SlideBuilder.Drops.Count + 1);
             }
             return null;
         }
@@ -493,24 +492,22 @@
             Origin = coord,
             MaxLift = maxLift,
             CarriedCount = maxLift,
-            OriginalPieces = stack.Pieces.ToList()
+            OriginalPieces = stack.Pieces.ToList(),
+            Legal = Session.LegalMovesFor(coord).OfType<SlideMove>().ToList()
         };
         SelectedCoord = coord;
         RefreshLegalTargets();
     }
 
-    private bool CanEnterSquare(Coord origin, Coord target, bool isFinalDrop)
-    {
-        if (Session.Board == null || !Session.Board.IsInBounds(target)) return false;
-        var targetStack = Session.Board.GetStack(target);
-        if (targetStack.IsEmpty || targetStack.TopPiece?.Type == PieceType.Flat) return true;
-        if (targetStack.TopPiece?.Type == PieceType.Standing)
-        {
-            var originStack = Session.Board.GetStack(origin);
-            return originStack.TopPiece?.Type == PieceType.Capstone && isFinalDrop;
-        }
-        return false; // Capstones block all moves
-    }
+    // The first step towards a neighbour is offered when a legal move with this carry starts with one tile there.
+    private bool CanStartTowards(Direction direction) =>
+        SlideBuilder != null && SlideTargets.Fits(SlideBuilder.Legal, SlideBuilder.CarriedCount, direction, [1]);
+
+    // One more tile on the current step square is offered when a legal move starts with these drops.
+    private bool CanStackOnCurrent() =>
+        SlideBuilder?.Direction is Direction dir && SlideBuilder.Drops.Count > 0 && SlideBuilder.PiecesInHand > 0 &&
+        SlideTargets.Fits(SlideBuilder.Legal, SlideBuilder.CarriedCount, dir,
+            [.. SlideBuilder.Drops.Take(SlideBuilder.Drops.Count - 1), SlideBuilder.Drops[^1] + 1]);
 
     private void HandleSquareClick(Coord coord)
     {
@@ -554,7 +551,7 @@
                         _ => null
                     };
 
-                    if (dir.HasValue && CanEnterSquare(SlideBuilder.Origin, coord, isFinalDrop: SlideBuilder.CarriedCount == 1))
+                    if (dir.HasValue && CanStartTowards(dir.Value))
                     {
                         SlideBuilder.Direction = dir.Value;
                         SlideBuilder.Drops.Add(1);
@@ -592,21 +589,16 @@
                 var nextCoord = SlideNextCoord;
 
                 // Clicked current step square: stack another piece on it
-                if (coord == curCoord && SlideBuilder.PiecesInHand > 0)
+                if (coord == curCoord && CanStackOnCurrent())
                 {
-                    var curStack = Session.Board.GetStack(curCoord);
-                    // Cannot stack more than 1 piece on a standing wall
-                    if (curStack.IsEmpty || curStack.TopPiece?.Type != PieceType.Standing)
+                    SlideBuilder.Drops[curStep - 1]++;
+                    if (SlideBuilder.PiecesInHand == 0)
                     {
-                        SlideBuilder.Drops[curStep - 1]++;
-                        if (SlideBuilder.PiecesInHand == 0)
-                        {
-                            ExecuteSlide(new SlideMove(SlideBuilder.Origin, SlideBuilder.Direction.Value, SlideBuilder.CarriedCount, SlideBuilder.Drops));
-                            SlideBuilder = null;
-                        }
-                        RefreshLegalTargets();
-                        return;
+                        ExecuteSlide(new SlideMove(SlideBuilder.Origin, SlideBuilder.Direction.Value, SlideBuilder.CarriedCount, SlideBuilder.Drops));
+                        SlideBuilder = null;
                     }
+                    RefreshLegalTargets();
+                    return;
                 }
 
                 // Clicked next step square: advance to next square
@@ -773,7 +765,7 @@
     {
         if (Session.Board != null)
         {
-            Session.Resign(Session.Board.ActivePlayer);
+            Session.Resign();
         }
     }
 
@@ -786,7 +778,6 @@
     {
         LegalPlacementTargets.Clear();
         LegalSlideTargets.Clear();
-        CurrentLegalSlideMoves.Clear();
 
         if (Session.Board == null || Session.Board.Phase == GamePhase.Completed) return;
 
@@ -794,22 +785,23 @@
         {
             if (!SlideBuilder.Direction.HasValue)
             {
-                // Show initial 4 adjacent directions
-                int[] dxs = { 0, 0, 1, -1 };
-                int[] dys = { 1, -1, 0, 0 };
-                for (int i = 0; i < 4; i++)
+                // Show the neighbours a first step may go to
+                var neighbours = new (Direction Dir, int Dx, int Dy)[]
                 {
-                    var adj = new Coord(SlideBuilder.Origin.X + dxs[i], SlideBuilder.Origin.Y + dys[i]);
-                    if (CanEnterSquare(SlideBuilder.Origin, adj, isFinalDrop: SlideBuilder.CarriedCount == 1))
+                    (Direction.North, 0, 1), (Direction.South, 0, -1), (Direction.East, 1, 0), (Direction.West, -1, 0)
+                };
+                foreach (var (dir, dx, dy) in neighbours)
+                {
+                    if (CanStartTowards(dir))
                     {
-                        LegalSlideTargets.Add(adj);
+                        LegalSlideTargets.Add(new Coord(SlideBuilder.Origin.X + dx, SlideBuilder.Origin.Y + dy));
                     }
                 }
             }
             else
             {
                 // In progress: highlight current step (for stacking) and next step (for stepping)
-                if (SlideCurrentStepCoord.HasValue && SlideBuilder.PiecesInHand > 0)
+                if (SlideCurrentStepCoord.HasValue && CanStackOnCurrent())
                 {
                     LegalSlideTargets.Add(SlideCurrentStepCoord.Value);
                 }
@@ -827,7 +819,7 @@
                 for (int y = 0; y < size; y++)
                 {
                     var c = new Coord(x, y);
-                    if (Session.Board.GetStack(c).IsEmpty)
+                    if (Session.LegalMovesFor(c).Any(m => m is PlaceMove place && place.PieceType == SelectedPieceType))
                     {
                         LegalPlacementTargets.Add(c);
                     }

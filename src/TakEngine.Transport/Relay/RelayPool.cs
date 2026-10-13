@@ -129,6 +129,16 @@ public sealed class RelayPool : IAsyncDisposable
             await c.ResubscribeAsync().ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Probes every connected relay now instead of after the idle window (a browser tab became visible again, a device woke up):
+    /// a socket that died silently meanwhile is then dropped and reconnected 10 s later rather than up to 70 s later (D-051).
+    /// </summary>
+    public void CheckNow()
+    {
+        foreach (RelayConnection c in _connections)
+            c.CheckNow();
+    }
+
     public PublishOutcome Outcome(string eventId)
     {
         lock (_gate) return _tracker.Outcome(eventId);
@@ -139,7 +149,11 @@ public sealed class RelayPool : IAsyncDisposable
         lock (_gate) return new Dictionary<Uri, RelayPublishState>(_tracker.PerRelay(eventId));
     }
 
-    private void OnSubscribed(RelayConnection connection) => _wake.Release();
+    private void OnSubscribed(RelayConnection connection)
+    {
+        lock (_gate) _tracker.OnReconnected(connection.Url);
+        _wake.Release();
+    }
 
     private void OnMessage(RelayConnection connection, RelayMessage message)
     {
@@ -161,9 +175,15 @@ public sealed class RelayPool : IAsyncDisposable
                 PublishStatusChanged?.Invoke(ok.EventId, changed.Value);
                 _wake.Release();
                 break;
+            case RelayMessage.Eose eose when eose.SubscriptionId == SubscriptionPlan.ProbeSubscriptionId:
+                // The probe was answered (the connection already reset its idle clock); end its subscription. SendAsync never throws.
+                _ = connection.SendAsync(new RelayMessage.Close(SubscriptionPlan.ProbeSubscriptionId).Format());
+                break;
             case RelayMessage.Eose:
                 connection.Link.OnEose();
                 break;
+            case RelayMessage.Closed closed when closed.SubscriptionId == SubscriptionPlan.ProbeSubscriptionId:
+                break; // an answer all the same; says nothing about the game's subscription
             case RelayMessage.Closed closed:
                 connection.Link.OnClosed(closed.Message);
                 break;

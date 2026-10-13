@@ -1,0 +1,14 @@
+2026-10-12T22:56:03.950Z PROBES local 5x5
+2026-10-12T22:56:08.541Z PASS setup history (got a1 e5 c3 c4 c2 d3 c2+ c4- b3 d4 b3> d3< c2 e1 c2+ a5)
+2026-10-12T22:56:08.757Z PASS carry limit: 6-stack starts at 5 of 5 (HUD "Moving C3: 5 of 5 tiles carried · Click origin to leave tiles · Click adjacent square to move")
+2026-10-12T22:56:10.137Z PASS carry limit: cycling the count never offers 6 (5 of 5, 4 of 5, 3 of 5, 2 of 5, 1 of 5, 5 of 5, 4 of 5)
+2026-10-12T22:56:10.139Z slide bar text: Slide stack at c3 (Height: 6, Carry Limit: 5) ✕ Cancel 1. Direction: ↑←→↓2. Drops: 1 piece → 12 pieces → 1-12 pieces → 23 pieces → 1-23 pieces → 2-13 pieces → 34 pieces → 1-34 pieces → 2-24 pieces → 3-14 pieces → 45 pieces → 1-45 pieces → 2-35 pieces → 3-25 pieces → 4-15 pieces → 5 Confirm Move (c2+)
+2026-10-12T22:56:10.847Z PASS stepping started (HUD "Path: C3 → · Dropped: 1 · In hand: 4 · Click square to stack or advance")
+2026-10-12T22:56:11.067Z PASS empty out-of-range click mid-move cancels and places nothing (history 16 plies)
+2026-10-12T22:56:11.072Z PASS b5 stays empty (top null)
+2026-10-12T22:56:11.514Z PASS empty out-of-range click with origin picked cancels and places nothing
+2026-10-12T22:56:14.281Z GAME 1 vs AI (Easy) 5x5, human is White
+2026-10-12T22:56:16.786Z GAME 1 RESULT "YOU WINS (ROAD)" PTN e5 a1 b1 Cc1 a2 c2 a3 c3 a4 d3 a5
+2026-10-12T22:56:16.789Z PASS F-021 human (White) beat the Easy AI on 5x5 in game 1; road highlighted a1,a2,a3,a4,a5
+2026-10-12T22:56:16.849Z SHOT human-win-vs-ai.png
+2026-10-12T22:56:16.900Z SUMMARY PASS failed=0

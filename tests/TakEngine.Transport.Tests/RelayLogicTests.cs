@@ -22,7 +22,7 @@ public class RelayLinkTests
         link.OnConnectStarted();
         Assert.Equal(RelayLinkState.Connecting, link.State);
         Assert.False(link.IsDueToConnect(T0));
-        link.OnSubscribed();
+        link.OnSubscribed(T0);
         Assert.Equal(RelayLinkState.Subscribed, link.State);
         Assert.True(link.CanWrite);
         link.OnEose();
@@ -62,7 +62,7 @@ public class RelayLinkTests
         Assert.Equal(3, link.Failures);
 
         link.OnConnectStarted();
-        link.OnSubscribed();
+        link.OnSubscribed(T0);
         link.OnDisconnected(T0);
 
         Assert.Equal(T0.AddSeconds(1), link.RetryAt);
@@ -73,7 +73,7 @@ public class RelayLinkTests
     {
         var link = new RelayLink(Url);
         link.OnConnectStarted();
-        link.OnSubscribed();
+        link.OnSubscribed(T0);
 
         link.OnClosed("auth-required: sign in");
 
@@ -97,7 +97,7 @@ public class RelayLinkTests
         link.OnClosed("auth-required: x");
         link.OnDisconnected(T0);
         link.OnConnectStarted();
-        link.OnSubscribed();
+        link.OnSubscribed(T0);
         Assert.False(link.ReadImpossible);
     }
 
@@ -109,6 +109,80 @@ public class RelayLinkTests
         link.Stop();
         Assert.Equal(RelayLinkState.Disconnected, link.State);
         Assert.Null(link.RetryAt);
+    }
+
+    private static RelayLink Subscribed()
+    {
+        var link = new RelayLink(Url);
+        link.OnConnectStarted();
+        link.OnSubscribed(T0);
+        return link;
+    }
+
+    [Fact]
+    public void SilentRelay_IsProbedAfterTheIdleWindow_AndDroppedWhenTheProbeIsNotAnswered()
+    {
+        RelayLink link = Subscribed();
+        Assert.Equal(T0 + RelayLink.IdleWindow, link.NextLivenessCheckAt);
+        Assert.Equal(TimeSpan.FromSeconds(60), RelayLink.IdleWindow);
+        Assert.Equal(TimeSpan.FromSeconds(10), RelayLink.ProbeTimeout);
+
+        Assert.Equal(LivenessAction.None, link.CheckLiveness(T0.AddSeconds(59)));
+        Assert.Equal(LivenessAction.SendProbe, link.CheckLiveness(T0.AddSeconds(60)));
+        Assert.Equal(T0.AddSeconds(60), link.ProbeSentAt);
+        Assert.Equal(T0.AddSeconds(70), link.NextLivenessCheckAt);
+        Assert.Equal(LivenessAction.None, link.CheckLiveness(T0.AddSeconds(61))); // one probe per idle window
+        Assert.Equal(LivenessAction.None, link.CheckLiveness(T0.AddSeconds(70).AddMilliseconds(-1)));
+        Assert.Equal(RelayLinkState.Subscribed, link.State);
+
+        Assert.Equal(LivenessAction.Drop, link.CheckLiveness(T0.AddSeconds(70)));
+        Assert.Contains("no answer", link.LastMessage);
+        // The shell closes the socket; its reader ends and reports the drop like any other.
+        link.OnDisconnected(T0.AddSeconds(70));
+        Assert.Equal(RelayLinkState.Backoff, link.State);
+        Assert.Equal(T0.AddSeconds(71), link.RetryAt);
+        Assert.Null(link.NextLivenessCheckAt);
+        Assert.Equal(LivenessAction.None, link.CheckLiveness(T0.AddSeconds(500)));
+
+        link.OnConnectStarted();
+        link.OnSubscribed(T0.AddSeconds(71));
+        Assert.Null(link.ProbeSentAt);
+        Assert.Equal(T0.AddSeconds(131), link.NextLivenessCheckAt);
+    }
+
+    [Fact]
+    public void AnyFrame_ResetsTheIdleClock_AndAnswersAPendingProbe()
+    {
+        RelayLink link = Subscribed();
+        link.OnEose();
+        link.OnFrame(T0.AddSeconds(50));
+        Assert.Equal(LivenessAction.None, link.CheckLiveness(T0.AddSeconds(60)));
+        Assert.Equal(T0.AddSeconds(110), link.NextLivenessCheckAt);
+        Assert.Equal(LivenessAction.SendProbe, link.CheckLiveness(T0.AddSeconds(110)));
+
+        link.OnFrame(T0.AddSeconds(111)); // the probe's EOSE, or anything else
+        Assert.Null(link.ProbeSentAt);
+        Assert.Equal(LivenessAction.None, link.CheckLiveness(T0.AddSeconds(125)));
+        Assert.Equal(RelayLinkState.CaughtUp, link.State);
+        Assert.Equal(T0.AddSeconds(171), link.NextLivenessCheckAt);
+    }
+
+    [Fact]
+    public void RequestProbe_ProbesAtOnce_ButNeverTwiceAndNeverWhileDown()
+    {
+        RelayLink link = Subscribed();
+        link.RequestProbe();
+        Assert.Equal(T0, link.NextLivenessCheckAt);
+        Assert.Equal(LivenessAction.SendProbe, link.CheckLiveness(T0.AddSeconds(5)));
+        link.RequestProbe(); // the tab became visible again while the probe is out
+        Assert.Equal(LivenessAction.None, link.CheckLiveness(T0.AddSeconds(6)));
+        Assert.Equal(LivenessAction.Drop, link.CheckLiveness(T0.AddSeconds(15)));
+
+        var down = new RelayLink(Url);
+        down.OnDisconnected(T0);
+        down.RequestProbe();
+        Assert.Null(down.NextLivenessCheckAt);
+        Assert.Equal(LivenessAction.None, down.CheckLiveness(T0.AddSeconds(100)));
     }
 }
 
@@ -206,6 +280,25 @@ public class PublishTrackerTests
         tracker.OnOk("e", R1, true, "", T0);
         tracker.OnNoAnswer("e", R1, T0);
         Assert.Equal(RelayPublishStatus.Sent, tracker.PerRelay("e")[R1].Status);
+    }
+
+    [Fact]
+    public void Reconnect_MakesANoAnswerRetryDueAtOnce_ButKeepsRateLimitBackoffs()
+    {
+        var tracker = new PublishTracker();
+        tracker.Track("quiet", [R1, R2]);
+        tracker.Track("limited", [R1]);
+        for (int i = 0; i < 4; i++)
+            tracker.OnNoAnswer("quiet", R1, T0); // sent into a socket that died silently: the retry drifts to 30 s
+        tracker.OnNoAnswer("quiet", R2, T0);
+        tracker.OnOk("limited", R1, false, "rate-limited: x", T0);
+
+        tracker.OnReconnected(R1);
+
+        Assert.Null(tracker.PerRelay("quiet")[R1].RetryAt); // the new socket gets it as soon as the budget allows
+        Assert.Equal(PublishTracker.NoAnswerReason, tracker.PerRelay("quiet")[R1].Reason);
+        Assert.Equal(T0.AddSeconds(2), tracker.PerRelay("quiet")[R2].RetryAt); // another relay's socket is untouched
+        Assert.Equal(T0.AddSeconds(2), tracker.PerRelay("limited")[R1].RetryAt);
     }
 
     [Fact]
@@ -333,5 +426,15 @@ public class SubscriptionPlanTests
 
         Assert.Equal([5, 5, 2], filters.Select(f => f.Ids!.Count));
         Assert.Equal(ids, filters.SelectMany(f => f.Ids!));
+    }
+
+    [Fact]
+    public void Probe_IsAReqThatMatchesNothing_OnItsOwnSubscription_AndItsClose()
+    {
+        RelayMessage.Req probe = SubscriptionPlan.Probe();
+
+        Assert.Equal(SubscriptionPlan.ProbeSubscriptionId, probe.SubscriptionId);
+        Assert.NotEqual(SubscriptionPlan.SubscriptionId(Game), probe.SubscriptionId);
+        Assert.Equal("[\"REQ\",\"tak-probe\",{\"ids\":[\"" + new string('0', 64) + "\"],\"kinds\":[3825],\"limit\":0}]", probe.Format());
     }
 }

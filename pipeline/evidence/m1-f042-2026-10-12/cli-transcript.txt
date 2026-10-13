@@ -1,0 +1,80 @@
+WAITING for the host to answer
+RELAY wss://nos.lol connecting
+RELAY wss://relay.damus.io connecting
+RELAY ws://127.0.0.1:7447/r1 connecting
+RELAY ws://127.0.0.1:7447/r2 connecting
+RELAY wss://nos.lol backoff
+RELAY ws://127.0.0.1:7447/r1 caught-up
+RELAY ws://127.0.0.1:7447/r2 caught-up
+RELAY wss://relay.damus.io backoff
+WAITING your move turn 1
+APPLIED turn 1 a1 2bac0e39bc80e0d7cb524819eab24aef01edf789d9af05ddd042937da3fc2213
+WAITING opponent move turn 2
+SENT turn 1 ws://127.0.0.1:7447/r1:ok ws://127.0.0.1:7447/r2:ok wss://nos.lol:pending wss://relay.damus.io:pending
+APPLIED turn 2 e5 9d1702d186aec1233c9b8f2111f0b792dad55e99086bc5f804c6e42ce41a4a51
+WAITING your move turn 3
+APPLIED turn 3 b2 d0fa9ae79f025adaa333dc14bd2bb901a16b2aec604eb0edc4508421c4d70e0c
+WAITING opponent move turn 4
+SENT turn 3 ws://127.0.0.1:7447/r1:ok ws://127.0.0.1:7447/r2:ok wss://nos.lol:pending wss://relay.damus.io:pending
+APPLIED turn 4 d4 8662b11b55187a7761fc85fbd9ef8c99c7829b234fe58e1a1446722d3843d95f
+WAITING your move turn 5
+RELAY wss://nos.lol connecting
+RELAY wss://relay.damus.io connecting
+RELAY wss://nos.lol backoff
+RELAY wss://relay.damus.io backoff
+RELAY wss://nos.lol connecting
+RELAY wss://relay.damus.io connecting
+RELAY wss://relay.damus.io backoff
+RELAY wss://nos.lol backoff
+RELAY wss://nos.lol connecting
+RELAY wss://relay.damus.io connecting
+RELAY wss://nos.lol backoff
+RELAY wss://relay.damus.io backoff
+APPLIED turn 5 c3 75d7effc982ef04f1ddb2064569109380f74cb63243cabb78ff1afa37a0e398d
+WAITING opponent move turn 6
+SENT turn 5 ws://127.0.0.1:7447/r1:ok ws://127.0.0.1:7447/r2:ok wss://nos.lol:pending wss://relay.damus.io:pending
+RELAY wss://nos.lol connecting
+RELAY wss://relay.damus.io connecting
+RELAY wss://relay.damus.io backoff
+RELAY wss://nos.lol backoff
+RELAY wss://nos.lol connecting
+RELAY wss://relay.damus.io connecting
+RELAY wss://nos.lol backoff
+RELAY wss://relay.damus.io backoff
+RELAY wss://relay.damus.io connecting
+RELAY wss://nos.lol connecting
+RELAY wss://nos.lol backoff
+RELAY wss://relay.damus.io backoff
+RELAY wss://relay.damus.io connecting
+RELAY wss://nos.lol connecting
+RELAY wss://relay.damus.io backoff
+RELAY wss://nos.lol backoff
+RELAY wss://relay.damus.io connecting
+RELAY wss://nos.lol connecting
+RELAY wss://relay.damus.io backoff
+RELAY wss://nos.lol backoff
+RELAY wss://relay.damus.io connecting
+RELAY wss://nos.lol connecting
+RELAY wss://relay.damus.io backoff
+RELAY wss://nos.lol backoff
+RELAY wss://relay.damus.io connecting
+RELAY wss://nos.lol connecting
+RELAY wss://nos.lol backoff
+RELAY wss://relay.damus.io backoff
+RELAY wss://nos.lol connecting
+RELAY wss://relay.damus.io connecting
+RELAY wss://nos.lol backoff
+RELAY wss://relay.damus.io backoff
+RELAY wss://nos.lol connecting
+RELAY wss://relay.damus.io connecting
+RELAY wss://nos.lol backoff
+RELAY wss://relay.damus.io backoff
+RELAY wss://nos.lol connecting
+RELAY wss://nos.lol backoff
+RELAY wss://relay.damus.io connecting
+RELAY wss://relay.damus.io backoff
+APPLIED turn 6 b4 1d67f39922de2463660618e7503573530e4f184768ccf5201e1cfab94fd131ee
+WAITING your move turn 7
+APPLIED turn 7 a3 5444b3c4d7d8f561eca8aa9b5bb47c8607b1dac987381c81c4397c257bee98e8
+WAITING opponent move turn 8
+SENT turn 7 ws://127.0.0.1:7447/r1:ok ws://127.0.0.1:7447/r2:ok wss://nos.lol:pending wss://relay.damus.io:pending

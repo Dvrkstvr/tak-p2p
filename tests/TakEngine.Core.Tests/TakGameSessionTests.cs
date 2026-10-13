@@ -156,4 +156,33 @@ public class TakGameSessionTests
         Assert.NotNull(warningSpan);
         Assert.Equal(4, warningSpan.Value.Days);
     }
+
+    [Fact]
+    public void WinningRoad_IsEmptyUntilARoadWins_ThenNamesItsSquares()
+    {
+        var session = TakGameSession.CreateLocal(BoardSize.Four);
+        // Opening a4 (black) d1 (white), then White builds rank 2 while Black plays b4 c4 d3.
+        string[] plies = ["a4", "d1", "a2", "b4", "b2", "c4", "c2", "d3"];
+        foreach (var ptn in plies)
+        {
+            Assert.Empty(session.WinningRoad);
+            Assert.True(session.SubmitPlacement(Coord.FromAlgebraic(ptn), PieceType.Flat).IsSuccess, ptn);
+        }
+
+        Assert.Empty(session.WinningRoad);
+        Assert.True(session.SubmitPlacement(Coord.FromAlgebraic("d2"), PieceType.Flat).IsSuccess);
+
+        Assert.Equal(GameEndReason.Road, session.Result!.Reason);
+        Assert.Equal(
+            new HashSet<Coord> { Coord.FromAlgebraic("a2"), Coord.FromAlgebraic("b2"), Coord.FromAlgebraic("c2"), Coord.FromAlgebraic("d2") },
+            new HashSet<Coord>(session.WinningRoad));
+    }
+
+    [Fact]
+    public void WinningRoad_IsEmptyAfterAResignation()
+    {
+        var session = TakGameSession.CreateLocal(BoardSize.Four);
+        Assert.True(session.Resign().IsSuccess);
+        Assert.Empty(session.WinningRoad);
+    }
 }

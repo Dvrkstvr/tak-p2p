@@ -346,3 +346,46 @@ domain or a dedicated account) is on the M7 release list.
   costs a domain or account and a redeploy while the browser head is still changing
 - revisit if: another repo of the account publishes to Pages, the site starts holding keys with value beyond test games, or M2 adds
   key backup or a persisted browser store
+
+## D-049 · 2026-10-12 · stage 7 · by: assumed (builder)
+F-041: the Blazor Play page plays local and vs-AI games through `LocalGameAdapter` (TakApp.Blazor/Services), a thin wrapper over
+`TakGameSession.CreateLocal` that also runs the bot's turn (350 ms pause, injectable for tests), keeps the PTN history and hands the
+views a `GameBoard` copy rebuilt from the session snapshot after each change. `WebGameSessionManager` is deleted. Road squares for the
+win highlight come from the new `RoadFinder.FindRoad` / `TakGameSession.WinningRoad`. The stepped tower gesture offers a square only
+when the engine's legal move list for the origin holds a move that starts with the drops so far (`SlideTargets.Fits`); placement
+markers come from the same list. The page still reads the board to choose a gesture (an empty square places, an own stack starts a
+move, any other stack is inspected; carry starts at min(height, size)), because that picks what a click means, not whether a move
+is legal; the engine judges every move sent. Adapter tests live in the new `tests/TakApp.Blazor.Tests`.
+- why: D-008 and F-041 ("no code in TakApp.Blazor decides legality or road wins") with the gestures frozen (pipeline/design/gestures.md):
+  the prefix rule offers exactly what the old hand-written enter-square check offered (SlideTargetsTests pin the wall, capstone and
+  edge cases), and the Playwright run passes unchanged before and after
+- side effects: the status SHA is now the engine's chain (pubkey input `local-player` where the old page used `local`), so its digits differ
+  from the old page's for the same moves; a bot move still pending when the player starts another game is dropped instead of being
+  played into the new game
+- revisit if: the slide bar (Q-1 in gestures.md) or gesture choice is redesigned, or M2 puts online play on the same page
+
+## D-050 · 2026-10-12 · stage 7 · by: user
+The slide bar starts afresh whenever its origin changes (gestures.md Q-1, now G-43). Before, it kept the direction and split chosen
+for an earlier stack, so after a move made by clicking the board, its Confirm button could name a move from another square. This is
+the one behaviour change M1 makes on purpose; the Playwright harness pins it.
+- why: Confirm could send a move the player didn't mean; the engine refused it only if it was illegal
+- revisit if: the slide bar is redesigned (Calvin chose "Fix in M1" on the decision card)
+
+## D-051 · 2026-10-12 · stage 7 · by: assumed (builder)
+A relay socket that dies without a close (a phone or laptop that slept, a NAT that dropped the flow) is found by a probe. `RelayLink`
+(pure, time passed in) records when anything last arrived; a link that is Subscribed or CaughtUp and has heard nothing for 60 s asks
+for one probe: `["REQ","tak-probe",{"ids":["<64 zeros>"],"kinds":[3825],"limit":0}]`, which matches nothing and which a relay answers
+with EOSE (the pool then sends `CLOSE tak-probe`; CLOSED or NOTICE count as an answer too). Any frame resets the idle clock and
+answers the probe. No frame within 10 s of the probe: the shell cancels the read, disposes the socket and the link backs off as for any
+drop (1 s first), and the reconnect's REQ (`since = maxCreatedAt - 30 s`) catches up. A fresh socket makes a pending no-answer
+publish retry due at once (`PublishTracker.OnReconnected`; rate-limit backoffs stay). `RelayPool.CheckNow()` (via
+`MultiplayerGame.CheckConnections()`) probes at once: the Blazor head calls it from `visibilitychange` (visible) and `online`
+(`wwwroot/js/page-visibility.js`). The fake relay's `SilentDrop()` knob reproduces the fault.
+- why: the F-042 background run showed the client reconnects only when it sees a close; a silent drop would leave a game waiting for
+  ever. A REQ that matches nothing is the cheapest frame every NIP-01 relay must answer, it is not an EVENT so it costs nothing from
+  the 4-per-10-s budget, and one per 60 s idle per relay is far below any rate limit seen. 60 s keeps it rare (the coordinator's 20 s
+  gap catch-up already makes a busy link chatty); 10 s is above the 8 s no-answer used for publishes
+- side effects: the worst case from a silent drop to a reconnect is 71 s without a wake hook (11 s with one); the frame log of an idle
+  game gains one REQ/EOSE/CLOSE per relay per minute
+- revisit if: a relay rate-limits or refuses REQs at that pace, refuses `limit: 0` or the zero id without answering, or a live run
+  shows a NAT dropping flows that are quiet for less than 60 s

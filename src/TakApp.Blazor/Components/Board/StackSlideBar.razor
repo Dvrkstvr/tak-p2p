@@ -92,8 +92,19 @@
         }
     }
 
+    private Coord? _shownOrigin;
+
     protected override void OnParametersSet()
     {
+        // A new origin (or none) starts the bar afresh: a choice made for another stack must never be confirmed for this one
+        // (pipeline/design/gestures.md G-43).
+        if (OriginCoord != _shownOrigin)
+        {
+            _shownOrigin = OriginCoord;
+            SelectedDirection = null;
+            SelectedMove = null;
+        }
+
         if (ActiveDirection.HasValue && AvailableSlideMoves.Any(m => m.Direction == ActiveDirection.Value))
         {
             SelectedDirection = ActiveDirection.Value;

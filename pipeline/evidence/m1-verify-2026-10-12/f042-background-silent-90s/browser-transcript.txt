@@ -1,0 +1,26 @@
+INVITE TAK2_eyJnaWQiOiI4ZjY4OTNhMC00ZmJmLTQzMDYtODk1ZS1jZDA0NTY3MTI2N2IiLCJob3N0IjoiMWZiNGJhYzE0YWY2MTlmNzI5ZDM5YTA0ZDVkZWE5NDMyMTAzNWExYWI2ZDYzYzU3NWNhZjdlODFlYjYxMWVkYyIsInNpemUiOjUsImtvbWkiOjAsInJlbGF5cyI6WyJ3c3M6Ly9ub3MubG9sIiwid3NzOi8vcmVsYXkuZGFtdXMuaW8iXSwic2VlZF9jb21taXQiOiIwYWE5YWYxZjA4ZDIyMjhhYWQ1MTc3ODUyYjk3ZjYyNzAyMDY4Y2E1MmZkNGE3YmExYzUxMjhiNzc5YjBlOTgwIn0
+RELAY wss://nos.lol connecting
+RELAY wss://relay.damus.io connecting
+RELAY wss://nos.lol caught-up
+RELAY wss://relay.damus.io caught-up
+EVENT ACCEPT turn 0 1ffe87c0cc5acdbfc2b33367e5e2a31267bd9bf401f0eb87d1cd12197dcc3951
+APPLIED turn 1 a1 ab11daad752c482c1f37239f51d987f2329bf19ea2e6b3741edcb472cc76a1f4
+SENT turn 1 wss://nos.lol:ok wss://relay.damus.io:pending
+EVENT MOVE turn 1 01d29d4ae205765ea3aaffc635cfd10474f951b00f767d05cd6bfd3a4f8cf03a
+APPLIED turn 2 e5 cc7095c2312ed61af7d2937c3f492baa09d884a56faf589514a6622c118b6610
+APPLIED turn 3 b2 b713a689b013d81aed23f1019042219f68e3c2c1a6c43dab40059d0872507bbc
+SENT turn 3 wss://nos.lol:ok wss://relay.damus.io:pending
+EVENT MOVE turn 3 c9548008c006c88a961d8e03cf1f0f200922b719452beaa7055415fd77caf505
+APPLIED turn 4 d4 f10b25104e509db2f8f626b545e829609b06b19c9298ba62dd4cbaf6a5e2ef0b
+APPLIED turn 5 c3 b5432e6659f8d21e3eeae2ced4c33730f26ff28b44494fcec4a460da189082b9
+SENT turn 5 wss://nos.lol:ok wss://relay.damus.io:pending
+EVENT MOVE turn 5 c8734aa6e8579148fd6bfb810f904e51857d48897085f715111bd220fb434743
+RELAY wss://nos.lol backoff
+RELAY wss://relay.damus.io backoff
+APPLIED turn 6 b4 2f8cc28e992bd8ceb155fb5a2fe8f9a7207235d596bd740fd98e9e8336315df4
+RELAY wss://nos.lol caught-up
+RELAY wss://relay.damus.io caught-up
+APPLIED turn 7 a3 595186bb6a4f1d2539df0f76f738dc338e84f7e1812967a34e9487699f90acdf
+SENT turn 7 wss://nos.lol:ok wss://relay.damus.io:pending
+EVENT MOVE turn 7 6a6ad064eda0d5fffa29ed685e82f26441135c611218af61dab34ba1678f6b6e
+APPLIED turn 8 e1 0ca632ed0fb44e2356fb12ea88b982de37d4678c3602a0845e7cc24cfc1eca6e
