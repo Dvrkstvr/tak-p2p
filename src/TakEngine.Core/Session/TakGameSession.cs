@@ -43,7 +43,13 @@ public sealed class TakGameSession : ITakGameSession
             : Array.Empty<Coord>();
 
     /// <summary>Plies applied so far (D-040); the next move carries <c>AppliedTurn + 1</c>.</summary>
-    public int AppliedTurn => _appliedTurn;
+    public int AppliedTurn => Volatile.Read(ref _appliedTurn);
+
+    /// <summary>
+    /// The turn moves on only after the hash for it is set: a view on another thread that sees turn n then reads the hash after
+    /// turn n, never the one before it.
+    /// </summary>
+    private void AdvanceTurn() => Volatile.Write(ref _appliedTurn, _appliedTurn + 1);
 
     /// <summary>The current position as TPS (what <see cref="Restore"/> takes back).</summary>
     public string CurrentTps => TpsSerializer.Serialize(_board);
@@ -295,9 +301,9 @@ public sealed class TakGameSession : ITakGameSession
             return execResult;
         }
 
-        _appliedTurn++;
         string tps = TpsSerializer.Serialize(_board);
-        _currentStateHash = StateHasher.ComputeStateHash(_currentStateHash, _appliedTurn, action.PlayerPubKey, ptnMove, tps);
+        _currentStateHash = StateHasher.ComputeStateHash(_currentStateHash, _appliedTurn + 1, action.PlayerPubKey, ptnMove, tps);
+        AdvanceTurn();
 
         var snapshot = _board.ToSnapshot();
         OnMoveExecuted?.Invoke(snapshot, move);
@@ -341,8 +347,8 @@ public sealed class TakGameSession : ITakGameSession
         string playerPubKey = _isRemote ? _localKey!.PublicKey.ToHex() : LocalPlayerPubKey;
 
         string prevHash = _currentStateHash;
-        _appliedTurn++;
-        _currentStateHash = StateHasher.ComputeStateHash(prevHash, _appliedTurn, playerPubKey, ptn, tps);
+        _currentStateHash = StateHasher.ComputeStateHash(prevHash, _appliedTurn + 1, playerPubKey, ptn, tps);
+        AdvanceTurn();
 
         var snapshot = _board.ToSnapshot();
         OnMoveExecuted?.Invoke(snapshot, move);
