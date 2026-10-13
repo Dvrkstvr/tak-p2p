@@ -79,8 +79,9 @@
     [Parameter] public EventCallback<SlideMove> OnSlideConfirmed { get; set; }
     [Parameter] public EventCallback OnCancelRequested { get; set; }
 
-    private Direction? SelectedDirection { get; set; }
-    private SlideMove? SelectedMove { get; set; }
+    private readonly SlideBarChoice _choice = new();
+    private Direction? SelectedDirection => _choice.Direction;
+    private SlideMove? SelectedMove => _choice.Move;
 
     private List<SlideMove> AvailableSlideMoves
     {
@@ -92,56 +93,25 @@
         }
     }
 
-    private Coord? _shownOrigin;
+    // A new origin (or none) starts the bar afresh (G-43, D-050); SlideBarChoiceTests pin it.
+    protected override void OnParametersSet() => _choice.Show(OriginCoord, ActiveDirection, AvailableSlideMoves);
 
-    protected override void OnParametersSet()
-    {
-        // A new origin (or none) starts the bar afresh: a choice made for another stack must never be confirmed for this one
-        // (pipeline/design/gestures.md G-43).
-        if (OriginCoord != _shownOrigin)
-        {
-            _shownOrigin = OriginCoord;
-            SelectedDirection = null;
-            SelectedMove = null;
-        }
+    private void SelectDirection(Direction dir) => _choice.PickDirection(dir, AvailableSlideMoves);
 
-        if (ActiveDirection.HasValue && AvailableSlideMoves.Any(m => m.Direction == ActiveDirection.Value))
-        {
-            SelectedDirection = ActiveDirection.Value;
-            SelectedMove = AvailableSlideMoves.FirstOrDefault(m => m.Direction == SelectedDirection);
-        }
-        else if (OriginCoord.HasValue && SelectedDirection == null && AvailableSlideMoves.Any())
-        {
-            SelectedDirection = AvailableSlideMoves.First().Direction;
-            SelectedMove = AvailableSlideMoves.FirstOrDefault(m => m.Direction == SelectedDirection);
-        }
-    }
-
-    private void SelectDirection(Direction dir)
-    {
-        SelectedDirection = dir;
-        SelectedMove = AvailableSlideMoves.FirstOrDefault(m => m.Direction == dir);
-    }
-
-    private void SelectMove(SlideMove move)
-    {
-        SelectedMove = move;
-    }
+    private void SelectMove(SlideMove move) => _choice.PickMove(move);
 
     private async Task ConfirmSlide()
     {
         if (SelectedMove != null && OnSlideConfirmed.HasDelegate)
         {
             await OnSlideConfirmed.InvokeAsync(SelectedMove);
-            SelectedDirection = null;
-            SelectedMove = null;
+            _choice.Clear();
         }
     }
 
     private async Task OnCancel()
     {
-        SelectedDirection = null;
-        SelectedMove = null;
+        _choice.Clear();
         if (OnCancelRequested.HasDelegate)
         {
             await OnCancelRequested.InvokeAsync();
