@@ -233,6 +233,34 @@ public sealed class RelayPoolTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task AuthRequiredRelay_AnswersTheProbeWithClosed_AndStaysConnectedAndReadImpossible()
+    {
+        _r1.AuthRequiredForReads(); // damus: every REQ, the probe included, gets an AUTH challenge and CLOSED auth-required
+        _r2.Partition();
+        Start();
+        await Eventually(() => _pool.Links[0].ReadImpossible, "r1 read-impossible");
+
+        for (int window = 1; window <= 3; window++)
+        {
+            await Advance(TimeSpan.FromSeconds(60));
+            await Eventually(() => Probes(_r1) == window, $"probe {window} at 60 s idle");
+            await Eventually(() => _pool.Links[0].ProbeSentAt is null, $"probe {window} answered by CLOSED");
+            await Advance(TimeSpan.FromSeconds(10));
+            Assert.Equal(RelayLinkState.Subscribed, _pool.Links[0].State);
+        }
+
+        Assert.True(_pool.Links[0].ReadImpossible);
+        Assert.Equal(1, _r1.ConnectAttempts);
+        Assert.DoesNotContain("[\"CLOSE\",\"tak-probe\"]", _r1.ReceivedFrames); // CLOSED already ended it
+
+        _r1.SilentDrop(); // a silent drop is still found on a read-impossible relay
+        await Advance(TimeSpan.FromSeconds(60));
+        await Eventually(() => _pool.Links[0].ProbeSentAt is not null, "probe into the silence");
+        await Advance(TimeSpan.FromSeconds(10));
+        await Eventually(() => _pool.Links[0].State == RelayLinkState.Backoff, "dropped");
+    }
+
+    [Fact]
     public async Task Upgrade503_IsRetried_WithBackoff()
     {
         _r1.RejectUpgrade(503, times: 2);

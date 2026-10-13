@@ -1,0 +1,12 @@
+Using launch settings from src/TakApp.Blazor/Properties/launchSettings.json...
+Building...
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://127.0.0.1:5199
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: /home/claude/tak-p2p/.claude/worktrees/agent-a2e77b3d034e53162/src/TakApp.Blazor
+info: Microsoft.Hosting.Lifetime[0]
+      Application is shutting down...
