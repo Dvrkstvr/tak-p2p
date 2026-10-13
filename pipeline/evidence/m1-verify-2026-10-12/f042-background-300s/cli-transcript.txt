@@ -1,0 +1,26 @@
+WAITING for the host to answer
+RELAY ws://127.0.0.1:7447/r1 connecting
+RELAY ws://127.0.0.1:7447/r2 connecting
+RELAY ws://127.0.0.1:7447/r1 caught-up
+RELAY ws://127.0.0.1:7447/r2 caught-up
+WAITING opponent move turn 1
+APPLIED turn 1 a1 9298235e9e61b7a4f7e151f1591e29cf3a2a5ab2eac477013ba695d29ecc0395
+WAITING your move turn 2
+APPLIED turn 2 e5 e238bcabb7a90eab1a2c493f5d57e62bc86293e66d15526eebb88d6a4967e490
+WAITING opponent move turn 3
+SENT turn 2 ws://127.0.0.1:7447/r1:ok ws://127.0.0.1:7447/r2:ok
+APPLIED turn 3 b2 51fb88440b079925ff40725708b58c83849d55c7ddeede60de0d041d7c603bd3
+WAITING your move turn 4
+APPLIED turn 4 d4 82b902d749d7e1efaee650042ff13f4fbeb05945c1fd772d4bbee051bd6bf276
+WAITING opponent move turn 5
+SENT turn 4 ws://127.0.0.1:7447/r1:ok ws://127.0.0.1:7447/r2:pending
+APPLIED turn 5 c3 e3ee0e78b23ef2c69c650e5f326e0024e4a713cd53a1a530fd190936b069ee67
+WAITING your move turn 6
+APPLIED turn 6 b4 db93060c014adebb83c8fb344ebb3e34ca0e2aaf9fd6b13cc6bbe82137bc4bb7
+WAITING opponent move turn 7
+SENT turn 6 ws://127.0.0.1:7447/r1:ok ws://127.0.0.1:7447/r2:ok
+APPLIED turn 7 a3 e2fc723e54fc318bb4501d60f9ab7481b9eee43d86a5d2032c116f1e645ee5d8
+WAITING your move turn 8
+APPLIED turn 8 e1 cc58ed9713653d0086027a740e2103da5d8d08f0f10b7a5c11d4e897c37a2e92
+WAITING opponent move turn 9
+SENT turn 8 ws://127.0.0.1:7447/r1:ok ws://127.0.0.1:7447/r2:ok

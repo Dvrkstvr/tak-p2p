@@ -85,6 +85,19 @@ public sealed class PublishTracker
         relays[relay] = new RelayPublishState(RelayPublishStatus.Pending, NoAnswerReason, now + RelayLink.BackoffDelay(retries + 1), retries);
     }
 
+    /// <summary>
+    /// <paramref name="relay"/> has a fresh socket: a no-answer retry waiting for it is due at once, since the silence was the old
+    /// socket's (a silent drop, D-051). Rate-limit backoffs stay: the relay asked for them. The publish budget still applies.
+    /// </summary>
+    public void OnReconnected(Uri relay)
+    {
+        foreach (var relays in _events.Values)
+        {
+            if (relays.TryGetValue(relay, out RelayPublishState? s) && s.Status == RelayPublishStatus.Pending && s.Reason == NoAnswerReason)
+                relays[relay] = s with { RetryAt = null };
+        }
+    }
+
     public IReadOnlyDictionary<Uri, RelayPublishState> PerRelay(string eventId) =>
         _events.TryGetValue(eventId, out var relays) ? relays : new Dictionary<Uri, RelayPublishState>();
 

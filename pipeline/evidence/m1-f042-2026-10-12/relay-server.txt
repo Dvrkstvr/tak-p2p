@@ -1,0 +1,3 @@
+relay ws://127.0.0.1:7447/r1
+relay ws://127.0.0.1:7447/r2
+Ctrl+C stops the relays (everything they hold is forgotten).

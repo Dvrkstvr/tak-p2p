@@ -87,6 +87,9 @@ internal sealed class GameCoordinator : IAsyncDisposable
 
     public OwnLink OwnLink => _pool is null ? OwnLink.Offline : LinkStatus.Own(_pool.Links.Select(l => l.State));
 
+    /// <summary>Probes every relay now (a woken device or a visible-again tab); see <see cref="RelayPool.CheckNow"/>.</summary>
+    public void CheckConnections() => _pool?.CheckNow();
+
     public OpponentLink OpponentLink => LinkStatus.Opponent(_lastHeardFromOpponent, _time.GetUtcNow());
 
     private PublicKey Me => _o.Key.PublicKey;

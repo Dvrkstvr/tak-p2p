@@ -190,6 +190,28 @@ public class InMemoryRelayTests
     }
 
     [Fact]
+    public async Task SilentDrop_StopsDeliveringAndAnswering_WithoutAClose_ButNewConnectionsWork()
+    {
+        var relay = new InMemoryRelay(Url);
+        var socket = await Connect(relay);
+        await Send(socket, Req("s", new NostrFilter { Kinds = [3825] }));
+
+        relay.SilentDrop();
+
+        // Sends still "succeed" (nothing tells the client), but nothing arrives, nothing is stored, nothing comes back.
+        Assert.Empty(await Send(socket, new RelayMessage.Publish(Evt(Alice, 100))));
+        Assert.Empty(await Send(socket, Req("t", new NostrFilter { Kinds = [3825] })));
+        Assert.Empty(relay.StoredEvents);
+        var other = await Connect(relay);
+        await Send(other, new RelayMessage.Publish(Evt(Bob, 101)));
+        Assert.Empty(socket.Drain()); // no live delivery to the silent socket
+        using var cts = new CancellationTokenSource(50);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => socket.ReceiveAsync(cts.Token)); // and no close either
+        Assert.Single(relay.StoredEvents);
+        Assert.Contains(await Send(other, Req("u", new NostrFilter { Kinds = [3825] })), m => m is RelayMessage.Eose);
+    }
+
+    [Fact]
     public async Task Partition_DropsAndRefuses_UntilHealed()
     {
         var relay = new InMemoryRelay(Url);

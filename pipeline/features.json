@@ -217,8 +217,8 @@
         "Illegal moves are not offered by the UI and are rejected by the engine if forced",
         "WebGameSessionManager's duplicate board and road logic is deleted (D-008); one rules implementation remains"
       ],
-      "passes": false,
-      "evidence": null
+      "passes": true,
+      "evidence": "verifier 2026-10-12, re-checked at 7d1a3a6: row 1, one-off Playwright run, human (White) beat the Easy AI on 5x5 by a road on the a-file (pipeline/evidence/m1-verify-2026-10-12/probes-and-human-win, again in pipeline/evidence/m1-verify-2026-10-12/reverify-probes-and-human-win; run.txt + human-win-vs-ai.png). Row 2: after D-050 the slide bar on a new stack names only that stack's move and Confirm sends a legal one; no square is marked for Wall or Cap in the opening, nor for Cap once the side has used its capstone (cap chip disabled); a forced cap with none left shows the engine's 'Insufficient reserves' error and changes nothing (pipeline/evidence/m1-verify-2026-10-12/reverify-f021-row2); slide targets and carry limit as in F-022. `node tests/e2e/play.mjs` SUMMARY PASS incl. G-04 and G-43 (pipeline/evidence/m1-verify-2026-10-12/reverify-play-run). Row 3: WebGameSessionManager.cs gone, no road code in TakApp.Blazor."
     },
     {
       "id": "F-022",
@@ -229,8 +229,8 @@
         "Scripted: move a 3-stack 1-1-1 and 2-1 on 5x5, cancel mid-move, place a wall via right click; each ends in the expected board",
         "Failure: an out-of-range click mid-move cancels the move and places no tile; a move that exceeds the carry limit is not offered"
       ],
-      "passes": false,
-      "evidence": null
+      "passes": true,
+      "evidence": "verifier 2026-10-12: table pipeline/design/gestures.md, encoded by tests/e2e/play.mjs (rows cited per check). `node tests/e2e/play.mjs` SUMMARY PASS: 3b3>111, 3d3<21, cancels by out-of-range click / mid-move click / right-click / Esc / slide-bar Cancel, Sa2 by right click, each with the expected PTN history (pipeline/evidence/m1-verify-2026-10-12/play-run1). One-off probe: an empty out-of-range square clicked mid-move and with only the origin picked cancels and places nothing; a 6-stack on 5x5 starts at 5 of 5 and the count cycle never offers 6, slide bar max drop 5 (pipeline/evidence/m1-verify-2026-10-12/probes-and-human-win)."
     },
     {
       "id": "F-023",
@@ -457,8 +457,8 @@
         "Playwright regression (F-043) passes: place, slide, cancel, win, vs AI full game",
         "Failure: forcing an illegal move through the adapter returns the engine's error and the UI shows it"
       ],
-      "passes": false,
-      "evidence": null
+      "passes": true,
+      "evidence": "verifier 2026-10-12: the four checks pass (one run had a Transport LocalRelayTests timing failure, unrelated and green on rerun); grep of src/TakApp.Blazor finds no legality or road code of its own (slide bar reads Core MoveValidator, gesture choice reads the board as D-049 says); `node tests/e2e/play.mjs` SUMMARY PASS (pipeline/evidence/m1-verify-2026-10-12/play-run1); forcing an illegal slide through the stale slide-bar Confirm shows the engine's 'No pieces to move at c3.' and changes nothing (pipeline/evidence/m1-verify-2026-10-12/q1-stale-slide-bar). Builder: LocalGameAdapter over TakGameSession, WebGameSessionManager deleted, slide targets from the engine's legal moves (D-049). tests/TakApp.Blazor.Tests (LocalGameAdapterTests: illegal placement and slide return the engine error and change nothing; hash chain equals a reference session; bot answers through the session) and Core RoadFinder.FindRoad / TakGameSession.WinningRoad tests, red (missing types) then green. UI shows the engine error: Playwright row G-10b. `node tests/e2e/play.mjs` unchanged script, SUMMARY PASS before (pipeline/evidence/m1-f043-2026-10-12/before-f041) and after (.../after-f041)."
     },
     {
       "id": "F-042",
@@ -469,8 +469,8 @@
         "Tab backgrounded for 5 minutes, then foregrounded: it reconnects and catches up with the since-30 s REQ",
         "Failure: if ClientWebSocket does not work in the WASM runtime, the result is recorded and the fallback (JS interop WebSocket) or the R-005 fallback (browser stays local/AI only) is chosen before M2 starts"
       ],
-      "passes": false,
-      "evidence": "Row 1 seen running 2026-10-12 (D-046): the Blazor WASM app's ClientWebSocket connected to nos.lol + damus from a desktop browser and from a phone browser, and played two full games with the CLI (each side verifies every event; m0-browser-2026-10-12/, m0-f039-2026-10-12/). Row 2 (5 minutes backgrounded, then catch-up) not run."
+      "passes": true,
+      "evidence": "verifier 2026-10-13 at c0669d3. Row 1, judged from the transcripts of 2026-10-12 (m0-browser-2026-10-12/, m0-f039-2026-10-12/; not re-run, no public publishing): the WASM ClientWebSocket reached nos.lol and damus (both caught-up), 9 moves in each game, every APPLIED hash and FINAL equal on both sides; damus never answered OK (every SENT line reads damus:pending), so the events went through nos.lol. Row 2: `node tests/e2e/background.mjs` passed with a 300 s freeze (pipeline/evidence/m1-verify-2026-10-12/f042-background-300s): reconnect 1 s after the thaw, REQ since = newest seen - 30 s, the missed move applied with the CLI's hash, no FLAG. `--silent --freeze-seconds 90` also passed (pipeline/evidence/m1-verify-2026-10-12/f042-background-silent-90s): the probe went into the silent sockets at the thaw, reconnect after 11 s, catch-up. In both runs the page opened only piped sockets (none BLOCKED) and the CLI dialled only 127.0.0.1. This is desktop headless Chromium with JS paused, not a phone; a real phone check (5 min backgrounded or locked on Android Chrome and iOS Safari, including a tab the OS discards and reloads) is still owed. Liveness review (fc90f11, D-051): nothing that blocks a thread (wasm-safe); probes are REQs, outside the publish budget. New RelayPoolTests test: a damus-like relay answers each probe with CLOSED auth-required, and the link stays connected and read-impossible; a silent drop is still found. Deliberate break (probe never sent) is caught by two RelayPoolTests tests (pipeline/evidence/m1-verify-2026-10-12/f042-break-no-probe.txt). Row 3: does not apply (ClientWebSocket works in WASM)."
     },
     {
       "id": "F-043",
@@ -481,8 +481,8 @@
         "The script fails when a cell click is broken on purpose (deliberate-break check)",
         "A state/transition table of the existing gestures exists in pipeline/ (design task) and the script cites it"
       ],
-      "passes": false,
-      "evidence": null
+      "passes": true,
+      "evidence": "verifier 2026-10-12: `node tests/e2e/play.mjs --out pipeline/evidence/m1-verify-2026-10-12/play-run1` started the dev server itself, wrote run.txt citing gestures.md rows and 9 screenshots, SUMMARY PASS, exit 0, all WebSockets stubbed. Own deliberate breaks, each reverted: right-click quick wall placing a flat failed G-11 (pipeline/evidence/m1-verify-2026-10-12/break-rightclick-wall); dropping the stack-on-current-square increment failed G-30 and the road win (pipeline/evidence/m1-verify-2026-10-12/break-slide-stack-drop); both exit 1. Builder: table pipeline/design/gestures.md; `node tests/e2e/play.mjs` run on the pre-F-041 build, SUMMARY PASS, log and screenshots in pipeline/evidence/m1-f043-2026-10-12/before-f041. Deliberate break: TakBoardView.HandleSquareClick dropped b-file clicks, the run failed (G-15, G-12, G-21, G-20, G-24, G-32, G-33, G-40 rows; SUMMARY FAIL, exit 1), log in .../deliberate-break; reverted."
     },
     {
       "id": "F-044",

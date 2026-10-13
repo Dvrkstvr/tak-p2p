@@ -12,6 +12,7 @@
       "src/TakApp.Blazor/TakApp.Blazor.csproj",
       "src/TakApp.Avalonia/TakApp.Avalonia.csproj",
       "src/TakApp.Avalonia.Desktop/TakApp.Avalonia.Desktop.csproj",
+      "tests/TakApp.Blazor.Tests/TakApp.Blazor.Tests.csproj",
       "tests/TakApp.Cli.Tests/TakApp.Cli.Tests.csproj",
       "tests/TakEngine.Core.Tests/TakEngine.Core.Tests.csproj",
       "tests/TakEngine.Crypto.Tests/TakEngine.Crypto.Tests.csproj",

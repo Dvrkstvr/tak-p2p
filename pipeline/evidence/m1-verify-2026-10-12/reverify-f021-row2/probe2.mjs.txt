@@ -1,0 +1,79 @@
+// Re-verify F-021 row 2 (2026-10-12): stale slide bar on a different stack; Wall/Cap markers in the opening and with caps used up.
+import { createRequire } from 'node:module';
+import fs from 'node:fs'; import path from 'node:path';
+const require = createRequire(import.meta.url);
+const { chromium } = require('/opt/node-tools/node_modules/playwright');
+const out = path.resolve(process.argv[2]); fs.mkdirSync(out, { recursive: true });
+const logPath = path.join(out, 'run.txt'); fs.writeFileSync(logPath, '');
+const log = (l) => { const s = `${new Date().toISOString()} ${l}`; console.log(s); fs.appendFileSync(logPath, s + '\n'); };
+let failures = 0;
+const check = (ok, what) => { if (!ok) failures++; log(`${ok ? 'PASS' : 'FAIL'} ${what}`); };
+const D = '.arena-3col'; const sq = (c) => `${D} #sq-${c} > rect.svg-sq`;
+const settle = (p) => p.waitForTimeout(150);
+const click = async (p, c) => { await p.click(sq(c)); await settle(p); };
+const key = async (p, k) => { await p.keyboard.press(k); await settle(p); };
+const history = (p) => p.$$eval(`${D} .move-history-list .move-history-row`, (rows) => rows.flatMap((r) => [r.querySelector('.move-ptn-white')?.textContent?.trim(), r.querySelector('.move-ptn-black')?.textContent?.trim()]).filter((m) => m));
+const marked = (p) => p.$$eval(`${D} g[data-coord]`, (gs) => gs.filter((g) => g.querySelector('rect.svg-sq.legal-target')).map((g) => g.dataset.coord));
+const errorText = async (p) => { const e = await p.$(`${D} .arena-col-left div[style*="#7f1d1d"]`); return e ? (await e.textContent()).trim() : ''; };
+const tab = async (p) => ((await p.textContent(`${D} .piece-selector-tab.active`)) ?? '').replace(/\s+/g, ' ').trim();
+async function local(p) {
+  await p.goto('http://127.0.0.1:5199/'); await p.waitForSelector('.actions-row button', { timeout: 60000 });
+  await p.click('.toggle-btn:has-text("5×5")'); await p.click('.actions-row button:has-text("Local")'); await p.waitForSelector(sq('a1')); await settle(p);
+}
+const browser = await chromium.launch();
+try {
+  const p = await (await browser.newContext({ viewport: { width: 1400, height: 1000 } })).newPage();
+  await p.routeWebSocket(/.*/, (ws) => log(`WS stubbed ${ws.url()}`));
+  p.on('pageerror', (e) => log(`PAGEERROR ${e.message}`));
+
+  log('PROBE A: stale slide bar on a different stack (the sequence that showed Q-1 before)');
+  await local(p);
+  for (const m of ['a1', 'e5', 'c3', 'c4']) await click(p, m);
+  await click(p, 'c3'); await click(p, 'c2'); // W c3-
+  await click(p, 'd4');                       // B
+  await click(p, 'c2');                       // W picks c2
+  const bar = ((await p.textContent(`${D} .slide-control-box`).catch(() => '')) ?? '').replace(/\s+/g, ' ').trim();
+  const named = (bar.match(/Confirm Move \(([^)]*)\)/) ?? [])[1] ?? '(no confirm)';
+  log(`slide bar with origin c2: ${bar}`);
+  check(named === '(no confirm)' || /^\d?c2/.test(named), `slide bar names only a c2 move (got "${named}")`);
+  const before = await history(p);
+  const confirm = await p.$(`${D} .slide-control-box button:has-text("Confirm")`);
+  if (confirm && await confirm.isEnabled()) { await confirm.click(); await settle(p); }
+  const after = await history(p);
+  check((await errorText(p)) === '' && after.length === before.length + (confirm ? 1 : 0), `confirm sends a legal move or none (history ${after.slice(before.length).join(' ') || 'unchanged'}, error "${await errorText(p)}")`);
+  await p.screenshot({ path: path.join(out, 'a-slide-bar-c2.png') });
+
+  log('PROBE B: markers per selected piece in the opening');
+  await local(p);
+  check((await marked(p)).length === 25, 'opening, Flat: 25 squares marked');
+  await key(p, 'w');
+  check((await tab(p)).startsWith('Wall') && (await marked(p)).length === 0, `opening, Wall: no square marked (${(await marked(p)).length})`);
+  await key(p, 'c');
+  check((await tab(p)).startsWith('Cap') && (await marked(p)).length === 0, `opening, Cap: no square marked (${(await marked(p)).length})`);
+  await p.screenshot({ path: path.join(out, 'b-opening-cap-no-markers.png') });
+  await key(p, 'f');
+  await click(p, 'a1'); await click(p, 'e5');
+  await key(p, 'w');
+  check((await marked(p)).length === 23, `after the opening, Wall: every empty square marked (${(await marked(p)).length})`);
+
+  log('PROBE C: Cap markers when the side has used its capstone');
+  await key(p, 'c');
+  check((await marked(p)).length === 23, `White has a cap: 23 squares marked for Cap (${(await marked(p)).length})`);
+  await click(p, 'c3'); // W Cc3
+  check((await history(p)).at(-1) === 'Cc3', `White placed Cc3 (history ${(await history(p)).join(' ')})`);
+  check((await tab(p)).startsWith('Cap') && (await marked(p)).length === 22, `Black still has a cap: 22 squares marked for Cap (${(await marked(p)).length})`);
+  await click(p, 'c4'); // B Cc4
+  check((await history(p)).at(-1) === 'Cc4', 'Black placed Cc4');
+  check((await marked(p)).length === 0, `White (no cap left), Cap selected: no square marked (${(await marked(p)).length})`);
+  const capChip = await p.$(`${D} .player-card-flat.active-player-card .reserve-chip[title^="Capstone"]`);
+  log(`white cap chip disabled: ${capChip ? await capChip.isDisabled() : 'chip not found'}`);
+  await p.screenshot({ path: path.join(out, 'c-no-cap-no-markers.png') });
+  const h = await history(p);
+  await click(p, 'a3'); // forced: Cap with none left
+  log(`forced cap with none left: error "${await errorText(p)}"`);
+  check((await errorText(p)).length > 0 && JSON.stringify(await history(p)) === JSON.stringify(h), 'forcing a cap with none left: engine error shown, nothing changes');
+  await key(p, 'f');
+  check((await marked(p)).length === 21, `back to Flat: 21 empty squares marked (${(await marked(p)).length})`);
+} finally { await browser.close(); }
+log(`SUMMARY ${failures ? 'FAIL' : 'PASS'} failed=${failures}`);
+process.exit(failures ? 1 : 0);

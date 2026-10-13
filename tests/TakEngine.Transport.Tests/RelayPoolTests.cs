@@ -156,6 +156,110 @@ public sealed class RelayPoolTests : IAsyncDisposable
         Assert.Empty(Drain()); // the replayed history is not delivered again
     }
 
+    private static int Probes(InMemoryRelay relay) => relay.ReceivedFrames.Count(f => f.StartsWith("[\"REQ\",\"tak-probe\"", StringComparison.Ordinal));
+
+    [Fact]
+    public async Task IdleHealthyRelay_AnswersOneProbePerIdleWindow_AndStaysConnected()
+    {
+        Start();
+        await Subscribed();
+
+        await Advance(TimeSpan.FromSeconds(59));
+        Assert.Equal(0, Probes(_r1));
+        await Advance(TimeSpan.FromSeconds(1));
+        await Eventually(() => Probes(_r1) == 1 && Probes(_r2) == 1, "a probe to each relay at 60 s idle");
+        await Eventually(() => _r1.ReceivedFrames.Contains("[\"CLOSE\",\"tak-probe\"]"), "the probe closed after its EOSE");
+        await Eventually(() => _pool.Links[0].ProbeSentAt is null, "probe answered");
+
+        await Advance(TimeSpan.FromSeconds(15));
+        Assert.Equal(1, Probes(_r1)); // not again until the next idle window
+        Assert.All(_pool.Links, l => Assert.Equal(RelayLinkState.CaughtUp, l.State));
+        Assert.Equal(1, _r1.ConnectAttempts);
+        Assert.DoesNotContain(_r1.ReceivedFrames, f => f.StartsWith("[\"EVENT\"", StringComparison.Ordinal)); // probes are not EVENTs
+    }
+
+    [Fact]
+    public async Task SilentDrop_IsFoundByTheProbe_AndTheReconnectCatchesUpWhatWasMissed()
+    {
+        _r2.Partition(); // one relay, so the missed event can only come from r1's catch-up
+        NostrEvent before = Evt(Opponent);
+        _r1.Seed(before);
+        Start();
+        await Eventually(() => _pool.Links[0].State == RelayLinkState.CaughtUp, "r1 caught up");
+        await Eventually(() => _pool.MaxCreatedAt == before.CreatedAt, "history delivered");
+        Drain();
+
+        _r1.SilentDrop(); // the laptop slept: no close reaches either side
+        NostrEvent missed = Evt(Opponent);
+        _r1.Seed(missed); // the opponent moved meanwhile, over its own healthy socket
+
+        await Advance(TimeSpan.FromSeconds(60));
+        await Eventually(() => _pool.Links[0].ProbeSentAt is not null, "probe sent into the silence");
+        Assert.Equal(RelayLinkState.CaughtUp, _pool.Links[0].State);
+        await Advance(TimeSpan.FromSeconds(9));
+        await Task.Delay(30);
+        Assert.Equal(RelayLinkState.CaughtUp, _pool.Links[0].State);
+        Assert.Empty(Drain());
+
+        await Advance(TimeSpan.FromSeconds(1));
+        await Eventually(() => _pool.Links[0].State == RelayLinkState.Backoff, "dropped after 10 s without an answer");
+        Assert.Contains("no answer", _pool.Links[0].LastMessage);
+        await Advance(TimeSpan.FromSeconds(1));
+        await Eventually(() => _pool.Links[0].State == RelayLinkState.CaughtUp, "reconnected");
+
+        var received = new List<ReceivedEvent>();
+        await Eventually(() => { received.AddRange(Drain()); return received.Any(r => r.Event.Id == missed.Id); }, "the missed event");
+        Assert.DoesNotContain(received, r => r.Event.Id == before.Id);
+        var lastReq = (RelayMessage.Req)RelayMessage.Parse(_r1.ReceivedFrames.Last(f => f.StartsWith("[\"REQ\",\"tak-0b7e3d4c\"", StringComparison.Ordinal)));
+        Assert.Equal(before.CreatedAt - 30, lastReq.Filters[0].Since);
+    }
+
+    [Fact]
+    public async Task CheckNow_ProbesAtOnce_AndASilentRelayIsDroppedTenSecondsLater()
+    {
+        _r2.Partition();
+        Start();
+        await Eventually(() => _pool.Links[0].State == RelayLinkState.CaughtUp, "r1 caught up");
+        await Advance(TimeSpan.FromSeconds(20));
+        _r1.SilentDrop();
+
+        _pool.CheckNow(); // the tab became visible again
+        await Eventually(() => _pool.Links[0].ProbeSentAt == _time.GetUtcNow(), "probe sent without waiting the idle window");
+        await Advance(TimeSpan.FromSeconds(10));
+        await Eventually(() => _pool.Links[0].State == RelayLinkState.Backoff, "dropped");
+        await Advance(TimeSpan.FromSeconds(1));
+        await Eventually(() => _pool.Links[0].State == RelayLinkState.CaughtUp, "reconnected");
+        Assert.Equal(2, _r1.ConnectAttempts);
+    }
+
+    [Fact]
+    public async Task AuthRequiredRelay_AnswersTheProbeWithClosed_AndStaysConnectedAndReadImpossible()
+    {
+        _r1.AuthRequiredForReads(); // damus: every REQ, the probe included, gets an AUTH challenge and CLOSED auth-required
+        _r2.Partition();
+        Start();
+        await Eventually(() => _pool.Links[0].ReadImpossible, "r1 read-impossible");
+
+        for (int window = 1; window <= 3; window++)
+        {
+            await Advance(TimeSpan.FromSeconds(60));
+            await Eventually(() => Probes(_r1) == window, $"probe {window} at 60 s idle");
+            await Eventually(() => _pool.Links[0].ProbeSentAt is null, $"probe {window} answered by CLOSED");
+            await Advance(TimeSpan.FromSeconds(10));
+            Assert.Equal(RelayLinkState.Subscribed, _pool.Links[0].State);
+        }
+
+        Assert.True(_pool.Links[0].ReadImpossible);
+        Assert.Equal(1, _r1.ConnectAttempts);
+        Assert.DoesNotContain("[\"CLOSE\",\"tak-probe\"]", _r1.ReceivedFrames); // CLOSED already ended it
+
+        _r1.SilentDrop(); // a silent drop is still found on a read-impossible relay
+        await Advance(TimeSpan.FromSeconds(60));
+        await Eventually(() => _pool.Links[0].ProbeSentAt is not null, "probe into the silence");
+        await Advance(TimeSpan.FromSeconds(10));
+        await Eventually(() => _pool.Links[0].State == RelayLinkState.Backoff, "dropped");
+    }
+
     [Fact]
     public async Task Upgrade503_IsRetried_WithBackoff()
     {

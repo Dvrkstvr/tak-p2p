@@ -7,9 +7,9 @@
 - stage: 7 Build — M0 done: features all pass, review (pipeline/reviews/M0-code.md, M0-security.md) fixed or decided (D-047, D-048); M1 next
 - clarity: scope 5/5 · blocking 0 · assumed 9 · deferred 3
 - feasibility: amber · H-open 0 · M-open 3 · spiked 4
-- milestone: M0 → M1 (browser on the engine) · features passing 32/58 · owed checks 4
+- milestone: M1 (browser on the engine) · M1 features all pass (PR #8) · owed checks 5
 - core promise: last ran end to end 2026-10-12, CLI host vs phone browser over nos.lol + damus (F-039, pipeline/evidence/live-relay-log.md)
-- next: M1: F-041 (Blazor local/AI play through TakGameSession) with F-043 (Playwright harness), then F-042 row 2 (5 min backgrounded tab) → `/pipeline:run`
+- next: M1 review (code + security lenses) and curate, then M2 → `/pipeline:run`. Browser regression: `node tests/e2e/play.mjs`, `node tests/e2e/background.mjs`
 
 ## Stages
 | # | Stage | State | Gate | Date |
@@ -30,6 +30,8 @@
 - The browser /online page (D-046) already covers parts of M2: host, join and rebuild over relays, sizes 3-8 and komi. M2 keeps
   invite link/QR UX (F-047), status (F-046), browser-vs-browser (F-044) and the cross-head run from the Pages site (F-045).
 - Owed hand-checks (5 min each): Blazor vs AI, M1.15.x tower-move controls, CLI game, Avalonia desktop → F-021, F-022, F-024, F-025.
+- Owed phone check (F-042 row 2, D-051): a game on Android Chrome and iOS Safari with the tab backgrounded 5 min, and once with the OS killing the tab; desktop Chromium was frozen only.
+- Cosmetic, open: on damus each liveness probe's AUTH challenge overwrites the relay status message.
 - Retired rituals (D-013): DEVLOG, mirrored milestone tables, test counts in docs. AGENTS.md section 2 still mandates them; edit it on a separate branch with D-009 (lean CLAUDE.md).
 - UI freeze (D-006) ends with M0; D-046 lifted it early for /online only.
 - Owed from spikes: re-run spikes/R-001-R-004-relay-roundtrip/check-retention.mjs (7-day result is F-040's acceptance), and retry primal from another network.

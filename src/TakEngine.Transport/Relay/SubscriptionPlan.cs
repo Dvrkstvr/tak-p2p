@@ -43,6 +43,16 @@ public static class SubscriptionPlan
         return new RelayMessage.Req(SubscriptionId(gameId), [fromOpponent, mine]);
     }
 
+    /// <summary>The liveness probe's own short-lived subscription (D-051); its EOSE is answered with a CLOSE.</summary>
+    public const string ProbeSubscriptionId = "tak-probe";
+
+    /// <summary>
+    /// A REQ the relay must answer and that matches nothing: one all-zero id (no event has it), <c>limit 0</c>. Any relay answers it
+    /// with EOSE (or CLOSED/NOTICE, which count as alive too). A probe is not an EVENT, so it does not touch the publish budget.
+    /// </summary>
+    public static RelayMessage.Req Probe() =>
+        new(ProbeSubscriptionId, [new NostrFilter { Ids = [new string('0', 64)], Kinds = [EnvelopeCodec.Kind], Limit = 0 }]);
+
     /// <summary><c>ids</c> lookups in filters of at most 5 ids (nos.lol silently returns nothing for 20).</summary>
     public static IReadOnlyList<NostrFilter> IdLookups(IEnumerable<string> eventIds) =>
         eventIds.Distinct(StringComparer.Ordinal).Chunk(IdsChunk).Select(chunk => new NostrFilter { Ids = [.. chunk] }).ToList();

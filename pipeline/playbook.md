@@ -81,6 +81,27 @@ dotnet test TakGame.Ci.slnf --no-build --filter "Category!=LiveRelay"
   --project src/TakApp.Cli --no-build` prints the menu and exits 0) and two CLI processes run side by side (both exit 0). Step 1-2's
   commands become runnable when F-016 / F-036 land; they are the acceptance runs for those features.
 
+### Verify method for an agent (M1, browser head)
+- **Play page regression (F-043):** `node tests/e2e/play.mjs` (Node 22, Playwright 1.56 from `/opt/node-tools/node_modules/playwright`
+  or `PLAYWRIGHT_MODULE=<path>`; never `playwright install`). If nothing answers at `http://127.0.0.1:5199` it runs
+  `dotnet run --project src/TakApp.Blazor/TakApp.Blazor.csproj --urls http://127.0.0.1:5199` itself and stops it by process group
+  at the end; `--url <base>` drives a site that is already up, `--out <dir>` picks the evidence folder (default
+  `pipeline/evidence/m1-f043-<date>`), `--headed` shows the browser. It drives local pass-and-play (place, refused placement,
+  inspect, reserve rotate, quick wall, slides 1-1-1 and 2-1 on 5×5, cancel by out-of-range click / right-click / Esc / slide bar,
+  road win) and a vs-AI game to a result, writes `run.txt` (one `PASS`/`FAIL <row> …` line per check, citing
+  `pipeline/design/gestures.md` rows) and numbered screenshots, and exits 0 only when every check passed.
+- Every WebSocket the page opens is stubbed (`page.routeWebSocket`), so a run sends nothing to a relay.
+- **Backgrounded tab catches up (F-042 row 2):** `node tests/e2e/background.mjs` (same Playwright; `--freeze-seconds` default 300,
+  `--relay-port` default 7447, `--url`, `--out` default `pipeline/evidence/m1-f042-<date>`, `--headed`). It starts
+  `tools/TakRelay.Local` and the Blazor dev server when nothing answers, hosts on `/online`, joins with the CLI on
+  `ws://127.0.0.1:<port>/r1,r2`, plays, freezes the tab (CDP `Page.setWebLifecycleState frozen` + `Debugger.pause`; the lifecycle
+  call alone does not stop timers in headless Chromium), closes both relay connections, lets the CLI move, thaws after the freeze
+  time, and checks the tab reopens its sockets, sends a REQ with `since` = newest seen `created_at` - 30 s, applies the missed move
+  and agrees with the CLI on every hash. The page's `wss://nos.lol` / `wss://relay.damus.io` sockets are answered by
+  `page.routeWebSocket` and piped to the local r1 / r2 (every frame is logged); any other non-loopback socket is closed unanswered,
+  so nothing reaches a public relay and the app is unchanged. A desktop-Chromium approximation of a backgrounded phone tab.
+- A 404 on `dotnet.<hash>.js` means stale `bin`/`obj` in `src/TakApp.Blazor`: delete both and rerun.
+
 ## Quality bar (track: deep)
 - Every H-impact risk and every M-impact hypothesis is spiked before it is built on.
 - Test-first: the failing test is written and seen red before the code (spec-first). Crypto and wire behaviour are tested between two

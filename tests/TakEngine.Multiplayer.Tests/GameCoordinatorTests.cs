@@ -99,6 +99,53 @@ public sealed class GameCoordinatorTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task MoveMadeDuringASilentDrop_IsAppliedAfterTheProbeFindsTheDropAndBothReconnect()
+    {
+        var (host, guest) = await _t.Connect();
+        MultiplayerGame white = host.MyColor == PlayerColor.White ? host : guest;
+        MultiplayerGame black = white == host ? guest : host;
+        int connects = _t.R1.ConnectAttempts + _t.R2.ConnectAttempts;
+        int flags = 0;
+        black.Flagged += _ => flags++;
+
+        // Both devices' sockets go silent with no close (a NAT dropped the flows); white moves into the silence.
+        _t.R1.SilentDrop();
+        _t.R2.SilentDrop();
+        Assert.True((await white.SubmitAsync("e5")).IsSuccess);
+        Assert.Equal(1, white.AppliedTurn);
+
+        await _t.Advance(TimeSpan.FromSeconds(50));
+        Assert.Equal(0, black.AppliedTurn);
+        Assert.Equal(connects, _t.R1.ConnectAttempts + _t.R2.ConnectAttempts); // nothing noticed yet: no close came
+
+        await _t.Advance(TimeSpan.FromSeconds(30)); // idle 60 s -> probe -> 10 s without an answer -> drop -> 1 s backoff
+
+        await Table.Eventually(() => black.AppliedTurn == 1, "the move made during the silent drop arrives");
+        Assert.Equal(white.StateHash, black.StateHash);
+        Assert.True(_t.R1.ConnectAttempts + _t.R2.ConnectAttempts >= connects + 4, "every socket reconnected");
+        Assert.Equal(0, flags);
+    }
+
+    [Fact]
+    public async Task CheckConnections_AfterAWake_FindsASilentDropWithoutWaitingTheIdleWindow()
+    {
+        var (host, guest) = await _t.Connect();
+        MultiplayerGame white = host.MyColor == PlayerColor.White ? host : guest;
+        MultiplayerGame black = white == host ? guest : host;
+        _t.R1.SilentDrop();
+        _t.R2.SilentDrop();
+        Assert.True((await white.SubmitAsync("e5")).IsSuccess);
+
+        // Both tabs become visible again: each probes at once, and 10 s of silence later reconnects.
+        white.CheckConnections();
+        black.CheckConnections();
+        await _t.Advance(TimeSpan.FromSeconds(15));
+
+        await Table.Eventually(() => black.AppliedTurn == 1, "the move arrives well inside the 60 s idle window");
+        Assert.Equal(white.StateHash, black.StateHash);
+    }
+
+    [Fact]
     public async Task PublishThenCrashBeforeSave_RepublishesTheSameTurn_PeerIgnoresTheDuplicate()
     {
         var (host, guest) = await _t.Connect();

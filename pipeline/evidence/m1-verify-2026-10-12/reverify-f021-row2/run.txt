@@ -1,0 +1,20 @@
+2026-10-12T23:05:55.742Z PROBE A: stale slide bar on a different stack (the sequence that showed Q-1 before)
+2026-10-12T23:06:00.507Z slide bar with origin c2: Slide stack at c2 (Height: 1, Carry Limit: 5) ✕ Cancel 1. Direction: ↑←→↓2. Drops: 1 piece → 1 Confirm Move (c2+)
+2026-10-12T23:06:00.507Z PASS slide bar names only a c2 move (got "c2+")
+2026-10-12T23:06:00.753Z PASS confirm sends a legal move or none (history c2+, error "")
+2026-10-12T23:06:00.803Z PROBE B: markers per selected piece in the opening
+2026-10-12T23:06:03.489Z PASS opening, Flat: 25 squares marked
+2026-10-12T23:06:03.671Z PASS opening, Wall: no square marked (0)
+2026-10-12T23:06:03.847Z PASS opening, Cap: no square marked (0)
+2026-10-12T23:06:04.672Z PASS after the opening, Wall: every empty square marked (23)
+2026-10-12T23:06:04.672Z PROBE C: Cap markers when the side has used its capstone
+2026-10-12T23:06:04.850Z PASS White has a cap: 23 squares marked for Cap (23)
+2026-10-12T23:06:05.067Z PASS White placed Cc3 (history a1 e5 Cc3)
+2026-10-12T23:06:05.075Z PASS Black still has a cap: 22 squares marked for Cap (22)
+2026-10-12T23:06:05.279Z PASS Black placed Cc4
+2026-10-12T23:06:05.285Z PASS White (no cap left), Cap selected: no square marked (0)
+2026-10-12T23:06:05.293Z white cap chip disabled: true
+2026-10-12T23:06:05.551Z forced cap with none left: error "Insufficient reserves for White to place Capstone."
+2026-10-12T23:06:05.560Z PASS forcing a cap with none left: engine error shown, nothing changes
+2026-10-12T23:06:05.737Z PASS back to Flat: 21 empty squares marked (21)
+2026-10-12T23:06:05.781Z SUMMARY PASS failed=0

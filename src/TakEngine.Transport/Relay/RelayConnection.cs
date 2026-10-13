@@ -18,6 +18,8 @@ public sealed class RelayConnection : IAsyncDisposable
     private readonly CancellationTokenSource _stop = new();
     private IRelaySocket? _socket;
     private Task? _run;
+    private TaskCompletionSource _poke = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private int _checkRequested;
 
     /// <param name="subscription">Evaluated at every (re)connect, so <c>since</c> follows the newest event seen.</param>
     /// <param name="onMessage">Every parsed frame from the relay, on the reader's thread.</param>
@@ -124,27 +126,15 @@ public sealed class RelayConnection : IAsyncDisposable
             }
 
             _socket = socket;
+            bool silent = false;
             RelayMessage.Req? req = _subscription();
             if (req is null || await SendAsync(req.Format()).ConfigureAwait(false))
             {
                 Generation++;
-                Link.OnSubscribed();
+                Link.OnSubscribed(_time.GetUtcNow());
                 _onSubscribed(this);
-                while (!ct.IsCancellationRequested)
-                {
-                    string? frame;
-                    try
-                    {
-                        frame = await socket.ReceiveAsync(ct).ConfigureAwait(false);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        break;
-                    }
-                    if (frame is null)
-                        break;
-                    _onMessage(this, RelayMessage.Parse(frame));
-                }
+                // A silent socket is closed below like any other; the next REQ's since catches up what it missed.
+                silent = await ReadUntilClosedAsync(socket, ct).ConfigureAwait(false);
             }
 
             // Under the send gate, so no send is half way through on the socket being disposed.
@@ -159,7 +149,90 @@ public sealed class RelayConnection : IAsyncDisposable
                 _sendGate.Release();
             }
             if (!ct.IsCancellationRequested)
-                Link.OnDisconnected(_time.GetUtcNow(), "connection dropped");
+                Link.OnDisconnected(_time.GetUtcNow(), silent ? null : "connection dropped"); // silent: the link already named the reason
+        }
+    }
+
+    /// <summary>Probe now rather than after the idle window (a tab became visible again, a device woke). Thread-safe.</summary>
+    public void CheckNow()
+    {
+        Interlocked.Exchange(ref _checkRequested, 1);
+        Volatile.Read(ref _poke).TrySetResult();
+    }
+
+    /// <summary>
+    /// Reads frames until the socket closes (false) or the link's liveness check gives up on a silent socket (true). Every frame
+    /// resets the idle clock; when the relay has been quiet for the idle window a probe goes out on this socket, and its EOSE is
+    /// answered with a CLOSE by the pool.
+    /// </summary>
+    private async Task<bool> ReadUntilClosedAsync(IRelaySocket socket, CancellationToken ct)
+    {
+        using var reading = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        Task<string?> receive = socket.ReceiveAsync(reading.Token);
+        try
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                TaskCompletionSource poke = Volatile.Read(ref _poke);
+                if (Interlocked.Exchange(ref _checkRequested, 0) == 1)
+                    Link.RequestProbe();
+                DateTimeOffset now = _time.GetUtcNow();
+                switch (Link.CheckLiveness(now))
+                {
+                    case LivenessAction.SendProbe:
+                        await SendAsync(SubscriptionPlan.Probe().Format()).ConfigureAwait(false);
+                        break;
+                    case LivenessAction.Drop:
+                        return true;
+                }
+
+                if (!receive.IsCompleted)
+                {
+                    using var waiting = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                    var waits = new List<Task> { receive, poke.Task };
+                    if (Link.NextLivenessCheckAt is DateTimeOffset due)
+                    {
+                        // Read the clock again: sending the probe awaited, and time may have moved on since `now`.
+                        TimeSpan wait = due - _time.GetUtcNow();
+                        waits.Add(Task.Delay(wait > TimeSpan.Zero ? wait : TimeSpan.Zero, _time, waiting.Token));
+                    }
+                    await Task.WhenAny(waits).ConfigureAwait(false);
+                    await waiting.CancelAsync().ConfigureAwait(false);
+                    if (poke.Task.IsCompleted)
+                        Interlocked.CompareExchange(ref _poke, new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously), poke);
+                    if (!receive.IsCompleted)
+                        continue;
+                }
+
+                string? frame;
+                try
+                {
+                    frame = await receive.ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    return false;
+                }
+                if (frame is null)
+                    return false;
+                Link.OnFrame(_time.GetUtcNow());
+                _onMessage(this, RelayMessage.Parse(frame));
+                receive = socket.ReceiveAsync(reading.Token);
+            }
+            return false;
+        }
+        finally
+        {
+            // A receive still pending on a silent socket ends here (the real socket aborts on cancel).
+            await reading.CancelAsync().ConfigureAwait(false);
+            try
+            {
+                await receive.ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is OperationCanceledException or ObjectDisposedException or InvalidOperationException
+                or System.Net.WebSockets.WebSocketException)
+            {
+            }
         }
     }
 

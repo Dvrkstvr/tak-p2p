@@ -130,6 +130,24 @@ public sealed class InMemoryRelay
         }
     }
 
+    /// <summary>
+    /// Every open socket goes silent without a close (a laptop that slept, a NAT that dropped the flow): nothing more is delivered
+    /// on it, frames the client sends on it never arrive (no OK, no EOSE, nothing stored), and the client's send still "succeeds".
+    /// The client only finds out by noticing the silence. New connections work normally.
+    /// </summary>
+    public void SilentDrop()
+    {
+        lock (_gate)
+        {
+            foreach (Link link in _links.ToList())
+            {
+                link.IsSilent = true;
+                link.Subscriptions.Clear();
+                _links.Remove(link);
+            }
+        }
+    }
+
     public void Heal()
     {
         lock (_gate) _partitioned = false;
@@ -426,6 +444,9 @@ public sealed class InMemoryRelay
         public List<string> Pending { get; } = [];
         public bool IsClosed { get; private set; }
 
+        /// <summary>See <see cref="SilentDrop"/>: open for the client, dead for the relay.</summary>
+        public bool IsSilent { get; set; }
+
         public ChannelReader<string> Outbound => _outbound.Reader;
 
         public bool Receive(string frame)
@@ -434,7 +455,8 @@ public sealed class InMemoryRelay
             {
                 if (IsClosed)
                     return false;
-                relay.HandleLocked(this, frame);
+                if (!IsSilent)
+                    relay.HandleLocked(this, frame);
                 return true;
             }
         }
@@ -446,7 +468,7 @@ public sealed class InMemoryRelay
 
         public void SendLocked(string frame)
         {
-            if (IsClosed)
+            if (IsClosed || IsSilent)
                 return;
             relay.FramesSent++;
             _outbound.Writer.TryWrite(frame);

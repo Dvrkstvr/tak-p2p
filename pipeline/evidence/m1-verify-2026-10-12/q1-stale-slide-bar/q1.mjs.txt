@@ -1,0 +1,36 @@
+// Probe Q-1: does the slide bar offer an illegal (stale) move, and what happens on Confirm?
+import { createRequire } from 'node:module';
+import fs from 'node:fs'; import path from 'node:path';
+const require = createRequire(import.meta.url);
+const { chromium } = require('/opt/node-tools/node_modules/playwright');
+const out = path.resolve(process.argv[2]); fs.mkdirSync(out, { recursive: true });
+const logPath = path.join(out, 'run.txt'); fs.writeFileSync(logPath, '');
+const log = (l) => { const s = `${new Date().toISOString()} ${l}`; console.log(s); fs.appendFileSync(logPath, s + '\n'); };
+const D = '.arena-3col'; const sq = (c) => `${D} #sq-${c} > rect.svg-sq`;
+const click = async (p, c) => { await p.click(sq(c)); await p.waitForTimeout(150); };
+const history = (p) => p.$$eval(`${D} .move-history-list .move-history-row`, (rows) => rows.flatMap((r) => [r.querySelector('.move-ptn-white')?.textContent?.trim(), r.querySelector('.move-ptn-black')?.textContent?.trim()]).filter((m) => m));
+const browser = await chromium.launch();
+try {
+  const p = await (await browser.newContext({ viewport: { width: 1400, height: 1000 } })).newPage();
+  await p.routeWebSocket(/.*/, (ws) => log(`WS stubbed ${ws.url()}`));
+  await p.goto('http://127.0.0.1:5199/'); await p.waitForSelector('.actions-row button', { timeout: 60000 });
+  await p.click('.toggle-btn:has-text("5×5")'); await p.click('.actions-row button:has-text("Local")'); await p.waitForSelector(sq('a1'));
+  for (const m of ['a1', 'e5', 'c3', 'c4']) await click(p, m);
+  await click(p, 'c3'); // W picks c3 (height 1)
+  log(`slide bar with origin c3: ${(await p.textContent(`${D} .slide-control-box`)).replace(/\s+/g, ' ').trim()}`);
+  await click(p, 'c2'); // W c3- (carry 1, sent at once)
+  await click(p, 'd4'); // B
+  log(`history ${(await history(p)).join(' ')}`);
+  await click(p, 'c2'); // W picks c2
+  const bar = (await p.textContent(`${D} .slide-control-box`)).replace(/\s+/g, ' ').trim();
+  log(`slide bar with origin c2: ${bar}`);
+  const confirm = await p.$(`${D} .slide-control-box button:has-text("Confirm")`);
+  const label = confirm ? (await confirm.textContent()).trim() : '(none)';
+  const enabled = confirm ? await confirm.isEnabled() : false;
+  log(`confirm button "${label}" enabled=${enabled}`);
+  if (confirm && enabled) { await confirm.click(); await p.waitForTimeout(200); }
+  const err = await p.$(`${D} .arena-col-left div[style*="#7f1d1d"]`);
+  log(`error box: ${err ? (await err.textContent()).trim() : '(none)'}`);
+  log(`history after confirm ${(await history(p)).join(' ')}`);
+  await p.screenshot({ path: path.join(out, 'q1-stale-confirm.png') });
+} finally { await browser.close(); }

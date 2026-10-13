@@ -99,6 +99,67 @@ public static class RoadFinder
         return false;
     }
 
+    /// <summary>
+    /// The squares of <paramref name="player"/>'s road on <paramref name="board"/>, for display: one shortest south-north path and
+    /// one shortest west-east path, whichever exist (both when one move completes two roads). Empty when the player has no road.
+    /// </summary>
+    public static IReadOnlyCollection<Coord> FindRoad(GameBoard board, PlayerColor player)
+    {
+        int size = (int)board.Size;
+        var road = new HashSet<Coord>();
+        AddShortestPath(board, size, player, northSouth: true, road);
+        AddShortestPath(board, size, player, northSouth: false, road);
+        return road;
+    }
+
+    private static void AddShortestPath(GameBoard board, int size, PlayerColor player, bool northSouth, HashSet<Coord> output)
+    {
+        var visited = new bool[size, size];
+        var parent = new Dictionary<Coord, Coord>();
+        var queue = new Queue<Coord>();
+
+        for (int i = 0; i < size; i++)
+        {
+            var start = northSouth ? new Coord(i, 0) : new Coord(0, i);
+            if (CanCarryRoad(board.GetStack(start), player))
+            {
+                visited[start.X, start.Y] = true;
+                queue.Enqueue(start);
+            }
+        }
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            if ((northSouth ? current.Y : current.X) == size - 1)
+            {
+                output.Add(current);
+                while (parent.TryGetValue(current, out var previous))
+                {
+                    output.Add(previous);
+                    current = previous;
+                }
+                return;
+            }
+
+            foreach (var (dx, dy) in OrthogonalNeighbors)
+            {
+                int nx = current.X + dx;
+                int ny = current.Y + dy;
+                if (nx >= 0 && nx < size && ny >= 0 && ny < size && !visited[nx, ny])
+                {
+                    var neighbor = new Coord(nx, ny);
+                    if (CanCarryRoad(board.GetStack(neighbor), player))
+                    {
+                        visited[nx, ny] = true;
+                        parent[neighbor] = current;
+                        queue.Enqueue(neighbor);
+                    }
+                }
+            }
+        }
+    }
+
     public static bool CanCarryRoad(PieceStack stack, PlayerColor player)
     {
         if (stack.IsEmpty)

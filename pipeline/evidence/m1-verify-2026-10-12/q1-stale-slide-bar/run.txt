@@ -1,0 +1,6 @@
+2026-10-12T22:58:02.845Z slide bar with origin c3: Slide stack at c3 (Height: 1, Carry Limit: 5) ✕ Cancel 1. Direction: ↑←→↓2. Drops: 1 piece → 1 Confirm Move (c3+)
+2026-10-12T22:58:03.285Z history a1 e5 c3 c4 c3- d4
+2026-10-12T22:58:03.517Z slide bar with origin c2: Slide stack at c2 (Height: 1, Carry Limit: 5) ✕ Cancel 1. Direction: ↑←→↓2. Drops: 1 piece → 1 Confirm Move (c3+)
+2026-10-12T22:58:03.541Z confirm button "Confirm Move (c3+)" enabled=true
+2026-10-12T22:58:03.816Z error box: No pieces to move at c3.
+2026-10-12T22:58:03.819Z history after confirm a1 e5 c3 c4 c3- d4

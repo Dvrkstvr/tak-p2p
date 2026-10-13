@@ -1,0 +1,20 @@
+Verifier deliberate break 2026-10-12: in RelayConnection.ReadUntilClosedAsync, case LivenessAction.SendProbe, the line
+`await SendAsync(SubscriptionPlan.Probe().Format())` was commented out, so the probe is never sent and the link still times it out.
+It was reverted after the run.
+
+Caught by: RelayPoolTests.IdleHealthyRelay_AnswersOneProbePerIdleWindow_AndStaysConnected and the verifier's new
+RelayPoolTests.AuthRequiredRelay_AnswersTheProbeWithClosed_AndStaysConnectedAndReadImpossible: a healthy idle relay is dropped
+every 70 s. The Multiplayer silent-drop tests still pass under this break, because they only need the drop, which happens without
+the probe.
+
+Verifier mistake: this run was started without --filter "Category!=LiveRelay", so the three LiveRelay tests ran. They failed. The
+sandbox proxy refuses CONNECT to nos.lol and relay.damus.io: right after the run, `curl -I https://nos.lol` and
+`curl -I https://relay.damus.io` both answered "CONNECT tunnel failed, response 403". Nothing reached a public relay.
+
+[xUnit.net 00:00:07.04]     TakEngine.Transport.Tests.RelayPoolTests.AuthRequiredRelay_AnswersTheProbeWithClosed_AndStaysConnectedAndReadImpossible [FAIL]
+[xUnit.net 00:00:13.34]     TakEngine.Transport.Tests.RelayPoolTests.IdleHealthyRelay_AnswersOneProbePerIdleWindow_AndStaysConnected [FAIL]
+[xUnit.net 00:00:21.64]     TakEngine.Transport.Tests.Live.LiveRelayTests.PublishOne_IsAcceptedByEachRelay_AndFetchableById [FAIL]
+[xUnit.net 00:00:41.71]     TakEngine.Transport.Tests.Live.LiveRelayTests.TwoRelaysTogether_DeliverEachEventOnce [FAIL]
+[xUnit.net 00:01:01.74]     TakEngine.Transport.Tests.Live.LiveRelayTests.CorruptedSig_IsRefusedInvalid_NotSent [FAIL]
+TakEngine.Transport.Tests.dll: Failed! (5 failed)
+TakEngine.Multiplayer.Tests.dll: Passed!

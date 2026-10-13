@@ -1,0 +1,145 @@
+2026-10-12T23:56:55.509Z F-042 row 2 background run: freeze 300 s, relays ws://127.0.0.1:7447/r1 ws://127.0.0.1:7447/r2, site http://127.0.0.1:5199
+2026-10-12T23:56:55.536Z RELAY starting dotnet run --project tools/TakRelay.Local -- --port 7447
+2026-10-12T23:57:00.655Z RELAY up (pid 5858)
+2026-10-12T23:57:00.658Z SERVER starting dotnet run --project src/TakApp.Blazor/TakApp.Blazor.csproj --urls http://127.0.0.1:5199
+2026-10-12T23:57:06.888Z SERVER up (pid 6050)
+2026-10-12T23:57:09.833Z WS#1 OPEN wss://relay.damus.io/ piped to ws://127.0.0.1:7447/r2
+2026-10-12T23:57:09.836Z WS#2 OPEN wss://nos.lol/ piped to ws://127.0.0.1:7447/r1
+2026-10-12T23:57:09.963Z WS#2 page->relay REQ ["REQ","tak-7891aadd",{"kinds":[3825],"#p":["c519087484fbb9f2a2e9bd1f60e6a6dc3f077e0c34c745cad7475b7eed2c6a48"],"#g":["7891aadd-653a-4a45-a2a7-e4edc9f5c2da"],"limit":500},{"authors":["c519087484fbb9f2a2e9bd1f60e6a6dc3f077e0c34c745cad7475b7eed2c6a48"],"kinds":[3825],"#g":["7891aadd-653a-4a45-a2a7-e4edc9f5c2da"],"limit":500}]
+2026-10-12T23:57:09.984Z WS#1 page->relay REQ ["REQ","tak-7891aadd",{"kinds":[3825],"#p":["c519087484fbb9f2a2e9bd1f60e6a6dc3f077e0c34c745cad7475b7eed2c6a48"],"#g":["7891aadd-653a-4a45-a2a7-e4edc9f5c2da"],"limit":500},{"authors":["c519087484fbb9f2a2e9bd1f60e6a6dc3f077e0c34c745cad7475b7eed2c6a48"],"kinds":[3825],"#g":["7891aadd-653a-4a45-a2a7-e4edc9f5c2da"],"limit":500}]
+2026-10-12T23:57:09.992Z INVITE TAK2_eyJnaWQiOiI3ODkxYWF...
+2026-10-12T23:57:10.040Z WS#1 relay->page ["EOSE","tak-7891aadd"]
+2026-10-12T23:57:10.041Z WS#2 relay->page ["EOSE","tak-7891aadd"]
+2026-10-12T23:57:10.195Z CLI starting dotnet run --project src/TakApp.Cli --no-build -- join <invite> --data-dir /tmp/tak-e2e-bg-XLXgBq --relays ws://127.0.0.1:7447/r1,ws://127.0.0.1:7447/r2 --plain
+2026-10-12T23:57:11.108Z CLI> WAITING for the host to answer
+2026-10-12T23:57:11.110Z CLI> RELAY ws://127.0.0.1:7447/r1 connecting
+2026-10-12T23:57:11.111Z CLI> RELAY ws://127.0.0.1:7447/r2 connecting
+2026-10-12T23:57:11.210Z CLI> RELAY ws://127.0.0.1:7447/r1 caught-up
+2026-10-12T23:57:11.210Z CLI> RELAY ws://127.0.0.1:7447/r2 caught-up
+2026-10-12T23:57:11.315Z WS#2 relay->page EVENT kind 3825 id 81909c5313a150fe created_at 1791849431
+2026-10-12T23:57:11.316Z WS#1 relay->page EVENT kind 3825 id 81909c5313a150fe created_at 1791849431
+2026-10-12T23:57:11.486Z WS#2 page->relay EVENT kind 3825 id 0121fa3644a2beec created_at 1791849431
+2026-10-12T23:57:11.487Z WS#1 page->relay EVENT kind 3825 id 0121fa3644a2beec created_at 1791849431
+2026-10-12T23:57:11.489Z WS#2 relay->page ["OK","0121fa3644a2beec4df0a9d1a4b8dbb97dd2252fc8e1d994f6c881cac8ee4897",true,""]
+2026-10-12T23:57:11.489Z WS#2 relay->page EVENT kind 3825 id 0121fa3644a2beec created_at 1791849431
+2026-10-12T23:57:11.491Z WS#1 relay->page ["OK","0121fa3644a2beec4df0a9d1a4b8dbb97dd2252fc8e1d994f6c881cac8ee4897",true,""]
+2026-10-12T23:57:11.491Z WS#1 relay->page EVENT kind 3825 id 0121fa3644a2beec created_at 1791849431
+2026-10-12T23:57:11.511Z CLI> WAITING opponent move turn 1
+2026-10-12T23:57:11.612Z COLOURS browser is white (host), CLI is black
+2026-10-12T23:57:11.614Z PAGE< a1
+2026-10-12T23:57:11.744Z WS#2 page->relay EVENT kind 3825 id 11e4be02b19ee1f5 created_at 1791849431
+2026-10-12T23:57:11.747Z WS#2 relay->page ["OK","11e4be02b19ee1f5f83c21a0dce152b45d762f56fcacd3b54431818e8ede9742",true,""]
+2026-10-12T23:57:11.749Z WS#2 relay->page EVENT kind 3825 id 11e4be02b19ee1f5 created_at 1791849431
+2026-10-12T23:57:11.749Z WS#1 page->relay EVENT kind 3825 id 11e4be02b19ee1f5 created_at 1791849431
+2026-10-12T23:57:11.752Z WS#1 relay->page ["OK","11e4be02b19ee1f5f83c21a0dce152b45d762f56fcacd3b54431818e8ede9742",true,""]
+2026-10-12T23:57:11.753Z WS#1 relay->page EVENT kind 3825 id 11e4be02b19ee1f5 created_at 1791849431
+2026-10-12T23:57:11.789Z CLI> APPLIED turn 1 a1 9298235e9e61b7a4f7e151f1591e29cf3a2a5ab2eac477013ba695d29ecc0395
+2026-10-12T23:57:11.789Z CLI> WAITING your move turn 2
+2026-10-12T23:57:11.859Z PASS turn 1 a1 (browser) applied on both sides with the same hash (browser 9298235e9e61b7a4 CLI 9298235e9e61b7a4)
+2026-10-12T23:57:11.859Z CLI< e5
+2026-10-12T23:57:11.871Z CLI> APPLIED turn 2 e5 e238bcabb7a90eab1a2c493f5d57e62bc86293e66d15526eebb88d6a4967e490
+2026-10-12T23:57:11.871Z CLI> WAITING opponent move turn 3
+2026-10-12T23:57:11.873Z WS#1 relay->page EVENT kind 3825 id 77b4b619243a558a created_at 1791849431
+2026-10-12T23:57:11.876Z WS#2 relay->page EVENT kind 3825 id 77b4b619243a558a created_at 1791849431
+2026-10-12T23:57:11.886Z CLI> SENT turn 2 ws://127.0.0.1:7447/r1:ok ws://127.0.0.1:7447/r2:ok
+2026-10-12T23:57:11.967Z PASS turn 2 e5 (CLI) applied on both sides with the same hash (browser e238bcabb7a90eab CLI e238bcabb7a90eab)
+2026-10-12T23:57:11.970Z PAGE< b2
+2026-10-12T23:57:12.076Z WS#2 page->relay EVENT kind 3825 id 1f3bcac21b20d3c7 created_at 1791849432
+2026-10-12T23:57:12.077Z WS#1 page->relay EVENT kind 3825 id 1f3bcac21b20d3c7 created_at 1791849432
+2026-10-12T23:57:12.078Z WS#2 relay->page ["OK","1f3bcac21b20d3c735061365ba249b0ac33abba1915af11ff0cf1a4bf8cdafbd",true,""]
+2026-10-12T23:57:12.078Z WS#2 relay->page EVENT kind 3825 id 1f3bcac21b20d3c7 created_at 1791849432
+2026-10-12T23:57:12.081Z WS#1 relay->page ["OK","1f3bcac21b20d3c735061365ba249b0ac33abba1915af11ff0cf1a4bf8cdafbd",true,""]
+2026-10-12T23:57:12.082Z WS#1 relay->page EVENT kind 3825 id 1f3bcac21b20d3c7 created_at 1791849432
+2026-10-12T23:57:12.093Z CLI> APPLIED turn 3 b2 51fb88440b079925ff40725708b58c83849d55c7ddeede60de0d041d7c603bd3
+2026-10-12T23:57:12.093Z CLI> WAITING your move turn 4
+2026-10-12T23:57:12.130Z PASS turn 3 b2 (browser) applied on both sides with the same hash (browser 51fb88440b079925 CLI 51fb88440b079925)
+2026-10-12T23:57:12.130Z CLI< d4
+2026-10-12T23:57:12.137Z CLI> APPLIED turn 4 d4 82b902d749d7e1efaee650042ff13f4fbeb05945c1fd772d4bbee051bd6bf276
+2026-10-12T23:57:12.137Z CLI> WAITING opponent move turn 5
+2026-10-12T23:57:12.140Z CLI> SENT turn 4 ws://127.0.0.1:7447/r1:ok ws://127.0.0.1:7447/r2:pending
+2026-10-12T23:57:12.143Z WS#1 relay->page EVENT kind 3825 id fe220913e5c3e272 created_at 1791849432
+2026-10-12T23:57:12.143Z WS#2 relay->page EVENT kind 3825 id fe220913e5c3e272 created_at 1791849432
+2026-10-12T23:57:12.237Z PASS turn 4 d4 (CLI) applied on both sides with the same hash (browser 82b902d749d7e1ef CLI 82b902d749d7e1ef)
+2026-10-12T23:57:12.240Z PAGE< c3
+2026-10-12T23:57:12.343Z WS#2 page->relay EVENT kind 3825 id 830684c2eb9f7f13 created_at 1791849432
+2026-10-12T23:57:12.351Z WS#2 relay->page ["OK","830684c2eb9f7f13a18e302443bb1e01405c10468dd023350526a6d77ed570dc",true,""]
+2026-10-12T23:57:12.352Z WS#2 relay->page EVENT kind 3825 id 830684c2eb9f7f13 created_at 1791849432
+2026-10-12T23:57:12.352Z WS#1 page->relay EVENT kind 3825 id 830684c2eb9f7f13 created_at 1791849432
+2026-10-12T23:57:12.354Z WS#1 relay->page ["OK","830684c2eb9f7f13a18e302443bb1e01405c10468dd023350526a6d77ed570dc",true,""]
+2026-10-12T23:57:12.354Z WS#1 relay->page EVENT kind 3825 id 830684c2eb9f7f13 created_at 1791849432
+2026-10-12T23:57:12.356Z CLI> APPLIED turn 5 c3 e3ee0e78b23ef2c69c650e5f326e0024e4a713cd53a1a530fd190936b069ee67
+2026-10-12T23:57:12.356Z CLI> WAITING your move turn 6
+2026-10-12T23:57:12.398Z PASS turn 5 c3 (browser) applied on both sides with the same hash (browser e3ee0e78b23ef2c6 CLI e3ee0e78b23ef2c6)
+2026-10-12T23:57:13.962Z SHOT 01-before-freeze.png
+2026-10-12T23:57:14.073Z FREEZE at 1791849434 (newest created_at the pipe saw: 1791849432); the tab stays frozen 300 s
+2026-10-12T23:57:14.574Z WS#1 DROP (tab backgrounded: sockets dropped)
+2026-10-12T23:57:14.574Z WS#2 DROP (tab backgrounded: sockets dropped)
+2026-10-12T23:57:24.575Z CLI< b4
+2026-10-12T23:57:24.593Z CLI> APPLIED turn 6 b4 db93060c014adebb83c8fb344ebb3e34ca0e2aaf9fd6b13cc6bbe82137bc4bb7
+2026-10-12T23:57:24.594Z CLI> WAITING opponent move turn 7
+2026-10-12T23:57:24.608Z CLI> SENT turn 6 ws://127.0.0.1:7447/r1:ok ws://127.0.0.1:7447/r2:ok
+2026-10-12T23:57:24.675Z PASS the CLI's turn 6 reached a local relay while the tab was frozen (SENT turn 6 ws://127.0.0.1:7447/r1:ok ws://127.0.0.1:7447/r2:ok)
+2026-10-12T23:57:24.675Z WAIT 290 s more with the tab frozen
+2026-10-13T00:02:14.675Z PASS no new relay socket was opened while frozen (sockets opened: 0)
+2026-10-13T00:02:14.676Z PASS no REQ was sent while frozen
+2026-10-13T00:02:14.693Z WS#1 close handed to the page at the thaw (tab backgrounded: sockets dropped)
+2026-10-13T00:02:14.694Z WS#2 close handed to the page at the thaw (tab backgrounded: sockets dropped)
+2026-10-13T00:02:14.694Z THAW at 1791849734 (300 s after the freeze)
+2026-10-13T00:02:14.722Z WS#1 page->relay REQ ["REQ","tak-probe",{"ids":["0000000000000000000000000000000000000000000000000000000000000000"],"kinds":[3825],"limit":0}]
+2026-10-13T00:02:14.722Z WS#2 page->relay REQ ["REQ","tak-probe",{"ids":["0000000000000000000000000000000000000000000000000000000000000000"],"kinds":[3825],"limit":0}]
+2026-10-13T00:02:15.749Z WS#3 OPEN wss://relay.damus.io/ piped to ws://127.0.0.1:7447/r2
+2026-10-13T00:02:15.753Z WS#4 OPEN wss://nos.lol/ piped to ws://127.0.0.1:7447/r1
+2026-10-13T00:02:15.757Z WS#3 page->relay REQ ["REQ","tak-7891aadd",{"kinds":[3825],"#p":["c519087484fbb9f2a2e9bd1f60e6a6dc3f077e0c34c745cad7475b7eed2c6a48"],"#g":["7891aadd-653a-4a45-a2a7-e4edc9f5c2da"],"since":1791849402,"limit":500},{"authors":["c519087484fbb9f2a2e9bd1f60e6a6dc3f077e0c34c745cad7475b7eed2c6a48"],"kinds":[3825],"#g":["7891aadd-653a-4a45-a2a7-e4edc9f5c2da"],"since":1791849402,"limit":500}]
+2026-10-13T00:02:15.759Z WS#4 page->relay REQ ["REQ","tak-7891aadd",{"kinds":[3825],"#p":["c519087484fbb9f2a2e9bd1f60e6a6dc3f077e0c34c745cad7475b7eed2c6a48"],"#g":["7891aadd-653a-4a45-a2a7-e4edc9f5c2da"],"since":1791849402,"limit":500},{"authors":["c519087484fbb9f2a2e9bd1f60e6a6dc3f077e0c34c745cad7475b7eed2c6a48"],"kinds":[3825],"#g":["7891aadd-653a-4a45-a2a7-e4edc9f5c2da"],"since":1791849402,"limit":500}]
+2026-10-13T00:02:15.762Z WS#3 relay->page EVENT kind 3825 id 1d9cf270e60d35c2 created_at 1791849444
+2026-10-13T00:02:15.763Z WS#3 relay->page EVENT kind 3825 id 1f3bcac21b20d3c7 created_at 1791849432
+2026-10-13T00:02:15.763Z WS#3 relay->page EVENT kind 3825 id 830684c2eb9f7f13 created_at 1791849432
+2026-10-13T00:02:15.764Z WS#4 relay->page EVENT kind 3825 id 1d9cf270e60d35c2 created_at 1791849444
+2026-10-13T00:02:15.764Z WS#4 relay->page EVENT kind 3825 id 1f3bcac21b20d3c7 created_at 1791849432
+2026-10-13T00:02:15.764Z WS#4 relay->page EVENT kind 3825 id 830684c2eb9f7f13 created_at 1791849432
+2026-10-13T00:02:15.764Z WS#4 relay->page EVENT kind 3825 id fe220913e5c3e272 created_at 1791849432
+2026-10-13T00:02:15.764Z WS#4 relay->page EVENT kind 3825 id 0121fa3644a2beec created_at 1791849431
+2026-10-13T00:02:15.767Z WS#3 relay->page EVENT kind 3825 id fe220913e5c3e272 created_at 1791849432
+2026-10-13T00:02:15.767Z WS#3 relay->page EVENT kind 3825 id 0121fa3644a2beec created_at 1791849431
+2026-10-13T00:02:15.768Z WS#3 relay->page EVENT kind 3825 id 11e4be02b19ee1f5 created_at 1791849431
+2026-10-13T00:02:15.768Z WS#3 relay->page EVENT kind 3825 id 77b4b619243a558a created_at 1791849431
+2026-10-13T00:02:15.768Z WS#3 relay->page EVENT kind 3825 id 81909c5313a150fe created_at 1791849431
+2026-10-13T00:02:15.768Z WS#3 relay->page ["EOSE","tak-7891aadd"]
+2026-10-13T00:02:15.769Z WS#4 relay->page EVENT kind 3825 id 11e4be02b19ee1f5 created_at 1791849431
+2026-10-13T00:02:15.769Z WS#4 relay->page EVENT kind 3825 id 77b4b619243a558a created_at 1791849431
+2026-10-13T00:02:15.769Z WS#4 relay->page EVENT kind 3825 id 81909c5313a150fe created_at 1791849431
+2026-10-13T00:02:15.769Z WS#4 relay->page ["EOSE","tak-7891aadd"]
+2026-10-13T00:02:15.985Z PASS the page's timers were stopped while frozen (a 1 s interval ticked 1 times over 300 s)
+2026-10-13T00:02:15.985Z PASS the tab reopened relay sockets after the thaw (2 new)
+2026-10-13T00:02:15.985Z PASS the tab sent 2 REQ after the thaw
+2026-10-13T00:02:15.986Z REQ after thaw on WS#3 at 1791849735: since [1791849402,1791849402] (freeze 1791849434, newest seen 1791849432, CLI move ~1791849444)
+2026-10-13T00:02:15.986Z PASS WS#3 REQ since = newest seen created_at - 30 s = 1791849402 (got [1791849402,1791849402])
+2026-10-13T00:02:15.986Z REQ after thaw on WS#4 at 1791849735: since [1791849402,1791849402] (freeze 1791849434, newest seen 1791849432, CLI move ~1791849444)
+2026-10-13T00:02:15.986Z PASS WS#4 REQ since = newest seen created_at - 30 s = 1791849402 (got [1791849402,1791849402])
+2026-10-13T00:02:15.989Z PASS turn 6 played while frozen is applied in the tab 1 s after the thaw with the CLI's hash (db93060c014adebb)
+2026-10-13T00:02:16.046Z SHOT 02-after-thaw-caught-up.png
+2026-10-13T00:02:16.048Z PAGE< a3
+2026-10-13T00:02:16.183Z WS#4 page->relay EVENT kind 3825 id 6fb363f803734e39 created_at 1791849736
+2026-10-13T00:02:16.183Z WS#3 page->relay EVENT kind 3825 id 6fb363f803734e39 created_at 1791849736
+2026-10-13T00:02:16.185Z WS#4 relay->page ["OK","6fb363f803734e391f84fd40be73ee0f97142fb80c2efaccba05745951174603",true,""]
+2026-10-13T00:02:16.185Z WS#4 relay->page EVENT kind 3825 id 6fb363f803734e39 created_at 1791849736
+2026-10-13T00:02:16.186Z WS#3 relay->page ["OK","6fb363f803734e391f84fd40be73ee0f97142fb80c2efaccba05745951174603",true,""]
+2026-10-13T00:02:16.186Z WS#3 relay->page EVENT kind 3825 id 6fb363f803734e39 created_at 1791849736
+2026-10-13T00:02:16.192Z CLI> APPLIED turn 7 a3 e2fc723e54fc318bb4501d60f9ab7481b9eee43d86a5d2032c116f1e645ee5d8
+2026-10-13T00:02:16.193Z CLI> WAITING your move turn 8
+2026-10-13T00:02:16.274Z PASS turn 7 a3 (browser) applied on both sides with the same hash (browser e2fc723e54fc318b CLI e2fc723e54fc318b)
+2026-10-13T00:02:16.274Z CLI< e1
+2026-10-13T00:02:16.279Z CLI> APPLIED turn 8 e1 cc58ed9713653d0086027a740e2103da5d8d08f0f10b7a5c11d4e897c37a2e92
+2026-10-13T00:02:16.279Z CLI> WAITING opponent move turn 9
+2026-10-13T00:02:16.280Z WS#4 relay->page EVENT kind 3825 id 4fdc511deb21d788 created_at 1791849736
+2026-10-13T00:02:16.280Z WS#3 relay->page EVENT kind 3825 id 4fdc511deb21d788 created_at 1791849736
+2026-10-13T00:02:16.282Z CLI> SENT turn 8 ws://127.0.0.1:7447/r1:ok ws://127.0.0.1:7447/r2:ok
+2026-10-13T00:02:16.379Z PASS turn 8 e1 (CLI) applied on both sides with the same hash (browser cc58ed9713653d00 CLI cc58ed9713653d00)
+2026-10-13T00:02:16.381Z PASS both sides hold the same 8 applied turns and hashes; last hash cc58ed9713653d0086027a740e2103da5d8d08f0f10b7a5c11d4e897c37a2e92
+2026-10-13T00:02:16.383Z PASS no FLAG on either side (0)
+2026-10-13T00:02:16.441Z SHOT 03-after-two-more-moves.png
+2026-10-13T00:02:16.443Z CLI< quit
+2026-10-13T00:02:16.444Z CLI> NOTICE left the game; it is saved, and resume picks it up
+2026-10-13T00:02:18.494Z SERVER stopped (pid 6050)
+2026-10-13T00:02:18.494Z RELAY stopped (pid 5858)
+2026-10-13T00:02:18.497Z SUMMARY PASS checks=18 failed=0 evidence=pipeline/evidence/m1-verify-2026-10-12/f042-background-300s
