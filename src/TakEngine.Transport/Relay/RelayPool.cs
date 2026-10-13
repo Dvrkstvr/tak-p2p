@@ -176,14 +176,17 @@ public sealed class RelayPool : IAsyncDisposable
                 _wake.Release();
                 break;
             case RelayMessage.Eose eose when eose.SubscriptionId == SubscriptionPlan.ProbeSubscriptionId:
-                // The probe was answered (the connection already reset its idle clock); end its subscription. SendAsync never throws.
-                _ = connection.SendAsync(new RelayMessage.Close(SubscriptionPlan.ProbeSubscriptionId).Format());
+                // The probe was answered (the connection already reset its idle clock); end its subscription, once per probe. A stray
+                // EOSE on the probe id gets nothing back. SendAsync never throws.
+                if (connection.Link.OnProbeEose())
+                    _ = connection.SendAsync(new RelayMessage.Close(SubscriptionPlan.ProbeSubscriptionId).Format());
                 break;
             case RelayMessage.Eose:
                 connection.Link.OnEose();
                 break;
             case RelayMessage.Closed closed when closed.SubscriptionId == SubscriptionPlan.ProbeSubscriptionId:
-                break; // an answer all the same; says nothing about the game's subscription
+                connection.Link.OnProbeClosed(); // an answer all the same; says nothing about the game's subscription
+                break;
             case RelayMessage.Closed closed:
                 connection.Link.OnClosed(closed.Message);
                 break;

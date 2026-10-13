@@ -179,6 +179,30 @@ public sealed class RelayPoolTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task StrayProbeEose_IsNotAnswered_AndARealProbeIsClosedOnce()
+    {
+        // M1 security finding 1: a relay must not be able to make the client send a CLOSE for every EOSE it sends.
+        _r2.Partition();
+        Start();
+        await Eventually(() => _pool.Links[0].State == RelayLinkState.CaughtUp, "r1 caught up");
+        int Closes() => _r1.ReceivedFrames.Count(f => f == "[\"CLOSE\",\"tak-probe\"]");
+
+        for (int i = 0; i < 20; i++)
+            _r1.Inject("[\"EOSE\",\"tak-probe\"]");
+        await Eventually(() => _pool.Links[0].LastHeardAt == _time.GetUtcNow(), "the stray frames were read");
+        await Task.Delay(50);
+        Assert.Equal(0, Closes());
+
+        await Advance(TimeSpan.FromSeconds(60));
+        await Eventually(() => Closes() == 1, "the real probe closed after its EOSE");
+        for (int i = 0; i < 20; i++)
+            _r1.Inject("[\"EOSE\",\"tak-probe\"]");
+        await Task.Delay(100);
+        Assert.Equal(1, Closes());
+        Assert.Equal(1, Probes(_r1));
+    }
+
+    [Fact]
     public async Task SilentDrop_IsFoundByTheProbe_AndTheReconnectCatchesUpWhatWasMissed()
     {
         _r2.Partition(); // one relay, so the missed event can only come from r1's catch-up
