@@ -4,12 +4,12 @@
 
 ## Now
 - track: deep · approach: spec-first (+ prototype-first: relay round-trip spikes)
-- stage: 7 Build — M0 done: features all pass, review (pipeline/reviews/M0-code.md, M0-security.md) fixed or decided (D-047, D-048); M1 next
+- stage: 7 Build — M0 and M1 done; M1 review (pipeline/reviews/M1-code.md, M1-security.md) fixed or answered (D-052, D-053); M2 next
 - clarity: scope 5/5 · blocking 0 · assumed 9 · deferred 3
 - feasibility: amber · H-open 0 · M-open 3 · spiked 4
-- milestone: M1 (browser on the engine) · M1 features all pass (PR #8) · owed checks 5
+- milestone: M2 (online polish) · M1 features all pass, on main · owed checks 5 + phone (F-042)
 - core promise: last ran end to end 2026-10-12, CLI host vs phone browser over nos.lol + damus (F-039, pipeline/evidence/live-relay-log.md)
-- next: M1 review (code + security lenses) and curate, then M2 → `/pipeline:run`. Browser regression: `node tests/e2e/play.mjs`, `node tests/e2e/background.mjs`
+- next: M2 plan agreed with the user, then build → `/pipeline:run`. Browser regression: `node tests/e2e/play.mjs`, `node tests/e2e/background.mjs`
 
 ## Stages
 | # | Stage | State | Gate | Date |
@@ -31,6 +31,7 @@
   invite link/QR UX (F-047), status (F-046), browser-vs-browser (F-044) and the cross-head run from the Pages site (F-045).
 - Owed hand-checks (5 min each): Blazor vs AI, M1.15.x tower-move controls, CLI game, Avalonia desktop → F-021, F-022, F-024, F-025.
 - Owed phone check (F-042 row 2, D-051): a game on Android Chrome and iOS Safari with the tab backgrounded 5 min, and once with the OS killing the tab; desktop Chromium was frozen only.
+- M1 review leftovers: a relay that stops reading can still stall the sequential send loop (per-relay send timeout); junk frames count as liveness; StackSlideBar keeps its own board copy.
 - Cosmetic, open: on damus each liveness probe's AUTH challenge overwrites the relay status message.
 - Retired rituals (D-013): DEVLOG, mirrored milestone tables, test counts in docs. AGENTS.md section 2 still mandates them; edit it on a separate branch with D-009 (lean CLAUDE.md).
 - UI freeze (D-006) ends with M0; D-046 lifted it early for /online only.

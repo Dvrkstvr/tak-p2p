@@ -8,7 +8,7 @@ namespace TakEngine.Transport.Tests.Live;
 
 /// <summary>
 /// F-014 and F-034's live row, against public relays (default wss://nos.lol and wss://relay.damus.io, or <c>TAK_LIVE_RELAYS</c>).
-/// By hand only, after the user approved publishing (D-032): <c>dotnet test TakGame.Ci.slnf --filter "Category=LiveRelay"</c>.
+/// By hand only, after the user approved publishing (D-032): <c>TAK_LIVE_RELAY=1 dotnet test TakGame.Ci.slnf --filter "Category=LiveRelay"</c>.
 /// Throwaway keys, kind 3825 only; every published event is logged in pipeline/evidence/live-relay-log.md.
 /// </summary>
 [Trait("Category", "LiveRelay")]

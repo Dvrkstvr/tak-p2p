@@ -21,9 +21,17 @@ public static class LiveRelayLog
         lock (Gate) return File.Exists(FilePath) ? File.ReadLines(FilePath).Count(l => l.StartsWith("| 20", StringComparison.Ordinal)) : 0;
     }
 
-    /// <summary>Throws unless <paramref name="events"/> more still fit in the budget.</summary>
+    /// <summary>Set to <c>1</c> by hand, after the user approved publishing for the milestone (D-032).</summary>
+    public const string OptIn = "TAK_LIVE_RELAY";
+
+    /// <summary>
+    /// Throws unless <see cref="OptIn"/> is set and <paramref name="events"/> more still fit in the budget, so a run that
+    /// forgets the <c>Category!=LiveRelay</c> filter fails before anything is sent.
+    /// </summary>
     public static void Reserve(int events)
     {
+        if (Environment.GetEnvironmentVariable(OptIn) != "1")
+            throw new InvalidOperationException($"Live-relay tests publish to public relays. Set {OptIn}=1 only after the user approved publishing (D-032).");
         int total = Total();
         if (total + events > Budget)
             throw new InvalidOperationException($"Live budget: {total} of {Budget} events used; this run needs {events}. Ask the user first (D-032).");
