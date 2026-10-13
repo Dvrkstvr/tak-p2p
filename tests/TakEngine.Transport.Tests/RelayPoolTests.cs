@@ -203,6 +203,27 @@ public sealed class RelayPoolTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task ProbeAnswer_ThatArrivesAsTheTimeoutFires_KeepsTheSocket()
+    {
+        // M1 code finding 5: a thawed tab runs the overdue timeout and the queued answer's receive together. The frame that
+        // already arrived is read before the liveness check, so a healthy socket is not dropped.
+        _r2.Partition();
+        Start();
+        await Eventually(() => _pool.Links[0].State == RelayLinkState.CaughtUp, "r1 caught up");
+        TimeSpan frozen = RelayLink.ProbeTimeout + TimeSpan.FromSeconds(20);
+        _r1.DelayFrames(frozen); // the probe's EOSE is queued while the tab is frozen and lands as it thaws
+
+        await Advance(TimeSpan.FromSeconds(60));
+        await Eventually(() => Probes(_r1) == 1, "probe sent");
+        await Advance(frozen); // the thaw: the clock jumps past the probe timeout in one go
+        await Eventually(() => _pool.Links[0].ProbeSentAt is null, "probe answered or dropped");
+        await Task.Delay(50);
+
+        Assert.Equal(RelayLinkState.CaughtUp, _pool.Links[0].State);
+        Assert.Equal(1, _r1.ConnectAttempts);
+    }
+
+    [Fact]
     public async Task SilentDrop_IsFoundByTheProbe_AndTheReconnectCatchesUpWhatWasMissed()
     {
         _r2.Partition(); // one relay, so the missed event can only come from r1's catch-up

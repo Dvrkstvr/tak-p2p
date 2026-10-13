@@ -21,6 +21,12 @@ public sealed class RelayConnection : IAsyncDisposable
     private TaskCompletionSource _poke = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private int _checkRequested;
 
+    /// <summary>A probe timeout seen this late means the process was frozen or asleep (M1 code review 5).</summary>
+    private static readonly TimeSpan LateWake = TimeSpan.FromSeconds(1);
+
+    /// <summary>How long a receive already under way then gets before the unanswered probe drops the socket.</summary>
+    private static readonly TimeSpan DropSettle = TimeSpan.FromMilliseconds(250);
+
     /// <param name="subscription">Evaluated at every (re)connect, so <c>since</c> follows the newest event seen.</param>
     /// <param name="onMessage">Every parsed frame from the relay, on the reader's thread.</param>
     /// <param name="onSubscribed">After each successful connect + REQ (the pool resends what this relay hasn't acknowledged).</param>
@@ -176,14 +182,26 @@ public sealed class RelayConnection : IAsyncDisposable
                 TaskCompletionSource poke = Volatile.Read(ref _poke);
                 if (Interlocked.Exchange(ref _checkRequested, 0) == 1)
                     Link.RequestProbe();
-                DateTimeOffset now = _time.GetUtcNow();
-                switch (Link.CheckLiveness(now))
+
+                // A frame that has already arrived is read before the liveness check. A thawed tab (or a woken device) runs the
+                // overdue probe timeout and the queued frame's receive together, in either order. When the timeout is found late,
+                // the receive gets a moment first (real time: it settles work already queued, it is not protocol time), so a
+                // healthy socket is not dropped. A timeout found on time drops at once.
+                if (!receive.IsCompleted && Link.ProbeSentAt is not null
+                    && Link.NextLivenessCheckAt is DateTimeOffset dropAt && _time.GetUtcNow() - dropAt >= LateWake)
                 {
-                    case LivenessAction.SendProbe:
-                        await SendAsync(SubscriptionPlan.Probe().Format()).ConfigureAwait(false);
-                        break;
-                    case LivenessAction.Drop:
-                        return true;
+                    await Task.WhenAny(receive, Task.Delay(DropSettle, ct)).ConfigureAwait(false);
+                }
+                if (!receive.IsCompleted)
+                {
+                    switch (Link.CheckLiveness(_time.GetUtcNow()))
+                    {
+                        case LivenessAction.SendProbe:
+                            await SendAsync(SubscriptionPlan.Probe().Format()).ConfigureAwait(false);
+                            break;
+                        case LivenessAction.Drop:
+                            return true;
+                    }
                 }
 
                 if (!receive.IsCompleted)

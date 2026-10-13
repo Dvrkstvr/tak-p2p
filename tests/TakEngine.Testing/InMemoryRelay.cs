@@ -33,6 +33,8 @@ public sealed class InMemoryRelay
     private TimeSpan _rateLimitWindow;
     private int _duplicateDeliveries = 1;
     private int _reorderWindow;
+    private TimeSpan _frameDelay;
+    private readonly List<ITimer> _delayedFrames = [];
 
     public InMemoryRelay(string url, TimeProvider? time = null, int seed = 0)
     {
@@ -157,6 +159,15 @@ public sealed class InMemoryRelay
     public void ReorderLive(int window = 2)
     {
         lock (_gate) _reorderWindow = window;
+    }
+
+    /// <summary>
+    /// Every frame the relay sends from now on reaches the client <paramref name="delay"/> later on the relay's clock (a slow path,
+    /// or a frozen tab whose frames are queued until it thaws). <see cref="TimeSpan.Zero"/> sends at once again.
+    /// </summary>
+    public void DelayFrames(TimeSpan delay)
+    {
+        lock (_gate) _frameDelay = delay;
     }
 
     public void FlushReordered()
@@ -470,6 +481,20 @@ public sealed class InMemoryRelay
         {
             if (IsClosed || IsSilent)
                 return;
+            if (relay._frameDelay > TimeSpan.Zero)
+            {
+                relay._delayedFrames.Add(relay._time.CreateTimer(_ =>
+                {
+                    lock (relay._gate)
+                    {
+                        if (IsClosed || IsSilent)
+                            return;
+                        relay.FramesSent++;
+                        _outbound.Writer.TryWrite(frame);
+                    }
+                }, null, relay._frameDelay, Timeout.InfiniteTimeSpan));
+                return;
+            }
             relay.FramesSent++;
             _outbound.Writer.TryWrite(frame);
         }
