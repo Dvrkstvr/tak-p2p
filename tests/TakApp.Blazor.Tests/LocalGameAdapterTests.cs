@@ -217,4 +217,62 @@ public class LocalGameAdapterTests
         Assert.Empty(adapter.MoveHistoryPtn);
         Assert.False(adapter.IsBotThinking);
     }
+
+    [Fact]
+    public async Task NewBotMatch_DuringABotWait_DropsTheStaleBotMove()
+    {
+        // The second game is a bot match with the human as White, so no fresh bot turn starts and only the generation check
+        // stops the stale turn from playing into the new game.
+        var gate = new TaskCompletionSource();
+        var adapter = new LocalGameAdapter(_ => gate.Task);
+        adapter.StartBotMatch(BoardSize.Five, BotDifficulty.Easy, PlayerColor.White);
+        Assert.True(Play(adapter, "a1").IsSuccess);
+        var staleTurn = adapter.BotTurn!;
+
+        adapter.StartBotMatch(BoardSize.Five, BotDifficulty.Easy, PlayerColor.White);
+        gate.SetResult();
+        await staleTurn;
+
+        Assert.Empty(adapter.MoveHistoryPtn);
+        Assert.False(adapter.IsBotThinking);
+        Assert.Equal(PlayerColor.White, adapter.Board!.ActivePlayer);
+    }
+
+    [Theory]
+    [InlineData(PlayerColor.White)]
+    [InlineData(PlayerColor.Black)]
+    public async Task BotMatch_ResignDuringTheBotsPause_ResignsTheHuman(PlayerColor human)
+    {
+        var gate = new TaskCompletionSource();
+        var adapter = new LocalGameAdapter(_ => gate.Task);
+        adapter.StartBotMatch(BoardSize.Five, BotDifficulty.Easy, human);
+        // As Black the bot opens and is already thinking; as White the human moves first.
+        if (human == PlayerColor.White)
+            Assert.True(Play(adapter, "a1").IsSuccess);
+        Assert.True(adapter.IsBotThinking);
+        var botTurn = adapter.BotTurn!;
+        int plies = adapter.MoveHistoryPtn.Count;
+
+        Assert.True(adapter.Resign().IsSuccess);
+        gate.SetResult();
+        await botTurn;
+
+        PlayerColor bot = human == PlayerColor.White ? PlayerColor.Black : PlayerColor.White;
+        Assert.Equal(GameEndReason.Resignation, adapter.Board!.Result!.Reason);
+        Assert.Equal(bot, adapter.Board.Result.Winner);
+        Assert.False(adapter.IsBotThinking);
+        Assert.Equal(plies, adapter.MoveHistoryPtn.Count);
+    }
+
+    [Fact]
+    public void BotMatch_ResignOnTheHumansTurn_ResignsTheHuman()
+    {
+        var adapter = NewAdapter();
+        adapter.StartBotMatch(BoardSize.Five, BotDifficulty.Easy, PlayerColor.White);
+        Assert.True(Play(adapter, "a1").IsSuccess);
+
+        Assert.True(adapter.Resign().IsSuccess);
+
+        Assert.Equal(PlayerColor.Black, adapter.Board!.Result!.Winner);
+    }
 }

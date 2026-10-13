@@ -73,7 +73,7 @@ A sent move that the engine refuses leaves the board unchanged and shows the err
 | id | in state | gesture | result | driven |
 |---|---|---|---|---|
 | G-50 | a move completes a road | — | status `<NAME> WINS (ROAD)`, road squares outlined, Resign hidden, no markers | yes |
-| G-51 | Opening/Playing | Resign | the side to move resigns; status `<NAME> WINS (RESIGNATION)` | no |
+| G-51 | Opening/Playing | Resign | pass-and-play: the side to move resigns; vs AI: the human resigns, also while "AI is thinking..." (D-052); status `<NAME> WINS (RESIGNATION)` | no |
 | G-52 | vs AI, after the human's move | — | "AI is thinking..." for ~350 ms, then the AI's move is applied; the game runs to a result | yes |
 
 ## Quirks seen while characterising (kept as they are in M1)

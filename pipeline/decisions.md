@@ -389,3 +389,11 @@ publish retry due at once (`PublishTracker.OnReconnected`; rate-limit backoffs s
   game gains one REQ/EOSE/CLOSE per relay per minute
 - revisit if: a relay rate-limits or refuses REQs at that pace, refuses `limit: 0` or the zero id without answering, or a live run
   shows a NAT dropping flows that are quiet for less than 60 s
+
+## D-052 · 2026-10-13 · stage 7 · by: assumed (builder)
+In a vs-AI game Resign always resigns the human's colour, also while "AI is thinking..." is shown; the bot's pending turn is then
+dropped. Pass-and-play keeps "the side to move resigns" (G-51). `TakGameSession.Resign(PlayerColor)` takes the colour: a local
+session takes either, an online session refuses any colour but its own (`Resign()` is unchanged for both).
+- why: M1 code review finding 1: pressing Resign during the bot's 350 ms pause resigned the bot, so the human won by giving up.
+  Refusing Resign while the bot thinks would leave a click that does nothing; resigning the human is what the player asked for
+- revisit if: the Play page gets a resign confirmation or an undo, or vs-AI moves to the online page (M2)

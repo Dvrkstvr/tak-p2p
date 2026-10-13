@@ -195,12 +195,20 @@ public sealed class TakGameSession : ITakGameSession
         return CommandResult.Success();
     }
 
-    public CommandResult Resign()
+    /// <summary>Online: the local player resigns. Local: the side to move resigns (pass-and-play).</summary>
+    public CommandResult Resign() => Resign(_isRemote ? LocalColor : _board.ActivePlayer);
+
+    /// <summary>
+    /// <paramref name="resigningPlayer"/> resigns. A local session takes either colour (a vs-AI game resigns the human even on the
+    /// bot's turn, D-052); an online session only its own.
+    /// </summary>
+    public CommandResult Resign(PlayerColor resigningPlayer)
     {
         if (_board.Phase == GamePhase.Completed)
             return CommandResult.Fail("Game has already completed.");
+        if (_isRemote && resigningPlayer != LocalColor)
+            return CommandResult.Fail("Only the local player can resign an online game.");
 
-        PlayerColor resigningPlayer = _isRemote ? LocalColor : _board.ActivePlayer;
         var res = _board.Resign(resigningPlayer);
         if (!res.IsSuccess)
             return res;

@@ -118,6 +118,19 @@ public class RemoteSessionTests
     }
 
     [Fact]
+    public void Resign_ForTheOpponentsColour_IsRefusedInAnOnlineGame()
+    {
+        var pair = new RemoteSessionPair();
+        pair.Play(["e5", "a1"]);
+        int emitted = pair.Emitted.Count;
+
+        Assert.False(pair.Alice.Resign(pair.Bob.LocalColor).IsSuccess);
+
+        Assert.Null(pair.Alice.Result);
+        Assert.Equal(emitted, pair.Emitted.Count);
+    }
+
+    [Fact]
     public void Resign_SentWhileTheResignersMoveIsInFlight_StillLands()
     {
         var pair = new RemoteSessionPair();
