@@ -32,6 +32,12 @@ Findings: blocking 0 · should 2 · nit 1.
    - Separately, stop the pump from awaiting relays one after another. Fire the per-relay sends, or bound each send with a timeout
      that treats a stuck send like a drop, so that one relay's socket can't hold up the others.
    - Add a test that injects EOSE on `tak-probe` with no probe outstanding and asserts that no CLOSE is sent.
+   · **Reply:** fixed in bae0f40. `RelayLink` keeps the probe's subscription open from the probe until its first EOSE or CLOSED
+   (cleared on every connect, drop and stop); `OnProbeEose()` is true once per probe and only then does the pool send CLOSE.
+   `StrayProbeEose_IsNotAnswered_AndARealProbeIsClosedOnce` injects 20 stray EOSE (0 CLOSE, was 20), then 20 more after a real
+   probe (1 CLOSE). Left: the pump still awaits relays one after another (part c, M0 coupling). With the reflection gone a relay
+   can no longer make the client send; a relay that stops reading still stalls the pump only on what we send it ourselves.
+   Worth a send timeout when the pump is next touched.
 
 2. **should** (introduced in M0, not by M1; first reported here) · `src/TakEngine.Transport/Relay/RelayPool.cs:238-243` (the pump
    spends the shared budget on `_outgoing` oldest first, retries included) with `PublishTracker.cs:79` (`OnNoAnswer` retries for
@@ -52,6 +58,11 @@ Findings: blocking 0 · should 2 · nit 1.
    - Once an event is Sent somewhere, keep retrying its no-answer relays only within a spare-budget share, or cap the retries
      (for example 5, then Refused "no answer").
    - Pin this with a test that times a new publish behind N events a relay swallows.
+   · **Reply:** fixed in edb6418 (D-053). The pump sends first sends first, then retries newest first, and a retry takes a slot
+   only while one more stays free (`PublishBudget.FirstSendReserve`), so retries use at most 3 of the 4 per 10 s and a new move
+   always finds a slot. Retries are not capped (a relay may come back). `RetriesToASwallowingRelay_DoNotHoldBackANewMove` plays
+   12 moves against r1 swallowing and r2 honest, stops the clock once the retries have spent what they can, and needs the new
+   move Sent without the clock moving; it fails on the old pump.
 
 3. **nit** · `src/TakEngine.Transport/Relay/RelayConnection.cs` (`Link.OnFrame` before `RelayMessage.Parse`)
    · **Attack/input:** a relay sends any frame at least every 59 s, even unparseable junk or a NOTICE.
@@ -60,6 +71,7 @@ Findings: blocking 0 · should 2 · nit 1.
    in the per-relay status then says nothing about whether the relay delivers.
    · **Suggested fix:** none needed for M1. If per-relay health is ever shown as "working", count only parseable NIP-01 frames
    toward liveness.
+   · **Reply:** left as suggested: no change for M1.
 
 ## Checked and found sound
 - **Probe matching real events:** the filter is `ids:[64 zeros]`, `kinds:[3825]`, `limit:0`. Matching it needs a SHA-256 preimage

@@ -41,6 +41,9 @@ Totals: blocking 0 · should 4 · nit 3.
   turn, though, so it is the place where vs-AI resign has to mean "the human resigns".
 - **Suggested fix:** in a bot match, refuse `Resign` while `IsBotThinking` (or resign `LocalPlayerColor`, which needs a
   colour-taking overload on the session). Add an adapter test for it.
+- **Reply:** fixed in a400460. In a bot match Resign resigns the human's colour, also during the pause, and drops the pending
+  bot turn (D-052; G-51 updated). New `TakGameSession.Resign(PlayerColor)`: a local session takes either colour, an online one
+  only its own. Adapter tests for both colours during the pause and on the human's turn; session tests for both cases.
 
 ### 2. should · src/TakApp.Blazor/Components/Board/StackSlideBar.razor:95-106 (D-050, gestures.md G-43)
 - **What happens:** the one behaviour change M1 makes on purpose, which resets the slide bar when its origin changes, is pinned
@@ -50,6 +53,8 @@ Totals: blocking 0 · should 4 · nit 3.
   that gates a commit, and nothing in the repo would show it until someone ran the harness by hand.
 - **Suggested fix:** move the "new origin → clear direction and move" rule into a small testable piece (or add a bUnit test for
   StackSlideBar) and pin it in `TakApp.Blazor.Tests`. Alternatively, run play.mjs in CI, since it already stubs every socket.
+- **Reply:** fixed in 54faf46. The bar's choice moved into `Services/SlideBarChoice` (StackSlideBar delegates to it);
+  `SlideBarChoiceTests` fail with the reset removed (checked). No bUnit.
 
 ### 3. should · src/TakApp.Blazor/wwwroot/js/page-visibility.js:1-21, Services/OnlineGameService.cs:309,321-336 (D-051 "11 s with a wake hook")
 - **What happens:** no test exercises the wake hook from `visibilitychange`/`online` → `OnPageVisible` →
@@ -64,6 +69,13 @@ Totals: blocking 0 · should 4 · nit 3.
   Either emulate it (`Emulation.setFocusEmulationEnabled` / override `document.visibilityState` and dispatch
   `visibilitychange`), or thaw well under 60 s after the last frame. Then check that a `tak-probe` REQ goes out within a few
   seconds of the thaw.
+- **Reply:** fixed in c7f5c7e. The game level was already pinned: `GameCoordinatorTests.CheckConnections_AfterAWake_...` fails
+  with `MultiplayerGame.CheckConnections` emptied (checked). New `PageVisibilityHookTests` pin the browser wiring in CI (script
+  tag before Blazor, `takVisibility.watch` = `OnlineGameService.VisibilityWatch`, `OnPageVisible` invoked on
+  `visibilitychange`/`online`, `[JSInvokable]`); they fail with the script tag removed (checked). background.mjs now marks the
+  page hidden at the freeze and visible at the thaw, and `--silent` checks a probe within 5 s of the tab becoming visible. Run
+  with `--silent --freeze-seconds 20` (under the idle window, so only the hook can explain it): probes at the thaw, turn applied
+  11 s later, all checks pass. The default run passes too.
 
 ### 4. should · tests/TakApp.Blazor.Tests/LocalGameAdapterTests.cs:205-220
 - **What happens:** `NewMatch_DuringABotWait_DropsTheStaleBotMove` starts a *local* match during the bot's wait. That sets
@@ -75,6 +87,8 @@ Totals: blocking 0 · should 4 · nit 3.
   shipped code is correct today; only the test that should protect it is weak.
 - **Suggested fix:** start the second game with `StartBotMatch` (human White, so no fresh bot turn masks it) and assert that the
   history is empty and `IsBotThinking` is false.
+- **Reply:** fixed in a400460. `NewBotMatch_DuringABotWait_DropsTheStaleBotMove` does exactly that and fails with the
+  generation check removed (checked).
 
 ### 5. nit · src/TakEngine.Transport/Relay/RelayConnection.cs:174-205
 - **What happens:** each loop pass runs `Link.CheckLiveness(now)` before it looks at a receive that has already completed. Take a
@@ -85,6 +99,11 @@ Totals: blocking 0 · should 4 · nit 3.
   the probe" is broken by ordering alone, and a browser decides that ordering, not the code.
 - **Suggested fix:** before acting on `Drop`, yield once (`await Task.Yield()`) and drain `receive` if it completed. Or check
   `receive.IsCompleted` first and process that frame before calling `CheckLiveness`.
+- **Reply:** fixed in f39cb2d. A completed receive is always read before `CheckLiveness`. When the probe timeout is found more
+  than 1 s late (a thaw), the reader gives the pending receive up to 250 ms of real time before dropping; one `Task.Yield` was
+  not enough under the thread pool. A timeout found on time still drops at once, so D-051's 10 s and the fake-clock tests are
+  unchanged. New `InMemoryRelay.DelayFrames` knob; `ProbeAnswer_ThatArrivesAsTheTimeoutFires_KeepsTheSocket` fails without the
+  settle (10 of 10) and passes with it (20 of 20).
 
 ### 6. nit · tests/e2e/play.mjs:76-80, tests/e2e/background.mjs:89-93
 - **What happens:** both scripts reuse whatever answers at `127.0.0.1:5199` (and `:7447/r1`) and write PASS evidence against it.
@@ -94,6 +113,9 @@ Totals: blocking 0 · should 4 · nit 3.
   site is loopback and every socket is still stubbed or piped.
 - **Suggested fix:** reuse a running site only when `--url` is passed explicitly. Otherwise start on a free port, or log the
   served `TakApp.Blazor.dll` build id next to `git rev-parse HEAD`.
+- **Reply:** fixed in c7f5c7e. Without `--url` (and `--relay-port`) both scripts start their own site (and relay) from this
+  checkout on free ports; an explicit one is used only if it answers, and the log says it may not be this tree. Both log
+  `TREE <path> at <HEAD>`.
 
 ### 7. nit · src/TakApp.Blazor/Components/Board/StackSlideBar.razor:84-92
 - **What happens:** the slide bar gets its legal moves from `MoveValidator.GetLegalMovesForSquare` on the view's board copy
@@ -102,6 +124,7 @@ Totals: blocking 0 · should 4 · nit 3.
   `Phase` from `TurnNumber`), the bar and the board markers can offer different moves.
 - **Suggested fix:** pass the adapter's slide moves for the origin into the bar as a parameter (the page already holds them in
   `SlideBuilder.Legal`).
+- **Reply:** left as asked: the legality is the engine's either way; fold it in when the slide bar is next touched.
 
 ## Checked and found sound
 - `SlideTargets.Fits` (prefix equal, last drop `>=`) offers exactly the old enter-square cases (wall, capstone alone, capstone
