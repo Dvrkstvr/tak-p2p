@@ -13,25 +13,33 @@ public sealed class PublishBudget
     private readonly Queue<DateTimeOffset> _taken = new();
     private readonly Lock _gate = new();
 
-    public bool TryTake(DateTimeOffset now)
+    /// <summary>
+    /// Slots a retry leaves free for an event's first send (D-053): retries to a relay that never answers can use at most
+    /// <see cref="MaxEvents"/> - 1 per window, so a new move always finds a slot.
+    /// </summary>
+    public const int FirstSendReserve = 1;
+
+    /// <param name="reserve">Slots that must stay free after this one (<see cref="FirstSendReserve"/> for a retry).</param>
+    public bool TryTake(DateTimeOffset now, int reserve = 0)
     {
         lock (_gate)
         {
             Expire(now);
-            if (_taken.Count >= MaxEvents)
+            if (_taken.Count >= MaxEvents - reserve)
                 return false;
             _taken.Enqueue(now);
             return true;
         }
     }
 
-    /// <summary>When the next <see cref="TryTake"/> can succeed (now if it already can).</summary>
-    public DateTimeOffset NextAvailable(DateTimeOffset now)
+    /// <summary>When the next <see cref="TryTake"/> with the same <paramref name="reserve"/> can succeed (now if it already can).</summary>
+    public DateTimeOffset NextAvailable(DateTimeOffset now, int reserve = 0)
     {
         lock (_gate)
         {
             Expire(now);
-            return _taken.Count < MaxEvents ? now : _taken.Peek() + Window;
+            int limit = MaxEvents - reserve;
+            return _taken.Count < limit ? now : _taken.ElementAt(_taken.Count - limit) + Window;
         }
     }
 

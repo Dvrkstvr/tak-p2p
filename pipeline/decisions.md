@@ -367,7 +367,7 @@ is legal; the engine judges every move sent. Adapter tests live in the new `test
 ## D-050 · 2026-10-12 · stage 7 · by: user
 The slide bar starts afresh whenever its origin changes (gestures.md Q-1, now G-43). Before, it kept the direction and split chosen
 for an earlier stack, so after a move made by clicking the board, its Confirm button could name a move from another square. This is
-the one behaviour change M1 makes on purpose; the Playwright harness pins it.
+the one behaviour change M1 makes on purpose; the Playwright harness pins it, and `SlideBarChoiceTests` pin the rule in CI.
 - why: Confirm could send a move the player didn't mean; the engine refused it only if it was illegal
 - revisit if: the slide bar is redesigned (Calvin chose "Fix in M1" on the decision card)
 
@@ -389,3 +389,25 @@ publish retry due at once (`PublishTracker.OnReconnected`; rate-limit backoffs s
   game gains one REQ/EOSE/CLOSE per relay per minute
 - revisit if: a relay rate-limits or refuses REQs at that pace, refuses `limit: 0` or the zero id without answering, or a live run
   shows a NAT dropping flows that are quiet for less than 60 s
+
+## D-052 · 2026-10-13 · stage 7 · by: assumed (builder)
+In a vs-AI game Resign always resigns the human's colour, also while "AI is thinking..." is shown; the bot's pending turn is then
+dropped. Pass-and-play keeps "the side to move resigns" (G-51). `TakGameSession.Resign(PlayerColor)` takes the colour: a local
+session takes either, an online session refuses any colour but its own (`Resign()` is unchanged for both).
+- why: M1 code review finding 1: pressing Resign during the bot's 350 ms pause resigned the bot, so the human won by giving up.
+  Refusing Resign while the bot thinks would leave a click that does nothing; resigning the human is what the player asked for
+- revisit if: the Play page gets a resign confirmation or an undo, or vs-AI moves to the online page (M2)
+
+## D-053 · 2026-10-13 · stage 7 · by: assumed (builder)
+A retry never holds back a first send. The pool's pump sends first sends first (oldest first), then retries (newest first), and a
+retry may take a slot of the 4-per-10-s budget only while one more slot stays free (`PublishBudget.FirstSendReserve`); a first send
+may take any slot. A first send is an (event, relay) pair with no rate limit and no unanswered send yet. Retries still run for ever
+at their backoff (30 s at most); nothing is given up.
+- why: M1 security finding 2: a relay that takes EVENTs and never answers OK (an invite can name it) kept about 12 old events
+  retrying, which spent the whole budget, so a new move reached the honest relay 94 s late. A cap on retries would give up on a
+  relay that may come back; a reserved slot keeps every retry and bounds the cost: retries use at most 3 slots per 10 s, a new move
+  goes out at once, and the total stays at 4 per 10 s
+- side effects: two first sends in a burst behind three retries wait for the window as before; retries to a swallowing relay are
+  at most 3 per 10 s instead of 4
+- revisit if: a game needs more than one new event per 10 s while retries run, or a relay is seen that answers OK only after
+  several resends

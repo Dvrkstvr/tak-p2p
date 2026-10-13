@@ -176,14 +176,17 @@ public sealed class RelayPool : IAsyncDisposable
                 _wake.Release();
                 break;
             case RelayMessage.Eose eose when eose.SubscriptionId == SubscriptionPlan.ProbeSubscriptionId:
-                // The probe was answered (the connection already reset its idle clock); end its subscription. SendAsync never throws.
-                _ = connection.SendAsync(new RelayMessage.Close(SubscriptionPlan.ProbeSubscriptionId).Format());
+                // The probe was answered (the connection already reset its idle clock); end its subscription, once per probe. A stray
+                // EOSE on the probe id gets nothing back. SendAsync never throws.
+                if (connection.Link.OnProbeEose())
+                    _ = connection.SendAsync(new RelayMessage.Close(SubscriptionPlan.ProbeSubscriptionId).Format());
                 break;
             case RelayMessage.Eose:
                 connection.Link.OnEose();
                 break;
             case RelayMessage.Closed closed when closed.SubscriptionId == SubscriptionPlan.ProbeSubscriptionId:
-                break; // an answer all the same; says nothing about the game's subscription
+                connection.Link.OnProbeClosed(); // an answer all the same; says nothing about the game's subscription
+                break;
             case RelayMessage.Closed closed:
                 connection.Link.OnClosed(closed.Message);
                 break;
@@ -235,12 +238,17 @@ public sealed class RelayPool : IAsyncDisposable
             {
                 DateTimeOffset now = _time.GetUtcNow();
                 ExpireUnansweredLocked(now);
-                foreach (NostrEvent evt in _outgoing)
+                // First sends go first, oldest first; then retries, newest first, and a retry leaves the window's last slot to a
+                // first send. A relay that swallows every event can't hold back a new move (D-053).
+                var ready = _outgoing
+                    .Select(evt => (Event: evt, Targets: _connections.Where(c => NeedsSendLocked(evt.Id, c, now)).ToList()))
+                    .Where(x => x.Targets.Count > 0)
+                    .Select(x => (x.Event, x.Targets, First: x.Targets.Any(c => IsFirstSendLocked(x.Event.Id, c))))
+                    .ToList();
+                var ordered = ready.Where(x => x.First).Concat(ready.Where(x => !x.First).Reverse());
+                foreach (var (evt, targets, first) in ordered)
                 {
-                    var targets = _connections.Where(c => NeedsSendLocked(evt.Id, c, now)).ToList();
-                    if (targets.Count == 0)
-                        continue;
-                    if (!_budget.TryTake(now))
+                    if (!_budget.TryTake(now, first ? 0 : PublishBudget.FirstSendReserve))
                         break;
                     string frame = new RelayMessage.Publish(evt).Format();
                     foreach (RelayConnection c in targets)
@@ -332,14 +340,18 @@ public sealed class RelayPool : IAsyncDisposable
             if (expires > now && (due is null || expires < due))
                 due = expires;
         }
-        if (_outgoing.Any(e => _connections.Any(c => NeedsSendLocked(e.Id, c, now))))
+        var ready = _outgoing.SelectMany(e => _connections.Where(c => NeedsSendLocked(e.Id, c, now)).Select(c => IsFirstSendLocked(e.Id, c))).ToList();
+        if (ready.Count > 0)
         {
-            DateTimeOffset budgetAt = _budget.NextAvailable(now);
+            DateTimeOffset budgetAt = _budget.NextAvailable(now, ready.Contains(true) ? 0 : PublishBudget.FirstSendReserve);
             if (budgetAt > now && (due is null || budgetAt < due))
                 due = budgetAt;
         }
         return due;
     }
+
+    /// <summary>Nothing has been retried for this relay yet (no rate limit, no unanswered send): a first send.</summary>
+    private bool IsFirstSendLocked(string id, RelayConnection c) => _tracker.PerRelay(id)[c.Url].Retries == 0;
 
     private static string ParseId(string frame) => RelayMessage.Parse(frame) is RelayMessage.Publish p ? p.NostrEvent.Id : "";
 

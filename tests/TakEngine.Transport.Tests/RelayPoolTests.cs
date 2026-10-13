@@ -179,6 +179,51 @@ public sealed class RelayPoolTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task StrayProbeEose_IsNotAnswered_AndARealProbeIsClosedOnce()
+    {
+        // M1 security finding 1: a relay must not be able to make the client send a CLOSE for every EOSE it sends.
+        _r2.Partition();
+        Start();
+        await Eventually(() => _pool.Links[0].State == RelayLinkState.CaughtUp, "r1 caught up");
+        int Closes() => _r1.ReceivedFrames.Count(f => f == "[\"CLOSE\",\"tak-probe\"]");
+
+        for (int i = 0; i < 20; i++)
+            _r1.Inject("[\"EOSE\",\"tak-probe\"]");
+        await Eventually(() => _pool.Links[0].LastHeardAt == _time.GetUtcNow(), "the stray frames were read");
+        await Task.Delay(50);
+        Assert.Equal(0, Closes());
+
+        await Advance(TimeSpan.FromSeconds(60));
+        await Eventually(() => Closes() == 1, "the real probe closed after its EOSE");
+        for (int i = 0; i < 20; i++)
+            _r1.Inject("[\"EOSE\",\"tak-probe\"]");
+        await Task.Delay(100);
+        Assert.Equal(1, Closes());
+        Assert.Equal(1, Probes(_r1));
+    }
+
+    [Fact]
+    public async Task ProbeAnswer_ThatArrivesAsTheTimeoutFires_KeepsTheSocket()
+    {
+        // M1 code finding 5: a thawed tab runs the overdue timeout and the queued answer's receive together. The frame that
+        // already arrived is read before the liveness check, so a healthy socket is not dropped.
+        _r2.Partition();
+        Start();
+        await Eventually(() => _pool.Links[0].State == RelayLinkState.CaughtUp, "r1 caught up");
+        TimeSpan frozen = RelayLink.ProbeTimeout + TimeSpan.FromSeconds(20);
+        _r1.DelayFrames(frozen); // the probe's EOSE is queued while the tab is frozen and lands as it thaws
+
+        await Advance(TimeSpan.FromSeconds(60));
+        await Eventually(() => Probes(_r1) == 1, "probe sent");
+        await Advance(frozen); // the thaw: the clock jumps past the probe timeout in one go
+        await Eventually(() => _pool.Links[0].ProbeSentAt is null, "probe answered or dropped");
+        await Task.Delay(50);
+
+        Assert.Equal(RelayLinkState.CaughtUp, _pool.Links[0].State);
+        Assert.Equal(1, _r1.ConnectAttempts);
+    }
+
+    [Fact]
     public async Task SilentDrop_IsFoundByTheProbe_AndTheReconnectCatchesUpWhatWasMissed()
     {
         _r2.Partition(); // one relay, so the missed event can only come from r1's catch-up
@@ -464,6 +509,51 @@ public sealed class RelayPoolTests : IAsyncDisposable
         await Eventually(() => _pool.Outcome(e.Id) == PublishOutcome.Sent, "the retry is answered");
         Assert.Equal(2, Sends());
         Assert.Equal(1, _r1.OpenConnections); // same socket, no reconnect needed
+    }
+
+    [Fact]
+    public async Task RetriesToASwallowingRelay_DoNotHoldBackANewMove()
+    {
+        // M1 security finding 2: r1 takes EVENTs and never answers OK, r2 is honest. Twelve earlier moves stay Pending on r1 and
+        // are retried for the rest of the game; a new move must still reach r2 at once, inside the 4-per-10-s budget.
+        var budget = new PublishBudget();
+        await using var pool = new RelayPool([_r1.Url, _r2.Url], new FakeRelaySocketFactory(_r1, _r2), _time, Me.PublicKey.ToHex(), budget: budget);
+        _r1.IgnorePublishes();
+        pool.Start(Subscription);
+        await Eventually(() => pool.Links.All(l => l.State == RelayLinkState.CaughtUp), "both relays caught up");
+        var earlier = new List<NostrEvent>();
+        for (int i = 0; i < 12; i++)
+        {
+            NostrEvent e = Evt(Me);
+            earlier.Add(e);
+            pool.Publish(e);
+            for (int s = 0; s < 200 && pool.PerRelay(e.Id)[_r2.Url].Status != RelayPublishStatus.Sent; s++)
+                await Advance(TimeSpan.FromSeconds(1));
+            Assert.Equal(RelayPublishStatus.Sent, pool.PerRelay(e.Id)[_r2.Url].Status);
+            for (int s = 0; s < 3; s++)
+                await Advance(TimeSpan.FromSeconds(1));
+        }
+
+        // Let the retries to r1 run, and stop the clock at the worst moment: when they have spent the whole window (if they can).
+        for (int s = 0; s < 120 || (s < 240 && budget.NextAvailable(_time.GetUtcNow()) <= _time.GetUtcNow()); s++)
+            await Advance(TimeSpan.FromSeconds(1));
+        Assert.All(earlier, e => Assert.Equal(RelayPublishStatus.Pending, pool.PerRelay(e.Id)[_r1.Url].Status));
+        int retries = _r1.ReceivedFrames.Count(f => f.StartsWith("[\"EVENT\"", StringComparison.Ordinal));
+        Assert.True(retries > 40, $"only {retries} sends to r1: the retries are not running");
+
+        NostrEvent move = Evt(Me);
+        pool.Publish(move);
+        await Eventually(() => pool.Outcome(move.Id) == PublishOutcome.Sent, "the new move is sent without waiting for the clock");
+
+        var slots = _r1.FrameLog.Concat(_r2.FrameLog)
+            .Where(f => f.Frame.StartsWith("[\"EVENT\"", StringComparison.Ordinal))
+            .Select(f => (f.At, Id: ((RelayMessage.Publish)RelayMessage.Parse(f.Frame)).NostrEvent.Id))
+            .Distinct()
+            .Select(f => f.At)
+            .ToList();
+        // Relay-side stamps can lag the budget's clock by a step under load (see RateLimited_...), so allow one extra.
+        foreach (DateTimeOffset start in slots)
+            Assert.True(slots.Count(t => t >= start && t < start + PublishBudget.Window) <= PublishBudget.MaxEvents + 1, $"burst at {start}");
     }
 
     [Fact]

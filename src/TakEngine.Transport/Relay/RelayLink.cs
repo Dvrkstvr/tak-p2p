@@ -68,6 +68,21 @@ public sealed class RelayLink(Uri url)
     public DateTimeOffset? ProbeSentAt { get; private set; }
 
     private bool _probeRequested;
+    private bool _probeSubscriptionOpen;
+
+    /// <summary>
+    /// An EOSE on the probe's subscription id arrived: true once per probe sent on this socket (the shell then sends one CLOSE).
+    /// A stray EOSE with no probe open is false, so a relay can't make the client send a frame for every frame it sends.
+    /// </summary>
+    public bool OnProbeEose()
+    {
+        bool open = _probeSubscriptionOpen;
+        _probeSubscriptionOpen = false;
+        return open;
+    }
+
+    /// <summary>The relay ended the probe's subscription itself (CLOSED): nothing left to close.</summary>
+    public void OnProbeClosed() => _probeSubscriptionOpen = false;
 
     /// <summary>When <see cref="CheckLiveness"/> next has something to do; null while not connected.</summary>
     public DateTimeOffset? NextLivenessCheckAt =>
@@ -100,6 +115,7 @@ public sealed class RelayLink(Uri url)
         LastHeardAt = now;
         ProbeSentAt = null;
         _probeRequested = false;
+        _probeSubscriptionOpen = false;
     }
 
     /// <summary>Any frame arrived from the relay (an event, EOSE, OK, NOTICE, CLOSED, ...): the socket is alive.</summary>
@@ -137,6 +153,7 @@ public sealed class RelayLink(Uri url)
             return LivenessAction.None;
         _probeRequested = false;
         ProbeSentAt = now;
+        _probeSubscriptionOpen = true;
         return LivenessAction.SendProbe;
     }
 
@@ -162,6 +179,7 @@ public sealed class RelayLink(Uri url)
         State = RelayLinkState.Backoff;
         ProbeSentAt = null;
         _probeRequested = false;
+        _probeSubscriptionOpen = false;
         RetryAt = now + BackoffDelay(Failures);
         if (reason is not null)
             LastMessage = reason;
@@ -173,5 +191,6 @@ public sealed class RelayLink(Uri url)
         RetryAt = null;
         ProbeSentAt = null;
         _probeRequested = false;
+        _probeSubscriptionOpen = false;
     }
 }

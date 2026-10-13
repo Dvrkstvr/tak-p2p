@@ -106,13 +106,21 @@ public sealed class LocalGameAdapter
         return result;
     }
 
-    /// <summary>The side to move resigns (pass-and-play semantics of <see cref="TakGameSession.Resign"/>).</summary>
+    /// <summary>
+    /// Pass-and-play: the side to move resigns. vs-AI: the human resigns, also during the bot's pause, and the bot's pending
+    /// turn is dropped (D-052).
+    /// </summary>
     public CommandResult Resign()
     {
         if (_session is null)
             return CommandResult.Fail("No active game.");
 
-        var result = _session.Resign();
+        var result = IsBotMatch ? _session.Resign(LocalPlayerColor) : _session.Resign();
+        if (result.IsSuccess && IsBotThinking)
+        {
+            _generation++;
+            IsBotThinking = false;
+        }
         Refresh();
         NotifyStateChanged();
         return result;

@@ -22,6 +22,9 @@ public sealed class OnlineGameService(BrowserStorage storage, TabGameLock tabLoc
 
     public static readonly IReadOnlyList<string> DefaultRelays = ["wss://nos.lol", "wss://relay.damus.io"];
 
+    /// <summary>The JS function (wwwroot/js/page-visibility.js) that calls <see cref="OnPageVisible"/> when the tab is shown again.</summary>
+    public const string VisibilityWatch = "takVisibility.watch";
+
     private readonly TabGameStore _store = new();
     private readonly PublishBudget _budget = new();
     private readonly object _gate = new();
@@ -327,7 +330,7 @@ public sealed class OnlineGameService(BrowserStorage storage, TabGameLock tabLoc
         _visibility = DotNetObjectReference.Create(this);
         try
         {
-            await js.InvokeVoidAsync("takVisibility.watch", _visibility);
+            await js.InvokeVoidAsync(VisibilityWatch, _visibility);
         }
         catch (JSException)
         {

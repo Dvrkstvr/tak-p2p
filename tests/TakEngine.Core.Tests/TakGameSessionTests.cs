@@ -95,6 +95,19 @@ public class TakGameSessionTests
     }
 
     [Fact]
+    public void LocalGame_ResignByColour_ResignsThatColourEvenOffTurn()
+    {
+        var session = TakGameSession.CreateLocal(BoardSize.Five);
+        Assert.True(session.SubmitPlacement(new Coord(0, 0), PieceType.Flat).IsSuccess);
+        Assert.Equal(PlayerColor.Black, session.CurrentBoard.ActivePlayer);
+
+        Assert.True(session.Resign(PlayerColor.White).IsSuccess);
+
+        Assert.Equal(PlayerColor.Black, session.Result!.Winner);
+        Assert.Equal(GameEndReason.Resignation, session.Result.Reason);
+    }
+
+    [Fact]
     public void LocalGame_SlideMove_LiftsAndDropsCorrectly()
     {
         var session = TakGameSession.CreateLocal(BoardSize.Five);

@@ -47,7 +47,7 @@ dotnet test TakGame.Ci.slnf --no-build --filter "Category!=LiveRelay"
 - Tag: `[Trait("Category", "LiveRelay")]`. They publish to public relays, so they run only after the user has approved publishing for
   the milestone (Q-018; D-014's approval covered the spike only). Throwaway keys, encrypted content, no kind 0/1, and the run's events
   are listed in the evidence (count, ids).
-- Run: `dotnet test TakGame.Ci.slnf --filter "Category=LiveRelay" --logger "console;verbosity=detailed"`
+- Run: `TAK_LIVE_RELAY=1 dotnet test TakGame.Ci.slnf --filter "Category=LiveRelay" --logger "console;verbosity=detailed"`
   (one feature: add `&FullyQualifiedName~<TestClass>`). Relays come from `TAK_LIVE_RELAYS` (default `wss://nos.lol,wss://relay.damus.io`).
 - Expect damus to refuse a burst after ~5 events (`rate-limited`): tests pace themselves under `PublishBudget`; a refusal is reported, not hidden.
 
