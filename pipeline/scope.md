@@ -105,7 +105,7 @@ process, seen in code MainViewModel.cs L21-25) is deleted. Features: F-025, F-05
 
 ## M7 — Release readiness and polish
 LICENSE file (Q-014), README device matrix matches features.json, CLI local game hand-checked, release workflow gated on tests, Android APK smoke on one phone
-(owed; relabelled experimental either way), key-storage threat model written (R-009), the small polish picks from Q-005. Features: F-054, F-055, F-056, F-024, F-028, F-026.
+(owed; relabelled experimental either way), key-storage threat model reviewed (R-009), the web app moved to an origin of its own so no other Pages site shares its `localStorage` (D-048), the small polish picks from Q-005. Features: F-054, F-055, F-056, F-024, F-028, F-026.
 
 ## Platform set proposal for v1 (answers Q-006; default recorded as D-018, user to confirm at sign-off)
 - In v1: Web (GitHub Pages, primary and zero-install), CLI (Windows, Linux, macOS via `dotnet publish`; Windows hand-verified, others "should work"), Desktop
@@ -147,7 +147,7 @@ Host states: `Idle` -> `Inviting` -> `Locked(G)` -> `InGame` | `Cancelled`.
 Guest states: `Idle` -> `InviteParsed` -> `Joining` -> `InGame` | `Failed`.
 - Idle -> InviteParsed: a malformed or truncated invite, size not 3..8, komi outside 0..20 half flats, missing seed commitment or host key, or host key == own key -> `Failed` with a specific message and no network traffic.
 - InviteParsed -> Joining: connect to the relay set (invite hints plus defaults); publish JOIN; republish at 5 s, 15 s, 45 s, then every 60 s; show per-relay state.
-- Joining -> InGame: ACCEPT arrives from H's pubkey (id, sig, game id), its host nonce matches the invite's commitment, its size and komi equal the invite's, and its colours equal the guest's own `ResolveColors` result. ACCEPT from any other pubkey is dropped and flagged.
+- Joining -> InGame: ACCEPT arrives from H's pubkey (id, sig, game id), its host nonce matches the invite's commitment, its size and komi equal the invite's, and its colours equal the guest's own `ResolveColors` result. ACCEPT from any other pubkey is counted and dropped, never flagged (tamper row 2, D-047).
   Colour mismatch -> `Failed` ("host and guest disagree on colours"), nothing played.
 - Joining, all relays unreachable: stay in Joining with "offline, retrying". Guest cancel -> `Idle`; nothing more is published, but a JOIN that already reached the host still locks the game to this guest
   (no un-join message in v1). The host's way out is cancel/resign, so a cancelled guest can strand the invite; accepted for v1 and listed under the bearer-invite gap below.

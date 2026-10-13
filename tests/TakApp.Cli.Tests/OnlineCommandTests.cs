@@ -144,3 +144,47 @@ internal static class Table
         Assert.True(condition(), "timed out waiting for: " + what);
     }
 }
+
+/// <summary>Code review M0 finding 3: <c>--relays</c> follows the invite's own relay rule, so a bad relay is exit 2, not a crash.</summary>
+public sealed class RelayArgumentTests : IDisposable
+{
+    private readonly string _appData = Directory.CreateTempSubdirectory("tak-cli-").FullName;
+    private readonly FakeRelaySocketFactory _sockets = new(new InMemoryRelay("wss://r1.test"));
+
+    public void Dispose() => Directory.Delete(_appData, recursive: true);
+
+    [Theory]
+    [InlineData("ws://example.com")]
+    [InlineData("ws://10.0.0.5:7447")]
+    [InlineData("http://example.com")]
+    [InlineData("wss://nos.lol,ws://example.com")]
+    public void ARelayTheInviteWouldRefuse_IsAnArgumentError(string relays)
+    {
+        Assert.Null(OnlineArgs.Parse(["host", "--relays", relays], out string? error));
+        Assert.Contains("wss://", error, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("wss://nos.lol,wss://relay.damus.io")]
+    [InlineData("ws://127.0.0.1:7447/r1,ws://127.0.0.1:7447/r2")]
+    [InlineData("ws://localhost:7447")]
+    public void RelaysTheInviteAccepts_Parse(string relays) =>
+        Assert.NotNull(OnlineArgs.Parse(["host", "--relays", relays], out _));
+
+    [Fact]
+    public async Task HostWithABadRelay_Exits2_WithTheReason_AndNoRelayTraffic()
+    {
+        var args = new OnlineArgs("host", Profile: "alice", Relays: ["ws://example.com"], Plain: true);
+        var output = new StringWriter();
+        var error = new StringWriter();
+        var env = new CliEnvironment(_sockets, TimeProvider.System, _appData, () => System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+
+        int exit = await OnlineCommand.RunAsync(args, new StringReader(""), new PlainOutput(output), error, env, CancellationToken.None)
+            .WaitAsync(TimeSpan.FromSeconds(10));
+
+        Assert.Equal(2, exit);
+        Assert.Contains("ws://example.com", error.ToString(), StringComparison.Ordinal);
+        Assert.Empty(output.ToString());
+        Assert.Empty(_sockets.Created);
+    }
+}

@@ -1,4 +1,5 @@
 using TakEngine.Abstractions;
+using TakEngine.Core.Text;
 using TakEngine.Multiplayer;
 using TakEngine.Storage.Local;
 using TakEngine.Transport.Matchmaking;
@@ -42,6 +43,14 @@ public sealed class OnlineCommand
         ArgumentNullException.ThrowIfNull(error);
         ArgumentNullException.ThrowIfNull(env);
 
+        // OnlineArgs.Parse checks this too; checked again here so a caller that built the args itself can't start a game whose
+        // invite would be refused (code review M0, finding 3).
+        if (args.Relays is { } relays && OnlineArgs.CheckRelays(relays) is { } relayError)
+        {
+            await ErrorAsync(error, relayError).ConfigureAwait(false);
+            return 2;
+        }
+
         string dir = Profile.Directory(args.DataDir, args.Profile, env.LocalAppData);
         MultiplayerOptions options;
         FileStream? profileLock = null;
@@ -55,7 +64,7 @@ public sealed class OnlineCommand
             }
             catch (IOException)
             {
-                await error.WriteLineAsync($"This profile ({dir}) is in use by another tak process. Close it, or use another --profile.")
+                await ErrorAsync(error, $"This profile ({dir}) is in use by another tak process. Close it, or use another --profile.")
                     .ConfigureAwait(false);
                 return 2;
             }
@@ -67,7 +76,7 @@ public sealed class OnlineCommand
         {
             if (profileLock is not null)
                 await profileLock.DisposeAsync().ConfigureAwait(false);
-            await error.WriteLineAsync(ex.Message).ConfigureAwait(false);
+            await ErrorAsync(error, ex.Message).ConfigureAwait(false);
             return 2;
         }
 
@@ -86,9 +95,10 @@ public sealed class OnlineCommand
             {
                 return await command.PlayAsync(args, options, input, error, stop).ConfigureAwait(false);
             }
-            catch (GameStoreException ex)
+            catch (Exception ex) when (ex is GameStoreException or InviteFormatException)
             {
-                await error.WriteLineAsync(ex.Message).ConfigureAwait(false);
+                // InviteFormatException: an invite built (host) or read back (resume) that its own rules refuse. Exit 2, never a crash.
+                await ErrorAsync(error, ex.Message).ConfigureAwait(false);
                 return 2;
             }
         }
@@ -99,7 +109,7 @@ public sealed class OnlineCommand
         (MultiplayerGame? game, string? failure) = await OpenAsync(args, options).ConfigureAwait(false);
         if (game is null)
         {
-            await error.WriteLineAsync(failure).ConfigureAwait(false);
+            await ErrorAsync(error, failure).ConfigureAwait(false);
             return 2;
         }
         await using (game.ConfigureAwait(false))
@@ -121,6 +131,9 @@ public sealed class OnlineCommand
             return _done.Task.IsCompleted ? await _done.Task.ConfigureAwait(false) : 0;
         }
     }
+
+    /// <summary>Errors can quote an invite or a relay's answer, so they are sanitized like everything else that is printed.</summary>
+    private static Task ErrorAsync(TextWriter error, string? message) => error.WriteLineAsync(DisplayText.Sanitize(message));
 
     /// <summary>How long a finished game waits for its last events (the winning move, a resign) to reach a relay before exiting.</summary>
     public static readonly TimeSpan FinalSendWait = TimeSpan.FromSeconds(15);

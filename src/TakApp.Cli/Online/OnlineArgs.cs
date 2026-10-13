@@ -1,4 +1,5 @@
 using TakEngine.Abstractions;
+using TakEngine.Transport.Matchmaking;
 
 namespace TakApp.Cli.Online;
 
@@ -56,8 +57,8 @@ public sealed record OnlineArgs(
                     break;
                 case "--relays":
                     a = a with { Relays = next!.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) };
-                    if (a.Relays.Any(r => !Uri.TryCreate(r, UriKind.Absolute, out Uri? u) || u.Scheme is not ("ws" or "wss")))
-                        return Fail("Each relay is a ws:// or wss:// URL.", out error);
+                    if (CheckRelays(a.Relays) is { } relayError)
+                        return Fail(relayError, out error);
                     break;
                 case "--size" when int.TryParse(next, out int size) && size is >= 3 and <= 8:
                     a = a with { Size = (BoardSize)size };
@@ -86,6 +87,35 @@ public sealed record OnlineArgs(
             return Fail($"Unknown argument '{a.Target}'.", out error);
         return a;
     }
+
+    /// <summary>
+    /// Null if every relay may go into an invite, else the message to show. It is the invite's own rule
+    /// (<see cref="InviteCode.Validate"/>: wss://, or plain ws:// on 127.0.0.1 or localhost for tools/TakRelay.Local), checked
+    /// on a probe invite so the two can't disagree (code review M0, finding 3).
+    /// </summary>
+    public static string? CheckRelays(IReadOnlyList<string> relays)
+    {
+        ArgumentNullException.ThrowIfNull(relays);
+        if (relays.Count == 0)
+            return "--relays needs at least one wss:// URL.";
+        foreach (string relay in relays)
+        {
+            try
+            {
+                new InviteCode(ProbeGameId, ProbeHostKey, BoardSize.Five, 0, [relay], ProbeSeedCommit).Validate();
+            }
+            catch (InviteFormatException)
+            {
+                return $"The relay '{relay}' can't go into an invite: use a wss:// URL (plain ws:// only on 127.0.0.1 or localhost).";
+            }
+        }
+        return null;
+    }
+
+    // A well-formed invite apart from the relay under test: the secp256k1 generator's x coordinate is a valid x-only key.
+    private static readonly Guid ProbeGameId = new("00000000-0000-0000-0000-000000000001");
+    private const string ProbeHostKey = "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798";
+    private static readonly string ProbeSeedCommit = new('0', 64);
 
     private static bool IsProfileName(string name) =>
         name.Length is > 0 and <= 64 && name.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_');

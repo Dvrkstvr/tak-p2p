@@ -356,22 +356,50 @@ public class TurnExchangeTests
     }
 
     [Fact]
-    public void Resign_IsAccepted_UpToOneTurnAhead_AndALaterMoveIsIgnored()
+    public void Resign_OneTurnAhead_WaitsForTheResignersMove_AndBothSidesEndOnTheSameHash()
+    {
+        // White played turn 3, then resigned (RESIGN turn 3). Black, at turn 2, gets the RESIGN first: turn 3 is still in flight.
+        var (actions, _) = Game();
+        string whiteFinalHash = SignedScript.Play(Script.Take(3).ToList()).FinalHash; // White's hash when it resigned
+        var r = new Receiver(Script);
+        r.Deliver(actions[0]); // applied 2
+        var resign = SignedScript.Sign(TestKeys.White, SignedGameAction.Unsigned(GameActionType.Resign, SignedScript.Game, 3, TestKeys.White.PublicKey.ToHex(), "whatever"));
+
+        ExchangeStep held = r.Deliver(resign);
+
+        Assert.Equal(ReceiveOutcome.Buffered, held.Outcome);
+        Assert.False(r.Exchange.IsCompleted);
+        Assert.Equal(3, r.Exchange.WaitingFor);
+        Assert.Equal(T0 + TurnExchange.GapTimeout, r.Exchange.NextDeadline); // a missing move 3 still gets a catch-up
+
+        ExchangeStep step = r.Deliver(actions[2]);
+
+        Assert.Equal(ReceiveOutcome.Applied, step.Outcome);
+        Assert.Equal(3, r.Exchange.AppliedTurn);
+        Assert.Equal(PlayerColor.Black, step.Ended!.Winner);
+        Assert.Equal(GameEndReason.Resignation, step.Ended.Reason);
+        Assert.Equal(whiteFinalHash, r.Session.CurrentStateHash);
+        Assert.Null(r.Exchange.NextDeadline);
+        Assert.Equal(ReceiveOutcome.Late, r.Deliver(actions[4]).Outcome);
+    }
+
+    [Fact]
+    public void Resign_ForTheAppliedTurn_EndsAtOnce_AndALaterMoveIsIgnored()
     {
         var (actions, _) = Game();
         var r = new Receiver(Script);
         r.Deliver(actions[0]); // applied 2
         r.Deliver(actions[4]); // turn 5 held
-        var resign = SignedScript.Sign(TestKeys.White, SignedGameAction.Unsigned(GameActionType.Resign, SignedScript.Game, 3, TestKeys.White.PublicKey.ToHex(), "whatever"));
+        string hash = r.Session.CurrentStateHash;
+        var resign = SignedScript.Sign(TestKeys.White, SignedGameAction.Unsigned(GameActionType.Resign, SignedScript.Game, 2, TestKeys.White.PublicKey.ToHex(), "whatever"));
 
         ExchangeStep step = r.Deliver(resign);
 
         Assert.Equal(0, r.Exchange.BufferedCount);
         Assert.Null(r.Exchange.NextDeadline);
-
         Assert.Equal(ReceiveOutcome.Applied, step.Outcome);
         Assert.Equal(PlayerColor.Black, step.Ended!.Winner);
-        Assert.Equal(GameEndReason.Resignation, step.Ended.Reason);
+        Assert.Equal(hash, r.Session.CurrentStateHash);
         Assert.Equal(ReceiveOutcome.Late, r.Deliver(actions[2]).Outcome);
     }
 
@@ -386,10 +414,16 @@ public class TurnExchangeTests
         Assert.False(r.Exchange.IsCompleted);
         Assert.Equal(1, r.Exchange.WaitingFor);
 
-        r.Deliver(actions[0]);
+        r.Deliver(actions[0]); // turn 1, and Black plays turn 2
+
+        Assert.False(r.Exchange.IsCompleted); // the resigner's turn 3 is still missing
+        Assert.Equal(3, r.Exchange.WaitingFor);
+
+        r.Deliver(actions[2]);
 
         Assert.True(r.Exchange.IsCompleted);
         Assert.Equal(PlayerColor.Black, r.Session.Result!.Winner);
+        Assert.Equal(SignedScript.Play(Script.Take(3).ToList()).FinalHash, r.Session.CurrentStateHash);
     }
 
     [Fact]

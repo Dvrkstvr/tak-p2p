@@ -273,8 +273,9 @@ public class HandshakeTests
     }
 
     [Fact]
-    public void Accept_FromANonHostKey_IsDroppedAndFlagged()
+    public void Accept_FromANonHostKey_IsIgnored_NotFlagged()
     {
+        // D-047: a stranger's event is counted and dropped, never flagged (the shell already drops it at tamper row 2).
         HostHandshake host = NewHost();
         GuestHandshake guest = NewGuest(host);
         SignedGameAction accept = host.OnJoin(Sign(Guest, guest.UnsignedJoin)).Accept!;
@@ -282,7 +283,7 @@ public class HandshakeTests
 
         GuestDecision g = guest.OnAccept(forged);
 
-        Assert.Equal(GuestDecisionKind.DropAndFlag, g.Kind);
+        Assert.Equal(GuestDecisionKind.Ignore, g.Kind);
         Assert.Equal(HandshakeState.Joining, guest.State);
         Assert.Equal(GuestDecisionKind.Start, guest.OnAccept(Sign(Host, accept)).Kind);
     }

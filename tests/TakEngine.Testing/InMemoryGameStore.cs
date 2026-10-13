@@ -5,7 +5,8 @@ namespace TakEngine.Testing;
 /// <summary>
 /// <see cref="IGameStore"/> in memory (architecture.md "Seams"). Outlives the coordinator that used it, so disposing a coordinator
 /// and opening a new one on the same store is a restart. <see cref="FailNextWrite"/> makes the next write throw with nothing kept,
-/// which simulates a crash at that point.
+/// which simulates a crash at that point. <c>src/TakApp.Blazor/Services/TabGameStore</c> ships a copy without the knobs (a shipped
+/// app can't reference this project); change both together.
 /// </summary>
 public sealed class InMemoryGameStore : IGameStore
 {

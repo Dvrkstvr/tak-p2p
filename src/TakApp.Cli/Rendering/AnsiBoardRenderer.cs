@@ -11,7 +11,10 @@ public static class AnsiBoardRenderer
 {
     private static readonly string[] Subscripts = ["⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹"];
 
-    public static void Render(GameBoard board, string? lastMove = null, string? statusMessage = null)
+    /// <param name="lastMove">Plain text (escaped here); in an online game it is the opponent's PTN.</param>
+    /// <param name="statusMessage">Markup.</param>
+    /// <param name="console">Where to draw; the process console by default.</param>
+    public static void Render(GameBoard board, string? lastMove = null, string? statusMessage = null, IAnsiConsole? console = null)
     {
         int size = (int)board.Size;
 
@@ -65,7 +68,7 @@ public static class AnsiBoardRenderer
 
         if (!string.IsNullOrEmpty(lastMove))
         {
-            layoutTable.AddRow(new Markup($"Last Move: [bold lime]{lastMove}[/]"));
+            layoutTable.AddRow(new Markup($"Last Move: [bold lime]{Markup.Escape(lastMove)}[/]"));
         }
 
         if (!string.IsNullOrEmpty(statusMessage))
@@ -73,7 +76,7 @@ public static class AnsiBoardRenderer
             layoutTable.AddRow(new Markup($"[italic]{statusMessage}[/]"));
         }
 
-        AnsiConsole.Write(layoutTable);
+        (console ?? AnsiConsole.Console).Write(layoutTable);
     }
 
     private static string FormatCell(PieceStack stack)
