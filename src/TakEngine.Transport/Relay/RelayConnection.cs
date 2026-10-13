@@ -191,7 +191,11 @@ public sealed class RelayConnection : IAsyncDisposable
                     using var waiting = CancellationTokenSource.CreateLinkedTokenSource(ct);
                     var waits = new List<Task> { receive, poke.Task };
                     if (Link.NextLivenessCheckAt is DateTimeOffset due)
-                        waits.Add(Task.Delay(due - now > TimeSpan.Zero ? due - now : TimeSpan.Zero, _time, waiting.Token));
+                    {
+                        // Read the clock again: sending the probe awaited, and time may have moved on since `now`.
+                        TimeSpan wait = due - _time.GetUtcNow();
+                        waits.Add(Task.Delay(wait > TimeSpan.Zero ? wait : TimeSpan.Zero, _time, waiting.Token));
+                    }
                     await Task.WhenAny(waits).ConfigureAwait(false);
                     await waiting.CancelAsync().ConfigureAwait(false);
                     if (poke.Task.IsCompleted)
