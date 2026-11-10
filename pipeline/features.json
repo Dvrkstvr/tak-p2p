@@ -667,6 +667,19 @@
       ],
       "passes": true,
       "evidence": "Engine part seen running 2026-10-11: BoardSizeAndKomiTests; deliberate break (komi not added, 7x7 one capstone) turned 5 of them red, reverted. Heads not wired yet (F-036, M1/M2, M6). Independent verify 2026-10-12 (claude/m0-closeout from 4cc7087): criteria 1-4 pass (BoardSizeAndKomiTests green; probes: 8x8 local TakGameSession with komi 4 played to a White road, then refuses moves; komi 20 accepted and wins a 5-4 board fill for Black, komi 21 rejected by GameBoard, TPS restore and CreateLocal; PTN Komi 10 -> 20, 10.5 rejected; Komi 2.5 header formats and parses back; komi 7 survives 8x8 TPS restore, clone, snapshot; CreateRemote 8x8 komi 3; sizes 2 and 9 rejected; 3x3 lift 4 rejected). CLI head passes: host --size 3..8 and --komi 0..20 go into the invite (size 3 komi 0, size 8 komi 20 seen); --size 2/9/x and --komi 21/-1/2.5 exit 2 with a clear message; a two-process 3x3 komi-3 game over tools/TakRelay.Local ran to the same FINAL white-road f311924a... on both sides and both games.db rows hold Size 3, KomiHalves 3. FAILS criterion 5 as written: the Blazor head is wired to multiplayer since F-039/D-046 (/online page) but hosting offers only 4, 5, 6 (src/TakApp.Blazor/Pages/OnlinePlay.razor:24) and komi is fixed at 0 (src/TakApp.Blazor/Services/OnlineGameService.cs:82); joining accepts any size/komi from the invite. Desktop (Avalonia) is not wired to multiplayer (M6). Stays false until the /online host exposes 3-8 and komi, or the user rules that page out of this criterion (M1/M2). Fixed 2026-10-12 by the conductor: the /online host now offers 3x3 to 8x8 and komi 0 to 10 in half flats (OnlinePlay.razor, OnlineGameService.HostAsync). Playwright with every WebSocket stubbed (nothing published) showed 6 size buttons and 21 komi options, hosted 8x8 komi 2.5, and the invite decoded to size 8 komi 5 with an 8x8 board drawn. Desktop isn't wired to multiplayer yet (M6, F-053), so every wired head exposes sizes and komi."
+    },
+    {
+      "id": "F-059",
+      "milestone": "M2",
+      "behaviour": "Redesigned browser site (D-052): one game screen for local, vs AI and online play with a 2D/3D board switch; online stack moves by clicking; home with setup (sizes 3-8, komi, AI colour) and a rules page",
+      "acceptance": [
+        "Local, vs AI (human as White and as Black) and online games are played to a result by clicking the board, on the 2D and the 3D board",
+        "Two browsers play a full online game by clicks (one 3D, one 2D) with the same state hash on every turn and the same FINAL",
+        "Phone width (390 px): no sideways scroll; taps place pieces; the board uses the width",
+        "Failure: a broken 3D hit-test fails the browser test"
+      ],
+      "passes": true,
+      "evidence": "builder 2026-11-10: `node tests/e2e/play.mjs` SUMMARY PASS (local 2D gestures, vs AI as White to a result, 3D board placements/wall/stack moves/switch, vs AI as Black with resign and Play again, phone 390x844), pipeline/evidence/redesign-2026-11-10/play; also PASS against a Release publish served under /tak-p2p/ as on Pages. `node tests/e2e/online.mjs` SUMMARY PASS: host on 3D, guest on 2D via the invite link, 15 turns by clicks incl. b5> and c2+, identical hashes each turn, FINAL white-road on both, local relays only, pipeline/evidence/redesign-2026-11-10/online. Deliberate break: board3d.js hit-test shifted one file right, play.mjs failed 5 checks (3D rows), pipeline/evidence/redesign-2026-11-10/break-3d-hit; reverted. tests/TakApp.Blazor.Tests/MoveInputTests (gesture rows, scene preview). `node tests/e2e/background.mjs --freeze-seconds 20` PASS on rerun (first run failed its since-boundary check by 1 s, a timing check unrelated to the UI). Not yet seen on a real phone."
     }
   ]
 }

@@ -4,28 +4,26 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tak P2P - Zero-Server Abstract Strategy Game</title>
+    <title>Tak · the game of roads</title>
+    <meta name="description" content="Play Tak against the AI, on one screen, or online peer to peer over Nostr. 2D and 3D boards, no sign-up." />
+    <meta name="theme-color" content="#121110" />
     <base href="/" />
     <link rel="preload" id="webassembly" />
-    <link rel="stylesheet" href="css/app.css" />
-    <link rel="stylesheet" href="css/tak-theme.css" />
-    <!-- If you add any scoped CSS files, uncomment the following to load them
-    <link href="TakApp.Blazor.styles.css" rel="stylesheet" /> -->
+    <link rel="stylesheet" href="css/site.css" />
+    <link rel="modulepreload" href="js/board3d.js" />
     <script type="importmap"></script>
 </head>
 
 <body>
     <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+        <div class="boot">
+            <div class="boot-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+            <div class="loading-progress-text"></div>
+        </div>
     </div>
 
     <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="." class="reload">Reload</a>
+        Something went wrong. <a href="." class="reload">Reload the page</a>; an online game can be rebuilt from its invite.
         <span class="dismiss">🗙</span>
     </div>
     <script src="js/game-lock.js"></script>

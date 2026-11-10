@@ -1,0 +1,434 @@
+@using TakEngine.Abstractions
+@using TakEngine.Core.Board
+@using TakEngine.Core.Rules
+@using TakEngine.Core.Serialization
+@inject ViewPreference View
+
+@*
+    The game screen every mode shares: status, both players, the board (2D or 3D), the piece tray, the tower-move helpers and the
+    move list. It holds the gesture state (MoveInput) and sends finished moves through Submit; the engine behind Submit decides.
+*@
+<div class="table" tabindex="0" @onkeydown="KeyDown" @ref="_root">
+    <header class="table-bar">
+        <div class="table-status @(IsOver ? "over" : "")">
+            <span class="stone-dot @(Board.ActivePlayer == PlayerColor.White ? "w" : "b") @(IsOver ? "hidden" : "")" aria-hidden="true"></span>
+            <span class="play-turn-text">@StatusText</span>
+            @if (Activity is not null)
+            {
+                <span class="table-activity"><span class="spinner" aria-hidden="true"></span>@Activity</span>
+            }
+        </div>
+        <div class="table-tools">
+            <span class="mode-label">@ModeLabel · @((int)Board.Size)×@((int)Board.Size)@(Board.KomiHalves > 0 ? $" · komi {PtnParser.FormatKomi(Board.KomiHalves)}" : "")</span>
+            <div class="seg view-toggle" role="group" aria-label="Board view">
+                <button type="button" class="seg-btn @(!Show3D ? "active" : "")" data-view="2d" @onclick="() => SetView(false)">2D</button>
+                <button type="button" class="seg-btn @(Show3D ? "active" : "")" data-view="3d" disabled="@_no3D"
+                        title="@(_no3D ? "This browser can't draw 3D (no WebGL)" : "3D board")" @onclick="() => SetView(true)">3D</button>
+            </div>
+            <button type="button" class="icon-btn" title="Controls (?)" aria-label="Controls" @onclick="() => _help = !_help">?</button>
+        </div>
+    </header>
+
+    <div class="table-grid">
+        <aside class="table-side table-players">
+            <PlayerCard Board="Board" Color="TopColor" Name="@NameOf(TopColor)" Tag="@TagOf(TopColor)"
+                        IsTurn="@(!IsOver && Board.ActivePlayer == TopColor)"
+                        Selectable="@(CanAct && !IsOver && Board.ActivePlayer == TopColor)"
+                        Selected="_input.Piece" PieceSelected="SelectPiece" />
+            <PlayerCard Board="Board" Color="Opposite(TopColor)" Name="@NameOf(Opposite(TopColor))" Tag="@TagOf(Opposite(TopColor))"
+                        IsTurn="@(!IsOver && Board.ActivePlayer == Opposite(TopColor))"
+                        Selectable="@(CanAct && !IsOver && Board.ActivePlayer == Opposite(TopColor))"
+                        Selected="_input.Piece" PieceSelected="SelectPiece" />
+            @if (Info is not null)
+            {
+                <div class="table-info">@Info</div>
+            }
+        </aside>
+
+        <section class="table-board">
+            @if (_error is not null)
+            {
+                <div class="table-error" role="alert">@_error</div>
+            }
+
+            <div class="board-wrap">
+                @if (Show3D)
+                {
+                    <Board3D Scene="_scene" Flipped="Flipped" SquareClick="ClickAsync" SquareRightClick="RightClickAsync"
+                             BackgroundClick="Cancel" Unavailable="Fallback" />
+                }
+                else
+                {
+                    <Board2D Scene="_scene" Flipped="Flipped" SquareClick="ClickAsync" SquareRightClick="RightClickAsync"
+                             BackgroundClick="Cancel" />
+                }
+
+                @if (_input.Inspecting is { } at && Board.GetStack(at) is { IsEmpty: false } stack)
+                {
+                    <div class="stack-inspector" @onclick="Dismiss" title="Click to close">
+                        <div class="stack-inspector-head">@at.ToAlgebraic() · @stack.Height @(stack.Height == 1 ? "piece" : "pieces") <span aria-hidden="true">✕</span></div>
+                        <ol>
+                            @for (int i = stack.Height - 1; i >= 0; i--)
+                            {
+                                var p = stack.Pieces[i];
+                                <li><span class="chip-icon @Kind(p.Type) @(p.Color == PlayerColor.White ? "w" : "b")"></span>@p.Color @KindName(p.Type)@(i == stack.Height - 1 ? " (top)" : "")</li>
+                            }
+                        </ol>
+                    </div>
+                }
+            </div>
+
+            @if (_input.Slide is { } slide)
+            {
+                <div class="slide-hud-banner">
+                    @if (slide.Direction is null)
+                    {
+                        <span>Moving <strong>@slide.Origin.ToAlgebraic()</strong>: <strong>@slide.Carry of @slide.MaxLift</strong> carried.
+                            @(slide.MaxLift > 1 ? "Tap the stack to leave one more behind, or a marked square to step." : "Tap a marked square to step.")</span>
+                    }
+                    else
+                    {
+                        <span>@slide.Origin.ToAlgebraic() @Arrow(slide.Direction.Value) · Dropped: <strong>@string.Join("-", slide.Drops)</strong> · In hand: <strong>@slide.InHand</strong>
+                            · Tap the same square to drop another, or the next one to step.</span>
+                    }
+                </div>
+            }
+            else if (CanAct && !IsOver)
+            {
+                <div class="piece-selector-row" role="group" aria-label="Piece to place">
+                    <button type="button" class="piece-selector-tab @(_input.Piece == PieceType.Flat ? "active" : "")" @onclick="() => SelectPiece(PieceType.Flat)">
+                        <span class="chip-icon flat @ActiveSide"></span>Flat <span class="kbd-hint">F</span>
+                    </button>
+                    <button type="button" class="piece-selector-tab @(_input.Piece == PieceType.Standing ? "active" : "")" @onclick="() => SelectPiece(PieceType.Standing)">
+                        <span class="chip-icon wall @ActiveSide"></span>Wall <span class="kbd-hint">W</span>
+                    </button>
+                    @if (HasCaps)
+                    {
+                        <button type="button" class="piece-selector-tab @(_input.Piece == PieceType.Capstone ? "active" : "")" @onclick="() => SelectPiece(PieceType.Capstone)">
+                            <span class="chip-icon cap @ActiveSide"></span>Cap <span class="kbd-hint">C</span>
+                        </button>
+                    }
+                </div>
+            }
+
+            <StackSlideBar OriginCoord="_input.Slide?.Origin" Board="Board" ActiveDirection="_input.Slide?.Direction"
+                           OnSlideConfirmed="SendAsync" OnCancelRequested="Cancel" />
+        </section>
+
+        <aside class="table-side table-log">
+            @if (IsOver)
+            {
+                <div class="result-card">
+                    <div class="result-title">@StatusText</div>
+                    <div class="result-actions">
+                        @if (Rematch.HasDelegate)
+                        {
+                            <button type="button" class="btn btn-primary btn-sm" @onclick="Rematch">Play again</button>
+                        }
+                        <button type="button" class="btn btn-quiet btn-sm" @onclick="Leave">@LeaveLabel</button>
+                    </div>
+                </div>
+            }
+
+            <details class="panel moves-panel" open>
+                <summary class="panel-title">Moves <span class="muted">@Moves.Count</span></summary>
+                <MoveList Moves="Moves" />
+            </details>
+
+            @if (StateHash is not null)
+            {
+                <div class="hash-line" title="State hash after the last move: both players' devices compute the same one">
+                    <span class="muted">State</span> <code>#@(StateHash.Length > 16 ? StateHash[..16] : StateHash)</code>
+                </div>
+            }
+
+            <div class="play-actions">
+                @if (!IsOver && Resign.HasDelegate)
+                {
+                    <button type="button" class="btn btn-quiet btn-sm" @onclick="ResignAsync">@(_confirmResign ? "Really resign?" : "Resign")</button>
+                }
+                @if (!IsOver)
+                {
+                    <button type="button" class="btn btn-quiet btn-sm" @onclick="Leave">@LeaveLabel</button>
+                }
+            </div>
+
+            @SidePanel
+        </aside>
+    </div>
+
+    @if (_help)
+    {
+        <div class="modal-backdrop" @onclick="() => _help = false">
+            <div class="modal" role="dialog" aria-label="Controls" @onclick:stopPropagation="true">
+                <div class="modal-head">
+                    <h3>How to play</h3>
+                    <button type="button" class="icon-btn" aria-label="Close" @onclick="() => _help = false">✕</button>
+                </div>
+                <dl class="controls-guide">
+                    <dt>Click an empty square</dt><dd>Place the selected piece (Flat, Wall or Cap). In the opening each side places one of the <em>opponent's</em> flats.</dd>
+                    <dt>Right-click / long-press empty</dt><dd>Place a wall straight away.</dd>
+                    <dt>Click your own stack</dt><dd>Pick it up. Click it again to leave one more piece behind, then click a marked neighbour to step.</dd>
+                    <dt>While stepping</dt><dd>Click the same square to drop another piece, or the next square to move on. The move is sent when your hand is empty.</dd>
+                    <dt>Any other stack</dt><dd>Click or right-click to see what's inside.</dd>
+                    <dt>F · W · C</dt><dd>Select Flat, Wall or Capstone.</dd>
+                    <dt>Esc</dt><dd>Cancel a move or close a panel.</dd>
+                    <dt>V</dt><dd>Switch between the 2D and 3D board. In 3D, drag to orbit and scroll or pinch to zoom.</dd>
+                    <dt>Goal</dt><dd>Build a road: a connected line of your flats or capstone between opposite edges. If the board fills or someone runs out of pieces, most flats on top wins.</dd>
+                </dl>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public GameBoard Board { get; set; } = default!;
+
+    /// <summary>The result when the game is over (online games get it from the game, local ones from the board).</summary>
+    [Parameter] public GameResult? Result { get; set; }
+
+    /// <summary>True when the viewer may move now (not while the AI thinks or the online opponent is to move).</summary>
+    [Parameter] public bool CanAct { get; set; } = true;
+
+    [Parameter, EditorRequired] public Func<Coord, IReadOnlyList<TakMove>> LegalMoves { get; set; } = default!;
+    [Parameter, EditorRequired] public Func<TakMove, Task<CommandResult>> Submit { get; set; } = default!;
+    [Parameter] public string WhiteName { get; set; } = "White";
+    [Parameter] public string BlackName { get; set; } = "Black";
+
+    /// <summary>The viewer's own colour in a game against someone else; the board is turned to face them.</summary>
+    [Parameter] public PlayerColor? MyColor { get; set; }
+
+    [Parameter] public IReadOnlyList<string> Moves { get; set; } = [];
+    [Parameter] public string? StateHash { get; set; }
+    [Parameter] public string ModeLabel { get; set; } = "";
+    [Parameter] public string? Activity { get; set; }
+    [Parameter] public string? Info { get; set; }
+    [Parameter] public string LeaveLabel { get; set; } = "Leave";
+    [Parameter] public EventCallback Resign { get; set; }
+    [Parameter] public EventCallback Leave { get; set; }
+    [Parameter] public EventCallback Rematch { get; set; }
+    [Parameter] public RenderFragment? SidePanel { get; set; }
+
+    private readonly MoveInput _input = new();
+    private ElementReference _root;
+    private BoardScene _scene = default!;
+    private string? _error;
+    private bool _busy;
+    private bool _help;
+    private bool _no3D;
+    private bool _confirmResign;
+
+    private bool Show3D => View.Is3D && !_no3D;
+    private bool Flipped => MyColor == PlayerColor.Black;
+    private bool IsOver => (Result ?? Board.Result) is not null;
+    private bool HasCaps => GameBoard.StartingReserves(Board.Size).Capstones > 0;
+    private string ActiveSide => Board.ActivePlayer == PlayerColor.White ? "w" : "b";
+
+    // The viewer's side sits at the bottom of the player list, like at a real table.
+    private PlayerColor TopColor => MyColor == PlayerColor.Black ? PlayerColor.White : PlayerColor.Black;
+
+    protected override async Task OnInitializedAsync() => await View.LoadAsync();
+
+    protected override void OnParametersSet()
+    {
+        _input.Sync(Board, LegalMoves, CanAct && !_busy);
+        Rebuild();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await _root.FocusAsync(preventScroll: true);
+            }
+            catch (JSException)
+            {
+            }
+        }
+    }
+
+    private void Rebuild()
+    {
+        var result = Result ?? Board.Result;
+        IReadOnlyCollection<Coord> road = result is { Reason: GameEndReason.Road, Winner: { } w } ? RoadFinder.FindRoad(Board, w) : [];
+        _scene = BoardScene.Build(Board, _input, LastMoveTarget(), road);
+    }
+
+    private Coord? LastMoveTarget()
+    {
+        if (Moves.Count == 0)
+            return null;
+        try
+        {
+            return BoardScene.Target(PtnParser.ParseMove(Moves[^1]));
+        }
+        catch (FormatException)
+        {
+            return null;
+        }
+        catch (ArgumentException)
+        {
+            return null;
+        }
+    }
+
+    private string StatusText
+    {
+        get
+        {
+            if ((Result ?? Board.Result) is { } r)
+            {
+                if (r.IsDraw || r.Winner is null)
+                    return "Draw" + (r.Reason == GameEndReason.FlatCount ? " on flats" : "");
+                string name = NameOf(r.Winner.Value);
+                string verb = name == "You" ? "win" : "wins";
+                string how = r.Reason switch
+                {
+                    GameEndReason.Road => "by road",
+                    GameEndReason.FlatCount => "on flats",
+                    GameEndReason.Resignation => "by resignation",
+                    _ => "",
+                };
+                return $"{name} {verb} {how}".TrimEnd();
+            }
+            string mover = NameOf(Board.ActivePlayer);
+            if (Board.Phase == GamePhase.FirstTurnPlacement)
+            {
+                string other = Opposite(Board.ActivePlayer) == PlayerColor.White ? "white" : "black";
+                return $"Opening · {mover} {(mover == "You" ? "place" : "places")} a {other} flat";
+            }
+            return mover == "You" ? "Your move" : $"{mover} to move";
+        }
+    }
+
+    private string NameOf(PlayerColor c) => c == PlayerColor.White ? WhiteName : BlackName;
+
+    private string? TagOf(PlayerColor c)
+    {
+        string colour = c == PlayerColor.White ? "White" : "Black";
+        if (MyColor is not null && c == MyColor && NameOf(c) != "You")
+            return "you";
+        return NameOf(c) == colour ? null : colour;
+    }
+
+    private static PlayerColor Opposite(PlayerColor c) => c == PlayerColor.White ? PlayerColor.Black : PlayerColor.White;
+
+    private void SelectPiece(PieceType piece)
+    {
+        _input.SelectPiece(piece);
+        Rebuild();
+    }
+
+    private void Dismiss()
+    {
+        _input.DismissInspect();
+        Rebuild();
+    }
+
+    private void Cancel()
+    {
+        _input.Cancel();
+        _confirmResign = false;
+        Rebuild();
+    }
+
+    private async Task ClickAsync(Coord c)
+    {
+        _error = null;
+        await SendAsync(_input.Click(c));
+    }
+
+    private async Task RightClickAsync(Coord c)
+    {
+        _error = null;
+        await SendAsync(_input.RightClick(c));
+    }
+
+    private async Task SendAsync(TakMove? move)
+    {
+        if (move is null || _busy)
+        {
+            Rebuild();
+            return;
+        }
+        _busy = true;
+        _input.Sync(Board, LegalMoves, false);
+        Rebuild();
+        try
+        {
+            CommandResult result = await Submit(move);
+            if (!result.IsSuccess)
+                _error = result.ErrorMessage ?? "That move was refused.";
+        }
+        finally
+        {
+            _busy = false;
+            _input.Sync(Board, LegalMoves, CanAct);
+            Rebuild();
+        }
+    }
+
+    private async Task ResignAsync()
+    {
+        if (!_confirmResign)
+        {
+            _confirmResign = true;
+            return;
+        }
+        _confirmResign = false;
+        await Resign.InvokeAsync();
+    }
+
+    private async Task SetView(bool is3D)
+    {
+        if (is3D && _no3D)
+            return;
+        await View.SetAsync(is3D);
+    }
+
+    private void Fallback()
+    {
+        _no3D = true;
+        _error = "This browser can't draw the 3D board, so it shows the 2D one.";
+    }
+
+    private async Task KeyDown(KeyboardEventArgs e)
+    {
+        switch (e.Key.ToLowerInvariant())
+        {
+            case "f":
+                SelectPiece(PieceType.Flat);
+                break;
+            case "w":
+                SelectPiece(PieceType.Standing);
+                break;
+            case "c" when HasCaps:
+                SelectPiece(PieceType.Capstone);
+                break;
+            case "escape":
+                _help = false;
+                Cancel();
+                break;
+            case "?" or "h":
+                _help = !_help;
+                break;
+            case "v":
+                await SetView(!Show3D);
+                break;
+        }
+    }
+
+    private static string Arrow(Direction d) => d switch
+    {
+        Direction.North => "↑",
+        Direction.South => "↓",
+        Direction.East => "→",
+        _ => "←",
+    };
+
+    private static string Kind(PieceType t) => t switch { PieceType.Standing => "wall", PieceType.Capstone => "cap", _ => "flat" };
+
+    private static string KindName(PieceType t) => t switch { PieceType.Standing => "wall", PieceType.Capstone => "capstone", _ => "flat" };
+}

@@ -1,0 +1,43 @@
+2026-11-10T07:07:54.951Z Online click-play run: relays ws://127.0.0.1:7448/r1 ws://127.0.0.1:7448/r2, site http://127.0.0.1:5199
+2026-11-10T07:07:54.961Z RELAY starting dotnet run --project tools/TakRelay.Local -- --port 7448
+2026-11-10T07:08:01.083Z RELAY up (pid 6847)
+2026-11-10T07:08:01.088Z SERVER using the one already running (http://127.0.0.1:5199/)
+2026-11-10T07:08:04.198Z WS#1 host OPEN wss://relay.damus.io/ piped to ws://127.0.0.1:7448/r2
+2026-11-10T07:08:04.202Z WS#2 host OPEN wss://nos.lol/ piped to ws://127.0.0.1:7448/r1
+2026-11-10T07:08:04.501Z PASS the waiting room shows a QR code of the invite link
+2026-11-10T07:08:04.505Z LINK http://127.0.0.1:5199/online?invite=TAK2_eyJnaWQiOiJhN2JkODR...
+2026-11-10T07:08:05.339Z SHOT 01-host-waiting-room.png
+2026-11-10T07:08:07.579Z PASS the invite link fills the Join box
+2026-11-10T07:08:07.800Z WS#3 guest OPEN wss://relay.damus.io/ piped to ws://127.0.0.1:7448/r2
+2026-11-10T07:08:07.804Z WS#4 guest OPEN wss://nos.lol/ piped to ws://127.0.0.1:7448/r1
+2026-11-10T07:08:10.489Z PASS host plays on the 3D board, guest on the 2D board
+2026-11-10T07:08:10.491Z COLOURS host is white
+2026-11-10T07:08:10.493Z PASS the black player sees the board turned to their side
+2026-11-10T07:08:10.729Z PASS turn 1 a1 by clicks (host 3D): both pages applied it with the same hash 4c3a9a98b4a63adc
+2026-11-10T07:08:11.008Z PASS turn 2 e5 by clicks (guest 2D): both pages applied it with the same hash ec8a4e77aca059ce
+2026-11-10T07:08:11.011Z PASS the side not to move has no piece tray
+2026-11-10T07:08:11.247Z PASS turn 3 a3 by clicks (host 3D): both pages applied it with the same hash 5d804c57b03006dd
+2026-11-10T07:08:11.680Z PASS turn 4 b5 by clicks (guest 2D): both pages applied it with the same hash 7e8a6a2d4656086b
+2026-11-10T07:08:11.913Z PASS turn 5 b3 by clicks (host 3D): both pages applied it with the same hash 3c5148e889e592e3
+2026-11-10T07:08:18.002Z PASS turn 6 c5 by clicks (guest 2D): both pages applied it with the same hash f16e3a3469e64c82
+2026-11-10T07:08:18.295Z PASS turn 7 c3 by clicks (host 3D): both pages applied it with the same hash ef66ae12b7e9c858
+2026-11-10T07:08:18.637Z PASS turn 8 d4 by clicks (guest 2D): both pages applied it with the same hash a5c814435fa6feac
+2026-11-10T07:08:20.679Z PASS turn 9 c2 by clicks (host 3D): both pages applied it with the same hash ead8bfa7b48cb744
+2026-11-10T07:08:21.337Z PASS turn 10 b5> by clicks (guest 2D): both pages applied it with the same hash 89f3d70907b1c757
+2026-11-10T07:08:24.677Z SHOT 02-stack-move-b5_.png
+2026-11-10T07:08:25.180Z PASS turn 11 c2+ by clicks (host 3D): both pages applied it with the same hash f47ad2099322ed11
+2026-11-10T07:08:28.138Z SHOT 03-stack-move-c2_.png
+2026-11-10T07:08:28.395Z PASS turn 12 a4 by clicks (guest 2D): both pages applied it with the same hash f11ef8e10bb0e9ec
+2026-11-10T07:08:28.630Z PASS turn 13 d3 by clicks (host 3D): both pages applied it with the same hash 1f72ccac30602ce0
+2026-11-10T07:08:28.896Z PASS turn 14 b4 by clicks (guest 2D): both pages applied it with the same hash 22a95a9d49fd4859
+2026-11-10T07:08:29.128Z PASS turn 15 e3 by clicks (host 3D): both pages applied it with the same hash 9735c14bdea87bdd
+2026-11-10T07:08:29.162Z PASS both pages agree: FINAL white-road 9735c14bdea87bdd8ace174c61e2c4bce6bcab6718e1a66f6c4cf96875e7ad7a
+2026-11-10T07:08:29.166Z PASS the winner's page says "You win by road"
+2026-11-10T07:08:29.168Z PASS the other page says "Opponent wins by road"
+2026-11-10T07:08:29.178Z PASS the 2D page outlines the road (a3,b3,c3,d3,e3)
+2026-11-10T07:08:29.180Z PASS host: no unhandled error bar
+2026-11-10T07:08:29.198Z PASS guest: no unhandled error bar
+2026-11-10T07:08:32.450Z SHOT 04-host-final.png
+2026-11-10T07:08:32.620Z SHOT 05-guest-final.png
+2026-11-10T07:08:32.724Z RELAY stopped (pid 6847)
+2026-11-10T07:08:32.725Z SUMMARY PASS checks=26 failed=0 evidence=pipeline/evidence/redesign-2026-11-10/online

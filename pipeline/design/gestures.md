@@ -1,4 +1,13 @@
-# Play page gestures (Blazor `/play`) — state/transition table
+# Board gestures (Blazor `/play` and `/online`) — state/transition table
+
+> **Redesign 2026-11-10 (D-052).** The gestures below now live in one place, `src/TakApp.Blazor/Services/MoveInput.cs`, which the
+> shared game screen (`Components/Game/GameTable.razor`) uses for local, vs AI and online games, on the 2D board (`Board2D.razor`) and
+> the 3D board (`Board3D.razor` + `wwwroot/js/board3d.js`). The rows keep their meaning; only the wording on screen changed:
+> the opening reads `Opening · White places a black flat`, play reads `White to move` (or `Your move` against the AI or online), a
+> result reads `<Name> wins by road` (`You win by road`, which also fixes Q-2). The inspector is an HTML panel (`.stack-inspector`)
+> over the board in both views, the error box is `.table-error` above the board, the reserve chips sit on the player cards
+> (`.player-card.is-turn`). `tests/e2e/play.mjs` drives these rows on the 2D board, then on the 3D board; `tests/e2e/online.mjs`
+> drives them in an online game. Rows G-08, G-19 and G-53..G-56 are new with the redesign.
 
 Characterisation of what the page does today (F-043, M1 design task; scope.md "Stepped tower movement gesture"). Read from
 `src/TakApp.Blazor/Pages/Play.razor`, `Components/Board/TakBoardView.razor`, `PieceInventoryView.razor`, `StackSlideBar.razor`
@@ -24,6 +33,7 @@ M1 freezes it (D-006 spirit). Rows marked *driven* are checked by the Playwright
 | G-05 | any | key F / W / C | Flat / Wall / Cap (C ignored on 4×4). Selecting a piece also ends a Slide/Stepping and closes the inspector | yes (F) |
 | G-06 | any | key Esc | back to Idle (ends a move, closes the inspector and the controls guide) | yes |
 | G-07 | any | key ? or H | toggles the controls guide | no |
+| G-08 | any | key V, or the 2D/3D switch in the top bar | switches between the 2D and the 3D board; the game and any half-built move carry over. The choice is kept in localStorage (`tak.view`); 3D is the default, 2D when the browser has no WebGL | yes |
 
 ## Board, Idle
 | id | in state | gesture | result | driven |
@@ -38,6 +48,7 @@ M1 freezes it (D-006 spirit). Rows marked *driven* are checked by the Playwright
 | G-16 | Inspecting | right-click anywhere, or click the overlay | closes the inspector only | no |
 | G-17 | Completed | left-click empty square | engine refuses ("Game is already completed."), error shown, nothing changes. No markers are drawn | yes |
 | G-18 | any | click the board background (outside the squares) | back to Idle | no |
+| G-19 | any, 3D board | drag / wheel / pinch; touch long-press | drag orbits the camera, wheel or pinch zooms (a press that moves more than 7 px is not a click); a touch long-press is a right-click (G-11, G-14, G-25). ⟲ resets the camera, ⊡ looks straight down | yes (clicks, right-click) |
 
 ## Board, Slide (origin picked, no direction yet)
 | id | in state | gesture | result | driven |
@@ -74,11 +85,15 @@ A sent move that the engine refuses leaves the board unchanged and shows the err
 |---|---|---|---|---|
 | G-50 | a move completes a road | — | status `<NAME> WINS (ROAD)`, road squares outlined, Resign hidden, no markers | yes |
 | G-51 | Opening/Playing | Resign | the side to move resigns; status `<NAME> WINS (RESIGNATION)` | no |
-| G-52 | vs AI, after the human's move | — | "AI is thinking..." for ~350 ms, then the AI's move is applied; the game runs to a result | yes |
+| G-52 | vs AI, after the human's move | — | "AI is thinking…" for ~350 ms, then the AI's move is applied; the game runs to a result. With the human as Black the AI opens and the board faces Black | yes |
+| G-53 | online or vs AI, the other side to move | click / right-click | no tray, no markers; nothing is sent; a click on a stack opens the inspector | yes (online) |
+| G-54 | game over | Play again (local and vs AI) | a fresh game with the same size, komi, players, difficulty and colours | yes |
+| G-55 | Opening/Playing | Resign | asks "Really resign?" first; a second click resigns | yes |
+| G-56 | online, Black's device | — | the board (2D and 3D) and the player list are turned to face Black | yes |
 
 ## Quirks seen while characterising (kept as they are in M1)
 - Q-1 (fixed in M1, G-43, D-050): the slide bar kept its chosen direction and split from an earlier origin until its own Cancel/Confirm is used, so after a
   board-click move its Confirm button can name a move of another square (seen: "Confirm Move (b2+)" while b3 is the origin).
   Confirm sends that stale move to the engine, which refuses it if illegal. Not driven by the script.
-- Q-2: the vs-AI result line reads "YOU WINS (ROAD)" when the human wins (name upper-cased into a fixed sentence).
-- Q-3: the mobile inventory line shows the stones count for both F and W.
+- Q-2 (fixed in the redesign): the vs-AI result line read "YOU WINS (ROAD)"; it now reads "You win by road".
+- Q-3 (gone with the redesign): the mobile inventory line showed the stones count for both F and W; phones now show the player cards.

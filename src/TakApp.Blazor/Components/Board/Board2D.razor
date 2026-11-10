@@ -1,0 +1,161 @@
+@using System.Globalization
+@using TakEngine.Abstractions
+
+@* The flat, top-down board. Draws a BoardScene; every click goes back to the table, which owns the gestures. *@
+<div class="board2d">
+    <svg class="board2d-svg" viewBox="0 0 @F(Total) @F(Total)" xmlns="http://www.w3.org/2000/svg" role="grid"
+         aria-label="Tak board, @Scene.Size by @Scene.Size">
+        <defs>
+            <linearGradient id="b2-wood" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="var(--board-wood-hi)" />
+                <stop offset="1" stop-color="var(--board-wood-lo)" />
+            </linearGradient>
+            <filter id="b2-shadow" x="-30%" y="-30%" width="160%" height="160%">
+                <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.35" />
+            </filter>
+        </defs>
+
+        <rect class="board2d-frame" x="0" y="0" width="@F(Total)" height="@F(Total)" rx="18" @onclick="Background" />
+
+        @for (int i = 0; i < Scene.Size; i++)
+        {
+            int file = Flipped ? Scene.Size - 1 - i : i;
+            int rank = Flipped ? i + 1 : Scene.Size - i;
+            double mid = Pad + i * Sq + Sq / 2;
+            @SvgText(mid, Total - Pad / 2 + 1, "board2d-label", ((char)('a' + file)).ToString())
+            @SvgText(Pad / 2, mid + 1, "board2d-label", rank.ToString(CultureInfo.InvariantCulture))
+        }
+
+        @foreach (SquareView s in Scene.Squares)
+        {
+            var (sx, sy) = Origin(s.Coord);
+            double cx = sx + Sq / 2, cy = sy + Sq / 2;
+            string name = s.Coord.ToAlgebraic();
+            <g id="sq-@name" data-coord="@name" class="board2d-square"
+               @onclick="() => SquareClick.InvokeAsync(s.Coord)" @onclick:stopPropagation="true"
+               @oncontextmenu="() => SquareRightClick.InvokeAsync(s.Coord)" @oncontextmenu:preventDefault="true">
+                <rect x="@F(sx)" y="@F(sy)" width="@F(Sq)" height="@F(Sq)"
+                      class="svg-sq @(((s.Coord.X + s.Coord.Y) % 2 == 0) ? "dark" : "light") @Marks(s)" />
+                @if (s.Road)
+                {
+                    <rect class="svg-road-highlight" x="@F(sx + 3)" y="@F(sy + 3)" width="@F(Sq - 6)" height="@F(Sq - 6)" rx="6" />
+                }
+                @if (s.LastMove)
+                {
+                    <rect class="svg-last-move" x="@F(sx + 5)" y="@F(sy + 5)" width="@F(Sq - 10)" height="@F(Sq - 10)" rx="6" />
+                }
+
+                @if (s.Pieces.Count > 0)
+                {
+                    @Stack(s.Pieces, cx, cy, false)
+                }
+
+                @if (s.PlaceTarget && s.Pieces.Count == 0)
+                {
+                    <circle class="svg-legal-marker" cx="@F(cx)" cy="@F(cy)" r="@F(Sq * 0.07)" />
+                }
+                @if (s.SlideTarget || s.NextStep)
+                {
+                    <circle class="svg-slide-ring @(s.NextStep ? "next" : "")" cx="@F(cx)" cy="@F(cy)" r="@F(Sq * 0.3)" />
+                }
+                @if (s.Dropped > 0)
+                {
+                    <g class="svg-badge drop">
+                        <rect x="@F(sx + Sq - 30)" y="@F(sy + 4)" width="26" height="16" rx="8" />
+                        @SvgText(sx + Sq - 17, sy + 12.5, "", $"+{s.Dropped}")
+                    </g>
+                }
+                @if (Scene.Origin == s.Coord && Scene.Carry > 0)
+                {
+                    <g class="svg-badge carry">
+                        <rect x="@F(sx + 4)" y="@F(sy + 4)" width="30" height="16" rx="8" />
+                        @SvgText(sx + 19, sy + 12.5, "", $"×{Scene.Carry}")
+                    </g>
+                }
+                @if (Scene.HandAt == s.Coord && Scene.Hand.Count > 0)
+                {
+                    <g class="carried-hand-stack">@Stack(Scene.Hand, cx + Sq * 0.18, cy - Sq * 0.2, true)</g>
+                }
+            </g>
+        }
+    </svg>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public BoardScene Scene { get; set; } = default!;
+    [Parameter] public bool Flipped { get; set; }
+    [Parameter] public EventCallback<Coord> SquareClick { get; set; }
+    [Parameter] public EventCallback<Coord> SquareRightClick { get; set; }
+    [Parameter] public EventCallback BackgroundClick { get; set; }
+
+    private const double Sq = 80;
+    private const double Pad = 30;
+    private double Total => Pad * 2 + Scene.Size * Sq;
+
+    private static string F(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);
+
+    // Razor reads a bare <text> tag as its own transition, so SVG text goes out as markup.
+    private static MarkupString SvgText(double x, double y, string cls, string content) =>
+        new($"<text class=\"{cls}\" x=\"{F(x)}\" y=\"{F(y)}\">{System.Net.WebUtility.HtmlEncode(content)}</text>");
+
+    private (double X, double Y) Origin(Coord c)
+    {
+        int col = Flipped ? Scene.Size - 1 - c.X : c.X;
+        int row = Flipped ? c.Y : Scene.Size - 1 - c.Y;
+        return (Pad + col * Sq, Pad + row * Sq);
+    }
+
+    private Task Background() => BackgroundClick.InvokeAsync();
+
+    private static string Marks(SquareView s) => string.Join(' ', new[]
+    {
+        s.Selected ? "selected" : null,
+        s.PlaceTarget ? "legal-target" : null,
+        s.SlideTarget ? "legal-slide-target" : null,
+        s.CurrentStep ? "slide-cur-target" : null,
+        s.NextStep ? "slide-next-target" : null,
+        s.Inspected ? "inspected-target" : null,
+    }.Where(m => m is not null));
+
+    // Lower tiles fan out up and to the right like a deck of cards; the top piece is drawn full size.
+    private RenderFragment Stack(IReadOnlyList<Piece> pieces, double cx, double cy, bool hand) => __builder =>
+    {
+        int n = pieces.Count;
+        int shown = Math.Min(n - 1, 9);
+        double step = hand ? 3.5 : 4.0;
+        double baseX = cx - shown * step / 2, baseY = cy + shown * step / 2;
+        for (int i = n - 1 - shown; i < n - 1; i++)
+        {
+            int k = i - (n - 1 - shown);
+            double x = baseX + k * step, y = baseY - k * step;
+            <rect class="pc-under @Side(pieces[i])" x="@F(x - 25)" y="@F(y - 25)" width="50" height="50" rx="7" />
+        }
+        double tx = baseX + shown * step, ty = baseY - shown * step;
+        Piece top = pieces[^1];
+        <g class="pc @(hand ? "in-hand" : "")" filter="url(#b2-shadow)">
+            @switch (top.Type)
+            {
+                case PieceType.Standing:
+                    <rect class="pc-wall @Side(top)" x="@F(tx - 9)" y="@F(ty - 27)" width="18" height="54" rx="4"
+                          transform="rotate(45 @F(tx) @F(ty))" />
+                    break;
+                case PieceType.Capstone:
+                    <circle class="pc-cap @Side(top)" cx="@F(tx)" cy="@F(ty)" r="23" />
+                    <circle class="pc-cap-ring @Side(top)" cx="@F(tx)" cy="@F(ty)" r="13" />
+                    break;
+                default:
+                    <rect class="pc-flat @Side(top)" x="@F(tx - 25)" y="@F(ty - 25)" width="50" height="50" rx="7" />
+                    break;
+            }
+        </g>
+        if (n > 1)
+        {
+            <g class="svg-badge height">
+                <circle cx="@F(tx + 24)" cy="@F(ty + 24)" r="9" />
+                @SvgText(tx + 24, ty + 24.5, "", n.ToString(CultureInfo.InvariantCulture))
+            </g>
+        }
+    };
+
+    private static string Side(Piece p) => p.Color == PlayerColor.White ? "w" : "b";
+}

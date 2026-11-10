@@ -389,3 +389,20 @@ publish retry due at once (`PublishTracker.OnReconnected`; rate-limit backoffs s
   game gains one REQ/EOSE/CLOSE per relay per minute
 - revisit if: a relay rate-limits or refuses REQs at that pace, refuses `limit: 0` or the zero id without answering, or a live run
   shows a NAT dropping flows that are quiet for less than 60 s
+
+## D-052 · 2026-11-10 · stage 7 · by: user (asked) + assumed (builder)
+Calvin asked for a full redesign of the website with a 2D/3D board toggle, completely playable. The browser head now has one game
+screen for every mode: `GameTable` (status, both players, board, piece tray, tower-move helpers, moves) over `MoveInput`, the
+gesture state machine extracted from the old Play page (gestures.md rows unchanged in meaning). Local and vs AI games feed it from
+`LocalGameAdapter`; online games from `OnlineGameService`, with legal moves from Core `MoveValidator` on the committed board, so online
+stack moves are now made by clicking instead of typing PTN (the PTN box stays). Two board views draw one `BoardScene`: `Board2D`
+(SVG, top-down) and `Board3D` (three.js r170, vendored at `wwwroot/lib/three`, MIT, no CDN). 3D is the default; without WebGL the page
+says so and shows 2D. New pages: a home page with a live 3D board, setup (sizes 3-8, komi, AI colour), and `/rules`. The old
+`TakBoardView`, `PieceStackSvg`, `PieceInventoryView`, `GameStatusHeader`, `MoveHistoryPanel`, the dead `InviteModal` and the two old
+stylesheets are deleted; `site.css` replaces them.
+- why: one screen for every mode keeps the gestures identical everywhere and lets the 2D/3D switch work in every mode; vendoring
+  three.js keeps the site free of third-party hosts (the project's no-server stance) and works offline once loaded
+- side effects: `tests/e2e/play.mjs` selectors and status wording changed (rows still cited); vs AI against Black, Play again, the 3D
+  board and a phone layout are now driven; `tests/e2e/online.mjs` plays browser vs browser by clicks over local relays; ~170 KB
+  (brotli) more on first load, fetched only when a 3D board is shown; komi and board sizes 3/7/8 reach local and AI games
+- revisit if: the 3D board is too heavy on low-end phones (then default to 2D on touch devices), or M7 moves the site to its own domain

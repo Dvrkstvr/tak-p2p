@@ -9,7 +9,7 @@
 - feasibility: amber · H-open 0 · M-open 3 · spiked 4
 - milestone: M1 (browser on the engine) · M1 features all pass (PR #8) · owed checks 5
 - core promise: last ran end to end 2026-10-12, CLI host vs phone browser over nos.lol + damus (F-039, pipeline/evidence/live-relay-log.md)
-- next: M1 review (code + security lenses) and curate, then M2 → `/pipeline:run`. Browser regression: `node tests/e2e/play.mjs`, `node tests/e2e/background.mjs`
+- next: M1 review (code + security lenses) and curate, then M2 → `/pipeline:run`. Site redesign with 2D/3D board landed ahead of M2 (D-052, F-059). Browser regression: `node tests/e2e/play.mjs`, `node tests/e2e/online.mjs`, `node tests/e2e/background.mjs`
 
 ## Stages
 | # | Stage | State | Gate | Date |

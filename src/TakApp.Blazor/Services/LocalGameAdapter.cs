@@ -51,9 +51,12 @@ public sealed class LocalGameAdapter
 
     public event Action? OnStateChanged;
 
-    public void StartLocalMatch(BoardSize size, string? whiteName = null, string? blackName = null)
+    /// <summary>The komi of the current game, in half flats.</summary>
+    public int KomiHalves { get; private set; }
+
+    public void StartLocalMatch(BoardSize size, string? whiteName = null, string? blackName = null, int komiHalves = 0)
     {
-        Begin(size);
+        Begin(size, komiHalves);
         LocalPlayerColor = PlayerColor.White;
         IsLocalOnly = true;
         IsBotMatch = false;
@@ -64,9 +67,10 @@ public sealed class LocalGameAdapter
         NotifyStateChanged();
     }
 
-    public void StartBotMatch(BoardSize size, BotDifficulty difficulty, PlayerColor humanColor = PlayerColor.White, string? humanName = null)
+    public void StartBotMatch(BoardSize size, BotDifficulty difficulty, PlayerColor humanColor = PlayerColor.White, string? humanName = null,
+        int komiHalves = 0)
     {
-        Begin(size);
+        Begin(size, komiHalves);
         LocalPlayerColor = humanColor;
         IsLocalOnly = false;
         IsBotMatch = true;
@@ -80,6 +84,20 @@ public sealed class LocalGameAdapter
         NotifyStateChanged();
 
         StartBotTurnIfDue();
+    }
+
+    /// <summary>A new game with the same size, komi, players and (for a bot game) difficulty and colours.</summary>
+    public void Restart()
+    {
+        if (IsBotMatch && BotDifficulty is { } difficulty)
+        {
+            string? human = LocalPlayerColor == PlayerColor.White ? WhitePlayerName : BlackPlayerName;
+            StartBotMatch(CurrentSize, difficulty, LocalPlayerColor, human == "You" ? null : human, KomiHalves);
+        }
+        else
+        {
+            StartLocalMatch(CurrentSize, WhitePlayerName, BlackPlayerName, KomiHalves);
+        }
     }
 
     /// <summary>The engine's legal moves from <paramref name="coord"/> in the current position.</summary>
@@ -118,14 +136,15 @@ public sealed class LocalGameAdapter
         return result;
     }
 
-    private void Begin(BoardSize size)
+    private void Begin(BoardSize size, int komiHalves)
     {
         _generation++;
         CurrentSize = size;
+        KomiHalves = komiHalves;
         IsBotThinking = false;
         BotTurn = null;
         _moveHistory.Clear();
-        _session = TakGameSession.CreateLocal(size);
+        _session = TakGameSession.CreateLocal(size, komiHalves);
         _session.OnMoveExecuted += (_, move) => _moveHistory.Add(move.ToPtn());
         Refresh();
     }

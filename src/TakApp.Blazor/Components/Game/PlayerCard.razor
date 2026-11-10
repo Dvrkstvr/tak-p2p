@@ -1,0 +1,61 @@
+@using TakEngine.Abstractions
+@using TakEngine.Core.Board
+
+@* One side's name and reserves. The chips of the side to move pick the piece to place (gestures.md G-02..G-04). *@
+<div class="player-card @(IsTurn ? "is-turn" : "") @(Color == PlayerColor.White ? "side-w" : "side-b")">
+    <div class="player-head">
+        <span class="stone-dot @(Color == PlayerColor.White ? "w" : "b")" aria-hidden="true"></span>
+        <span class="player-name">@Name</span>
+        @if (Tag is not null)
+        {
+            <span class="player-tag">@Tag</span>
+        }
+        @if (IsTurn)
+        {
+            <span class="turn-pill">to move</span>
+        }
+    </div>
+    <div class="reserve-row">
+        <button type="button" class="reserve-chip @(Selectable && Selected == PieceType.Flat ? "selected" : "")"
+                title="Flat stone (F). Click again or right-click for a wall." disabled="@(!Selectable)"
+                @onclick="FlatClick" @oncontextmenu="() => Pick(PieceType.Standing)" @oncontextmenu:preventDefault="true">
+            <span class="chip-icon flat @Side"></span><span class="reserve-chip-label">Flat</span><span class="chip-count">@Reserves.Stones</span>
+        </button>
+        <button type="button" class="reserve-chip @(Selectable && Selected == PieceType.Standing ? "selected" : "")"
+                title="Wall (W): a flat stood on its edge. Doesn't count for roads, and nothing but a lone capstone can land on it." disabled="@(!Selectable)"
+                @onclick="() => Pick(PieceType.Standing)">
+            <span class="chip-icon wall @Side"></span><span class="reserve-chip-label">Wall</span><span class="chip-count">@Reserves.Stones</span>
+        </button>
+        @if (HasCaps)
+        {
+            <button type="button" class="reserve-chip @(Selectable && Selected == PieceType.Capstone ? "selected" : "")"
+                    title="Capstone (C): counts for roads and can flatten a wall." disabled="@(!Selectable || Reserves.Capstones <= 0)"
+                    @onclick="() => Pick(PieceType.Capstone)">
+                <span class="chip-icon cap @Side"></span><span class="reserve-chip-label">Cap</span><span class="chip-count">@Reserves.Capstones</span>
+            </button>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public GameBoard Board { get; set; } = default!;
+    [Parameter] public PlayerColor Color { get; set; }
+    [Parameter] public string Name { get; set; } = "";
+    [Parameter] public string? Tag { get; set; }
+    [Parameter] public bool IsTurn { get; set; }
+
+    /// <summary>True when this card's chips may pick a piece (its side is to move and the viewer may act).</summary>
+    [Parameter] public bool Selectable { get; set; }
+
+    [Parameter] public PieceType Selected { get; set; }
+    [Parameter] public EventCallback<PieceType> PieceSelected { get; set; }
+
+    private PlayerReserves Reserves => Color == PlayerColor.White ? Board.WhiteReserves : Board.BlackReserves;
+    private bool HasCaps => GameBoard.StartingReserves(Board.Size).Capstones > 0;
+    private string Side => Color == PlayerColor.White ? "w" : "b";
+
+    // G-02: Flat when anything else is selected; a second click turns it into a wall.
+    private Task FlatClick() => Pick(Selected == PieceType.Flat ? PieceType.Standing : PieceType.Flat);
+
+    private Task Pick(PieceType piece) => Selectable ? PieceSelected.InvokeAsync(piece) : Task.CompletedTask;
+}

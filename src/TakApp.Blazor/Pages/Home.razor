@@ -1,309 +1,222 @@
 @page "/"
-@using TakApp.Blazor.Components.Modals
-@using TakApp.Blazor.Services
-@using TakEngine.Core.Cryptography
 @inject LocalGameAdapter Session
 @inject NavigationManager Nav
 @inject BrowserStorage Storage
 
-<div class="home-container">
-    
-    <!-- Incoming Challenge Notification -->
-    @if (PendingChallenge != null)
+<PageTitle>Tak · the game of roads</PageTitle>
+
+<div class="page home">
+    @if (PendingChallenge is not null)
     {
-        <div style="border: 1px solid var(--accent-amber); padding: 1.25rem 1.5rem; margin-bottom: 2rem; background: #111111; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div class="banner invite-banner" role="status">
             <div>
-                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--accent-amber); font-weight: 700; letter-spacing: 0.08em; margin-bottom: 0.25rem;">
-                    Match Invitation Received
-                </div>
-                <div style="font-size: 1.05rem; font-weight: 700; color: #ffffff; margin-bottom: 0.25rem;">
-                    @((int)PendingChallenge.BoardSize)×@((int)PendingChallenge.BoardSize) Tak Challenge
-                </div>
-                <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                    From: <strong style="color: #ffffff;">@(PendingChallenge.HostNickname ?? "Anonymous")</strong>
-                </div>
+                <div class="banner-kicker">You've been invited</div>
+                <div class="banner-title">@((int)PendingChallenge.BoardSize)×@((int)PendingChallenge.BoardSize) game@(PendingChallenge.HostNickname is { } n ? $" from {n}" : "")</div>
             </div>
-
-            <div style="display: flex; gap: 0.75rem;">
-                <button class="btn-tak btn-white" @onclick="AcceptPendingChallenge">
-                    Accept & Play
-                </button>
-                <button class="btn-tak btn-outline" @onclick="() => PendingChallenge = null">
-                    Decline
-                </button>
+            <div class="btn-row">
+                <button type="button" class="btn btn-primary" @onclick="AcceptPendingChallenge">Accept and play</button>
+                <button type="button" class="btn btn-quiet" @onclick="() => PendingChallenge = null">Not now</button>
             </div>
         </div>
     }
 
-    @if (!string.IsNullOrEmpty(LinkedSuccessMessage))
+    @if (LinkedSuccessMessage is not null)
     {
-        <div style="border: 1px solid #ffffff; padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; color: #ffffff; font-size: 0.85rem;">
-            <span>✓ @LinkedSuccessMessage</span>
-            <button class="btn-link-action" @onclick="() => LinkedSuccessMessage = null">✕</button>
+        <div class="banner ok" role="status">
+            <span>@LinkedSuccessMessage</span>
+            <button type="button" class="icon-btn" aria-label="Dismiss" @onclick="() => LinkedSuccessMessage = null">✕</button>
         </div>
     }
 
-    <!-- Hero Section -->
-    <div class="hero-section">
-        <h1 class="hero-title">TAK</h1>
-        <div class="hero-subtitle">peer-to-peer · zero servers · encrypted</div>
-        <div class="amber-line"></div>
-    </div>
+    <section class="hero">
+        <div class="hero-copy">
+            <p class="hero-kicker">The beautiful game of roads</p>
+            <h1 class="hero-title">Tak</h1>
+            <p class="hero-lede">Stack, slide and wall your way across the board to link two opposite edges. Play the computer, a
+                friend on the same screen, or anyone online. No sign-up, no game server: moves travel encrypted over Nostr and both
+                devices check every one.</p>
+            <div class="btn-row">
+                <button type="button" class="btn btn-primary btn-lg" @onclick="StartBotGame">Play the AI</button>
+                <button type="button" class="btn btn-secondary btn-lg" @onclick='() => Nav.NavigateTo("online")'>Play a friend online</button>
+            </div>
+        </div>
+        <div class="hero-board" aria-hidden="true">
+            @if (_showcase is not null)
+            {
+                @if (_showcase3D)
+                {
+                    <Board3D Scene="_showcase" Interactive="false" AutoRotate="true" Unavailable="() => _showcase3D = false" />
+                }
+                else
+                {
+                    <Board2D Scene="_showcase" />
+                }
+            }
+        </div>
+    </section>
 
-    <!-- Controls Row: Board Size & AI Difficulty -->
-    <div class="controls-row">
-        <!-- Board Size Picker -->
-        <div class="control-group">
-            <span class="control-label">Board size</span>
-            <div class="toggle-btn-group">
-                <button class="toggle-btn @(SelectedSize == BoardSize.Four ? "active" : "")"
-                        @onclick="() => SelectedSize = BoardSize.Four">
-                    4×4
-                </button>
-                <button class="toggle-btn @(SelectedSize == BoardSize.Five ? "active" : "")"
-                        @onclick="() => SelectedSize = BoardSize.Five">
-                    5×5
-                </button>
-                <button class="toggle-btn @(SelectedSize == BoardSize.Six ? "active" : "")"
-                        @onclick="() => SelectedSize = BoardSize.Six">
-                    6×6
-                </button>
+    <section class="card setup" aria-label="New game">
+        <div class="setup-head">
+            <h2 class="card-title">New game</h2>
+            <div class="setup-options">
+                <div class="field">
+                    <span class="field-label">Board</span>
+                    <div class="seg size-picker" role="group" aria-label="Board size">
+                        @foreach (BoardSize size in Enum.GetValues<BoardSize>())
+                        {
+                            <button type="button" class="seg-btn toggle-btn @(SelectedSize == size ? "active" : "")" @onclick="() => SelectedSize = size">@((int)size)×@((int)size)</button>
+                        }
+                    </div>
+                </div>
+                <label class="field">
+                    <span class="field-label">Komi</span>
+                    <select class="input komi-select" @bind="KomiHalves" title="Flats added to Black's count, to balance White's first move">
+                        @for (int halves = 0; halves <= GameBoard.MaxKomiHalves; halves++)
+                        {
+                            <option value="@halves">@PtnParser.FormatKomi(halves)</option>
+                        }
+                    </select>
+                </label>
             </div>
         </div>
 
-        <!-- AI Difficulty Picker -->
-        <div class="control-group">
-            <span class="control-label">AI difficulty</span>
-            <div class="toggle-btn-group">
-                <button class="toggle-btn @(SelectedDifficulty == BotDifficulty.Easy ? "active" : "")"
-                        @onclick="() => SelectedDifficulty = BotDifficulty.Easy">
-                    Easy
-                </button>
-                <button class="toggle-btn @(SelectedDifficulty == BotDifficulty.Medium ? "active" : "")"
-                        @onclick="() => SelectedDifficulty = BotDifficulty.Medium">
-                    Medium
-                </button>
-                <button class="toggle-btn @(SelectedDifficulty == BotDifficulty.Hard ? "active" : "")"
-                        @onclick="() => SelectedDifficulty = BotDifficulty.Hard">
-                    Hard
-                </button>
+        <div class="mode-grid actions-row">
+            <article class="mode-card">
+                <div class="mode-icon" aria-hidden="true">◆</div>
+                <h3>Against the AI</h3>
+                <div class="seg difficulty-picker" role="group" aria-label="AI difficulty">
+                    @foreach (BotDifficulty d in Enum.GetValues<BotDifficulty>())
+                    {
+                        <button type="button" class="seg-btn toggle-btn @(SelectedDifficulty == d ? "active" : "")" @onclick="() => SelectedDifficulty = d">@d</button>
+                    }
+                </div>
+                <div class="seg colour-picker" role="group" aria-label="Your colour">
+                    <button type="button" class="seg-btn @(HumanColor == PlayerColor.White ? "active" : "")" @onclick="() => HumanColor = PlayerColor.White"><span class="stone-dot w"></span>White</button>
+                    <button type="button" class="seg-btn @(HumanColor == PlayerColor.Black ? "active" : "")" @onclick="() => HumanColor = PlayerColor.Black"><span class="stone-dot b"></span>Black</button>
+                </div>
+                <button type="button" class="btn btn-primary" data-mode="ai" @onclick="StartBotGame">vs AI</button>
+            </article>
+
+            <article class="mode-card">
+                <div class="mode-icon" aria-hidden="true">⇄</div>
+                <h3>Pass and play</h3>
+                <p class="card-text">Two players, one screen. Take turns on this device.</p>
+                <button type="button" class="btn btn-primary" data-mode="local" @onclick="StartLocalGame">Local</button>
+            </article>
+
+            <article class="mode-card">
+                <div class="mode-icon" aria-hidden="true">⟡</div>
+                <h3>Online</h3>
+                <p class="card-text">Host a game and send the link, or join with an invite. Works between phone, browser and the CLI.</p>
+                <button type="button" class="btn btn-secondary" data-mode="online" @onclick='() => Nav.NavigateTo("online")'>Host or join</button>
+            </article>
+        </div>
+    </section>
+
+    <section class="how" id="how">
+        <h2 class="section-title">How Tak works</h2>
+        <div class="how-grid">
+            <div class="how-item">
+                <div class="how-figure place" aria-hidden="true"><span class="chip-icon flat w"></span><span class="chip-icon wall b"></span><span class="chip-icon cap w"></span></div>
+                <h3>Place</h3>
+                <p>On your turn, put a stone on any empty square: a flat, a wall standing on its edge, or your capstone.</p>
+            </div>
+            <div class="how-item">
+                <div class="how-figure move" aria-hidden="true">⇢</div>
+                <h3>Or move</h3>
+                <p>Pick up a stack you control, carry it in a straight line and drop at least one piece on every square you pass.</p>
+            </div>
+            <div class="how-item">
+                <div class="how-figure road" aria-hidden="true">━</div>
+                <h3>Build a road</h3>
+                <p>Connect two opposite edges with your flats and capstone. Walls block; only a lone capstone can flatten one.</p>
             </div>
         </div>
-    </div>
-
-    <!-- Actions Row -->
-    <div class="actions-row">
-        <button class="btn-tak btn-white" @onclick="StartBotGame">
-            vs AI
-        </button>
-        <button class="btn-tak btn-white" @onclick="StartLocalGame">
-            Local
-        </button>
-        <button class="btn-tak btn-outline" @onclick='() => Nav.NavigateTo("online")'>
-            Invite
-        </button>
-        <button class="btn-tak btn-outline" @onclick='() => Nav.NavigateTo("online")'>
-            Join
-        </button>
-    </div>
-
-    <!-- Identity & Device Links -->
-    <div style="display: flex; justify-content: center; gap: 2rem; margin-bottom: 2.5rem; font-size: 0.85rem; color: var(--text-secondary);">
-        <button class="btn-link-action" @onclick="() => IsProfileModalOpen = true">
-            Profile: <strong style="color: #ffffff;">@(string.IsNullOrWhiteSpace(PlayerNickname) ? "Anonymous" : PlayerNickname)</strong>
-        </button>
-        <button class="btn-link-action" @onclick="() => IsLinkModalOpen = true">
-            Link Devices
-        </button>
-        <span style="font-family: var(--font-mono); color: var(--text-muted); cursor: pointer;"
-              title="@FullNpub"
-              @onclick="() => IsProfileModalOpen = true">
-            @ShortNpub
-        </span>
-    </div>
-
-    <!-- Features Architecture Block -->
-    <div class="features-grid">
-        <div class="feature-block">
-            <div class="feature-title">LOCAL ENGINE</div>
-            <div class="feature-desc">
-                Deterministic rules, carry limits, and DFS road detection run locally inside your browser via WebAssembly.
-            </div>
-        </div>
-
-        <div class="feature-block">
-            <div class="feature-title">NOSTR RELAY</div>
-            <div class="feature-desc">
-                Peer-to-peer encrypted store-and-forward messaging across public Nostr WebSocket relays with zero centralized servers.
-            </div>
-        </div>
-
-        <div class="feature-block">
-            <div class="feature-title">MULTI-DEVICE</div>
-            <div class="feature-desc">
-                Universal identity allows pairing phones, tablets, and desktops using sovereign cryptographic keypairs.
-            </div>
-        </div>
-    </div>
-
+        <p class="how-more"><a href="rules">Read the full rules →</a></p>
+    </section>
 </div>
 
-<!-- Modals -->
-<InviteModal IsOpen="@IsInviteModalOpen"
-             IsGenerateMode="@IsInviteGenerateMode"
-             Title="@InviteModalTitle"
-             InviteCode="@GeneratedInviteCode"
-             OnClose="() => IsInviteModalOpen = false"
-             OnJoinCodeSubmitted="HandleJoinCode" />
-
-<LinkDeviceModal IsOpen="@IsLinkModalOpen"
-                 OnClose="() => IsLinkModalOpen = false"
-                 OnIdentityChanged="RefreshIdentity" />
-
-<ProfileModal IsOpen="@IsProfileModalOpen"
-              OnClose="() => IsProfileModalOpen = false"
-              OnProfileSaved="RefreshIdentity" />
-
 @code {
+    // A mid-game position for the hero board (rank 5 first).
+    private const string ShowcaseTps = "x2,2,x2/x,1,21,2S,x/1,1,12C,1,2/x,2,1,x2/2,x3,1 1 9";
+
     private BoardSize SelectedSize { get; set; } = BoardSize.Five;
     private BotDifficulty SelectedDifficulty { get; set; } = BotDifficulty.Medium;
-    private bool IsInviteModalOpen { get; set; }
-    private bool IsInviteGenerateMode { get; set; } = true;
-    private string InviteModalTitle { get; set; } = "Direct Invite";
-    private string GeneratedInviteCode { get; set; } = "";
-
-    private bool IsLinkModalOpen { get; set; } = false;
-    private bool IsProfileModalOpen { get; set; } = false;
+    private PlayerColor HumanColor { get; set; } = PlayerColor.White;
+    private int KomiHalves { get; set; }
     private string? PlayerNickname { get; set; }
-    private string ShortNpub { get; set; } = "Loading...";
-    private string FullNpub { get; set; } = "";
     private string? LinkedSuccessMessage { get; set; }
     private InviteCode? PendingChallenge { get; set; }
+    private BoardScene? _showcase;
+    private bool _showcase3D = true;
 
     protected override async Task OnInitializedAsync()
     {
+        try
+        {
+            var board = TpsSerializer.Deserialize(ShowcaseTps);
+            _showcase = BoardScene.Build(board, new MoveInput(), null, []);
+        }
+        catch (FormatException)
+        {
+        }
         await CheckUrlParameters();
-        await RefreshIdentity();
+        PlayerNickname = await Storage.GetNicknameAsync();
     }
 
     private async Task CheckUrlParameters()
     {
-        var uri = new Uri(Nav.Uri);
-        string query = uri.Query.TrimStart('?');
-
-        if (string.IsNullOrEmpty(query)) return;
+        string query = new Uri(Nav.Uri).Query.TrimStart('?');
+        if (string.IsNullOrEmpty(query))
+            return;
 
         string? linkIdentity = null;
         string? inviteParam = null;
-
         foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
         {
-            var kvp = part.Split('=');
-            if (kvp.Length == 2)
-            {
-                string key = kvp[0].ToLowerInvariant();
-                string val = Uri.UnescapeDataString(kvp[1]);
-
-                if (key == "link_identity")
-                    linkIdentity = val;
-                else if (key is "invite" or "c" or "code")
-                    inviteParam = val;
-            }
+            var kvp = part.Split('=', 2);
+            if (kvp.Length != 2)
+                continue;
+            string key = kvp[0].ToLowerInvariant();
+            string val = Uri.UnescapeDataString(kvp[1]);
+            if (key == "link_identity")
+                linkIdentity = val;
+            else if (key is "invite" or "c" or "code")
+                inviteParam = val;
         }
 
-        // 1. Device Pairing URL check
         if (!string.IsNullOrEmpty(linkIdentity))
         {
             try
             {
                 await Storage.ImportPrivateKeyAsync(linkIdentity);
-                LinkedSuccessMessage = "Device linked successfully to your Nostr identity! Ready for cross-device play.";
+                LinkedSuccessMessage = "This device now plays with your key.";
                 Nav.NavigateTo("/", replace: true);
             }
-            catch { }
-        }
-
-        // 2. Direct Challenge Invite URL check
-        if (!string.IsNullOrEmpty(inviteParam))
-        {
-            try
+            catch (Exception e) when (e is ArgumentException or FormatException or IdentityFormatException)
             {
-                PendingChallenge = InviteCode.Parse(inviteParam);
             }
-            catch { }
         }
-    }
 
-    private async Task RefreshIdentity()
-    {
-        var (_, pubHex) = await Storage.GetOrCreateKeypairAsync();
-        PlayerNickname = await Storage.GetNicknameAsync();
-        try
-        {
-            FullNpub = Nip19.ToNpub(pubHex);
-            ShortNpub = FullNpub.Length > 18 ? $"{FullNpub[..10]}...{FullNpub[^6..]}" : FullNpub;
-        }
-        catch
-        {
-            FullNpub = pubHex;
-            ShortNpub = pubHex.Length > 12 ? $"{pubHex[..8]}...{pubHex[^4..]}" : pubHex;
-        }
-        StateHasChanged();
+        if (!string.IsNullOrEmpty(inviteParam) && InviteCode.TryParse(inviteParam, out var invite, out _))
+            PendingChallenge = invite;
     }
 
     private void StartBotGame()
     {
-        Session.StartBotMatch(SelectedSize, SelectedDifficulty, PlayerColor.White, PlayerNickname);
+        Session.StartBotMatch(SelectedSize, SelectedDifficulty, HumanColor, PlayerNickname, KomiHalves);
         Nav.NavigateTo("play");
     }
 
     private void StartLocalGame()
     {
-        Session.StartLocalMatch(SelectedSize, PlayerNickname, "Opponent");
+        Session.StartLocalMatch(SelectedSize, null, null, KomiHalves);
         Nav.NavigateTo("play");
-    }
-
-    private async Task OpenCreateInvite()
-    {
-        var (priv, pub) = await Storage.GetOrCreateKeypairAsync();
-        var invite = new InviteCode(
-            GameId: Guid.NewGuid(),
-            HostPubKey: pub,
-            BoardSize: SelectedSize,
-            KomiHalves: 0,
-            Relays: new[] { "wss://relay.damus.io", "wss://nos.lol" },
-            // Multiplayer is not wired in the browser yet (M2); this nonce is not kept, so nobody can be ACCEPTed from it.
-            SeedCommit: ColorSeed.Commit(System.Security.Cryptography.RandomNumberGenerator.GetBytes(ColorSeed.NonceLength)),
-            HostNickname: PlayerNickname);
-
-        GeneratedInviteCode = invite.ToCompactCode();
-        InviteModalTitle = $"Invite for {(int)SelectedSize}×{(int)SelectedSize} Match";
-        IsInviteGenerateMode = true;
-        IsInviteModalOpen = true;
-    }
-
-    private void OpenJoinModal()
-    {
-        InviteModalTitle = "Join Tak Match";
-        IsInviteGenerateMode = false;
-        IsInviteModalOpen = true;
-    }
-
-    private void HandleJoinCode(string code)
-    {
-        try
-        {
-            InviteCode.Parse(code);
-            Nav.NavigateTo($"online?invite={Uri.EscapeDataString(code.Trim())}");
-        }
-        catch { }
     }
 
     private void AcceptPendingChallenge()
     {
-        if (PendingChallenge != null)
-        {
+        if (PendingChallenge is not null)
             Nav.NavigateTo($"online?invite={Uri.EscapeDataString(PendingChallenge.ToCompactCode())}");
-        }
     }
 }

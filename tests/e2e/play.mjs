@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// F-043: Playwright regression for the Blazor Play page (local pass-and-play and vs AI).
+// F-043: Playwright regression for the Blazor Play page (local pass-and-play and vs AI), on the 2D board, plus the 3D board,
+// the AI playing White, and a phone-sized layout (the redesign).
 // Gesture rows (G-xx) are defined in pipeline/design/gestures.md; every step below cites the row it exercises.
 //
 // One command:   node tests/e2e/play.mjs
@@ -107,8 +108,8 @@ function stopServer(child) {
   log(`SERVER stopped (pid ${child.pid})`);
 }
 
-// ---------- page helpers (desktop layout: viewport >= 1024 px, so everything is scoped to .arena-3col) ----------
-const D = '.arena-3col';
+// ---------- page helpers (everything is scoped to the game table) ----------
+const D = '.table';
 // The square's own rect: the g's box grows upward when a stack or a carried hand is drawn above it.
 const sq = (c) => `${D} #sq-${c} > rect.svg-sq`;
 
@@ -128,7 +129,7 @@ async function statusText(page) {
 }
 
 async function errorText(page) {
-  const el = await page.$(`${D} .arena-col-left div[style*="#7f1d1d"]`);
+  const el = await page.$(`${D} .table-error`);
   return el ? (await el.textContent()).trim() : '';
 }
 
@@ -173,12 +174,22 @@ async function openHome(page) {
   await page.waitForSelector('.actions-row button', { timeout: 60000 });
 }
 
-async function startGame(page, mode, size = '5×5', difficulty = 'Easy') {
+async function startGame(page, mode, size = '5×5', difficulty = 'Easy', view = '2d', colour = 'White') {
   await openHome(page);
   await page.click(`.toggle-btn:has-text("${size}")`);
-  if (mode === 'vs AI') await page.click(`.toggle-btn:has-text("${difficulty}")`);
+  if (mode === 'vs AI') {
+    await page.click(`.toggle-btn:has-text("${difficulty}")`);
+    await page.click(`.colour-picker .seg-btn:has-text("${colour}")`);
+  }
   await page.click(`.actions-row button:has-text("${mode}")`);
-  await page.waitForSelector(sq('a1'), { timeout: 30000 });
+  await page.waitForSelector(`${D} .view-toggle`, { timeout: 30000 });
+  if (view === '2d') {
+    await page.click(`${D} .view-toggle [data-view="2d"]`);
+    await page.waitForSelector(sq('a1'), { timeout: 30000 });
+  } else {
+    await page.click(`${D} .view-toggle [data-view="3d"]`);
+    await page.waitForFunction(() => window.__tak3d?.ready === true, null, { timeout: 30000 });
+  }
   await settle(page);
 }
 
@@ -186,7 +197,7 @@ async function startGame(page, mode, size = '5×5', difficulty = 'Easy') {
 async function localGame(page) {
   log('SCENARIO local pass-and-play 5x5: place, rotate, quick wall, inspect, slides 1-1-1 and 2-1, cancels, road win');
   await startGame(page, 'Local');
-  check((await statusText(page)).includes('OPENING: WHITE PLACES OPPONENT'), 'G-01 new local game opens in the opening phase');
+  check((await statusText(page)) === 'Opening · White places a black flat', 'G-01 new local game opens in the opening phase');
   check((await selectedTab(page)).startsWith('Flat'), 'G-01 Flat is the selected piece at start');
   check((await squaresWithClass(page, 'legal-target')).length === 25, 'G-01 every empty square is marked as a placement target');
 
@@ -207,18 +218,18 @@ async function localGame(page) {
   check((await errorText(page)) === '', 'G-10 a successful click clears the error');
   await click(page, 'e5'); // 2. B places a white flat
   await expectHistory(page, ['a1', 'e5'], 'G-10');
-  check((await statusText(page)).includes('WHITE TO PLAY'), 'G-10 after both opening plies it is White to play');
+  check((await statusText(page)) === 'White to move', 'G-10 after both opening plies it is White to move');
 
   // G-13 left-click on the opponent's stack inspects it.
   await click(page, 'a1');
-  check((await page.$(`${D} .svg-inspector-group`)) !== null, 'G-13 left-click on an opponent stack opens the inspector');
+  check((await page.$(`${D} .stack-inspector`)) !== null, 'G-13 left-click on an opponent stack opens the inspector');
   await screenshot(page, 'inspect-a1');
   await click(page, 'b3'); // G-15 click dismisses the inspector and then places
-  check((await page.$(`${D} .svg-inspector-group`)) === null, 'G-15 a square click dismisses the inspector');
+  check((await page.$(`${D} .stack-inspector`)) === null, 'G-15 a square click dismisses the inspector');
   await expectHistory(page, ['a1', 'e5', 'b3'], 'G-15/G-10');
 
   // G-02 / G-03 reserve chip: click Flat (selected) rotates to Wall; right-click rotates to Wall. Then F back.
-  const blackFlatChip = `${D} .player-card-flat.active-player-card .reserve-chip:has-text("Flat")`;
+  const blackFlatChip = `${D} .player-card.is-turn .reserve-chip:has-text("Flat")`;
   await page.click(blackFlatChip);
   await settle(page);
   check((await selectedTab(page)).startsWith('Wall'), 'G-02 clicking the selected Flat chip rotates to Wall');
@@ -335,7 +346,7 @@ async function localGame(page) {
   await click(page, 'e3'); // 25. W wins
   await expectHistory(page, [...afterSlides, 'c1', 'a3', 'c5', 'd3', 'd2', 'e3'], 'G-10 final placement');
   const status = await statusText(page);
-  check(/WINS \(ROAD\)/.test(status), `G-50 road win is announced (status "${status}")`);
+  check(status === 'White wins by road', `G-50 road win is announced (status "${status}")`);
   const road = await page.$$eval(`${D} g[data-coord]`, (gs) => gs.filter((g) => g.querySelector('.svg-road-highlight')).map((g) => g.dataset.coord).sort());
   check(JSON.stringify(road) === JSON.stringify(['a3', 'b3', 'c3', 'd3', 'e3']), `G-50 the winning road is highlighted (got ${road.join(',')})`);
   check((await page.$(`${D} .play-actions button:has-text("Resign")`)) === null, 'G-50 Resign is hidden after the game ends');
@@ -351,17 +362,17 @@ async function localGame(page) {
 async function aiGame(page) {
   log('SCENARIO vs AI (Easy) 5x5: the human places flats on the first empty square until the game ends');
   await startGame(page, 'vs AI');
-  check((await page.textContent(`${D} .status-text`)).includes('AI Easy'), 'G-52 the status names the AI mode');
+  check((await page.textContent(`${D} .mode-label`)).includes('vs AI Easy'), 'G-52 the status names the AI mode');
   let plies = 0;
   for (let turn = 0; turn < 60; turn++) {
     // Wait for the AI to finish and the page to settle on a state.
     await page.waitForFunction(() => {
-      const t = document.querySelector('.arena-3col .play-turn-text')?.textContent ?? '';
-      const thinking = document.querySelector('.arena-3col .status-block')?.textContent?.includes('AI is thinking') ?? false;
-      return !thinking && (t.includes('WHITE') || t.includes('WINS') || t.includes('DRAW'));
+      const t = document.querySelector('.table .play-turn-text')?.textContent ?? '';
+      const thinking = document.querySelector('.table .table-activity') !== null;
+      return !thinking && (/You place|Your move/.test(t) || /win|Draw/.test(t));
     }, null, { timeout: 30000 });
     const status = await statusText(page);
-    if (/WINS|DRAW/.test(status)) {
+    if (/win|Draw/.test(status)) {
       log(`RESULT vs AI after ${plies} human plies: ${status}`);
       break;
     }
@@ -380,42 +391,157 @@ async function aiGame(page) {
     }
     // G-52: the AI answers on its own (unless the human's move ended the game).
     await page.waitForFunction((n) => {
-      const rows = document.querySelectorAll('.arena-3col .move-history-list .move-history-row');
+      const rows = document.querySelectorAll('.table .move-history-list .move-history-row');
       let count = 0;
       rows.forEach((r) => {
         if (r.querySelector('.move-ptn-white')?.textContent?.trim()) count++;
         if (r.querySelector('.move-ptn-black')?.textContent?.trim()) count++;
       });
-      const t = document.querySelector('.arena-3col .play-turn-text')?.textContent ?? '';
-      return count >= n + 2 || t.includes('WINS') || t.includes('DRAW');
+      const t = document.querySelector('.table .play-turn-text')?.textContent ?? '';
+      return count >= n + 2 || /win|Draw/.test(t);
     }, before, { timeout: 30000 });
     if (turn === 0) await screenshot(page, 'ai-first-reply');
   }
   const final = await statusText(page);
-  check(/WINS|DRAW/.test(final), `G-52 the vs AI game reached a result ("${final}")`);
+  check(/win|Draw/.test(final), `G-52 the vs AI game reached a result ("${final}")`);
   const h = await history(page);
   log(`AI GAME PTN ${h.join(' ')}`);
   await screenshot(page, 'ai-result');
+}
+
+
+// ---------- scenario 3: the 3D board ----------
+// Clicks land where board3d.js projects each square (window.__tak3d.screenOf), so this drives the real canvas hit-testing.
+async function click3d(page, coord, button = 'left') {
+  const pt = await page.evaluate((c) => window.__tak3d.screenOf(c), coord);
+  await page.mouse.click(pt.x, pt.y, { button });
+  await settle(page);
+  await page.waitForTimeout(150);
+}
+
+async function threeDGame(page) {
+  log('SCENARIO 3D board 5x5: placements, quick wall, stack pick-up and step, a 2-stack split, switch to 2D and back mid-game');
+  await startGame(page, 'Local', '5×5', 'Easy', '3d');
+  check((await page.$(`${D} .board3d-canvas`)) !== null && (await page.$(`${D} .board2d`)) === null, '3D the 3D board replaces the 2D one');
+  for (const c of ['a1', 'e5', 'c3', 'c4']) await click3d(page, c); // opening, then W c3, B c4
+  await click3d(page, 'd4', 'right'); // W quick wall
+  await expectHistory(page, ['a1', 'e5', 'c3', 'c4', 'Sd4'], '3D placements and right-click wall');
+  await click3d(page, 'c5'); // B
+  await click3d(page, 'c3'); // W picks up c3
+  check((await hudText(page)).includes('1 of 1'), '3D clicking an own stack picks it up');
+  await screenshot(page, '3d-picked-up');
+  await click3d(page, 'b3'); // W c3<
+  await expectHistory(page, ['a1', 'e5', 'c3', 'c4', 'Sd4', 'c5', 'c3<'], '3D step sends the move');
+  await click3d(page, 'c4'); // B picks up c4 ...
+  await click3d(page, 'c5'); // ... and steps onto c5: 2-stack
+  await click3d(page, 'b2'); // W
+  await click3d(page, 'c5'); // B picks up the 2-stack (carry 2)
+  check((await hudText(page)).includes('2 of 2'), '3D a 2-stack carries 2');
+  await click3d(page, 'c4'); // first step drops 1
+  check((await hudText(page)).includes('In hand: 1'), '3D first step drops one, one in hand');
+  await screenshot(page, '3d-mid-move');
+  await click3d(page, 'c3'); // second step drops the last: 2c5-11
+  await expectHistory(page, ['a1', 'e5', 'c3', 'c4', 'Sd4', 'c5', 'c3<', 'c4+', 'b2', '2c5-11'], '3D two-square split');
+  await click3d(page, 'b3');
+  check((await page.$(`${D} .stack-inspector`)) === null && (await hudText(page)).includes('of'), '3D own stack picked up again');
+  await page.keyboard.press('Escape');
+  await settle(page);
+  check((await hudText(page)) === '', '3D Esc cancels');
+  await click3d(page, 'c3', 'right');
+  check((await page.$(`${D} .stack-inspector`)) !== null, '3D right-click on a stack opens the inspector');
+  await page.keyboard.press('v'); // to 2D, same game
+  await page.waitForSelector(sq('a1'));
+  await expectHistory(page, ['a1', 'e5', 'c3', 'c4', 'Sd4', 'c5', 'c3<', 'c4+', 'b2', '2c5-11'], 'V switches to 2D and keeps the game');
+  await page.keyboard.press('v');
+  await page.waitForFunction(() => window.__tak3d?.ready === true);
+  check((await page.$(`${D} .board3d-canvas`)) !== null, 'V switches back to 3D');
+  await screenshot(page, '3d-after-switch');
+}
+
+// ---------- scenario 4: the AI plays White ----------
+async function aiWhite(page) {
+  log('SCENARIO vs AI as Black 4x4: the AI opens, the board faces Black, resign, then Play again');
+  await startGame(page, 'vs AI', '4×4', 'Easy', '2d', 'Black');
+  await page.waitForFunction(() => document.querySelectorAll('.table .move-ptn-white').length > 0 &&
+    document.querySelector('.table .table-activity') === null, null, { timeout: 30000 });
+  const h = await history(page);
+  check(h.length === 1, `G-52 the AI (White) made the first move (${h.join(' ')})`);
+  check((await statusText(page)) === 'Opening · You place a white flat', `the human is to place White's flat ("${await statusText(page)}")`);
+  check((await page.$$(`${D} .piece-selector-tab:has-text("Cap")`)).length === 0, 'no Cap tab on 4x4 (no capstones)');
+  const flipped = await page.evaluate(() => {
+    const a1 = document.querySelector('#sq-a1').getBoundingClientRect();
+    const d4 = document.querySelector('#sq-d4').getBoundingClientRect();
+    return a1.top < d4.top && a1.left > d4.left;
+  });
+  check(flipped, 'the board is turned to face Black');
+  const empties = await squaresWithClass(page, 'legal-target');
+  await click(page, empties[0]);
+  await page.waitForFunction(() => document.querySelectorAll('.table .move-ptn-white').length > 1 &&
+    document.querySelector('.table .table-activity') === null, null, { timeout: 30000 });
+  await page.click(`${D} .play-actions button:has-text("Resign")`);
+  await settle(page);
+  check((await page.textContent(`${D} .play-actions`)).includes('Really resign?'), 'Resign asks once more');
+  await page.click(`${D} .play-actions button:has-text("Really resign?")`);
+  await settle(page);
+  const status = await statusText(page);
+  check(/^AI \(Easy\) wins by resignation$/.test(status), `G-51 resigning ends the game ("${status}")`);
+  await screenshot(page, 'ai-white-resigned');
+  await page.click(`${D} .result-card button:has-text("Play again")`);
+  await page.waitForFunction(() => document.querySelectorAll('.table .move-ptn-white').length === 1 &&
+    document.querySelector('.table .table-activity') === null, null, { timeout: 30000 });
+  check((await history(page)).length === 1, 'Play again starts a fresh game with the same settings (the AI opens again)');
+}
+
+// ---------- scenario 5: phone-sized screen ----------
+async function phone(browser) {
+  log('SCENARIO phone 390x844: home, local game on the 2D board by taps, layout fits the width');
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+  const page = await context.newPage();
+  await page.routeWebSocket(/.*/, () => {});
+  page.on('pageerror', (e) => log(`PAGEERROR ${e.message}`));
+  await openHome(page);
+  check(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), 'phone: the home page has no sideways scroll');
+  await screenshot(page, 'phone-home');
+  await page.tap('.actions-row button:has-text("Local")');
+  await page.waitForSelector(`${D} .view-toggle`);
+  await page.tap(`${D} .view-toggle [data-view="2d"]`);
+  await page.waitForSelector(sq('a1'));
+  for (const c of ['a1', 'e5', 'c3']) {
+    await page.tap(sq(c));
+    await settle(page);
+  }
+  await expectHistory(page, ['a1', 'e5', 'c3'], 'phone: taps place pieces');
+  check(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), 'phone: the game page has no sideways scroll');
+  const box = await page.$eval(`${D} .board2d`, (el) => el.getBoundingClientRect().width);
+  check(box >= 340, `phone: the board uses the screen width (${Math.round(box)} px)`);
+  await screenshot(page, 'phone-game');
+  await context.close();
 }
 
 // ---------- main ----------
 const server = await startServerIfNeeded();
 let browser;
 try {
-  browser = await chromium.launch({ headless: !headed });
+  browser = await chromium.launch({ headless: !headed, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const context = await browser.newContext({ viewport: { width: 1400, height: 1000 } });
   const page = await context.newPage();
   await page.routeWebSocket(/.*/, (ws) => { log(`WS stubbed ${ws.url()}`); });
   page.on('pageerror', (e) => log(`PAGEERROR ${e.message}`));
   page.on('console', (m) => { if (m.type() === 'error') log(`CONSOLE ${m.text()}`); });
 
-  for (const scenario of [localGame, aiGame]) {
+  for (const scenario of [localGame, aiGame, threeDGame, aiWhite]) {
     try {
       await scenario(page);
     } catch (e) {
       check(false, `${scenario.name} threw: ${e.message.split('\n')[0]}`);
       try { await screenshot(page, `${scenario.name}-error`); } catch { /* page gone */ }
     }
+    check(!(await page.isVisible('#blazor-error-ui')), `${scenario.name}: no unhandled error bar`);
+  }
+  try {
+    await phone(browser);
+  } catch (e) {
+    check(false, `phone threw: ${e.message.split('\n')[0]}`);
   }
 } finally {
   if (browser) await browser.close();

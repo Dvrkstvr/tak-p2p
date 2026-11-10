@@ -12,5 +12,6 @@ builder.Services.AddSingleton<BrowserStorage>();
 builder.Services.AddSingleton(_ => new LocalGameAdapter());
 builder.Services.AddSingleton<TabGameLock>();
 builder.Services.AddSingleton<OnlineGameService>();
+builder.Services.AddSingleton<ViewPreference>();
 
 await builder.Build().RunAsync();
