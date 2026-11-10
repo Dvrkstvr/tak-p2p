@@ -7,99 +7,51 @@
 @if (IsOpen)
 {
     <div class="modal-backdrop" @onclick="Close">
-        <div class="modal-content" @onclick:stopPropagation="true" style="max-width: 540px; width: 95%;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
-                <h3 style="font-size: 1.25rem; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 0.5rem;">
-                    🔗 Nostr Identity & Linked Devices
-                </h3>
-                <button class="btn-tak btn-ghost btn-sm" @onclick="Close">✕</button>
+        <div class="modal" role="dialog" aria-label="Your key and devices" @onclick:stopPropagation="true">
+            <div class="modal-head">
+                <h3>Your key and devices</h3>
+                <button type="button" class="icon-btn" aria-label="Close" @onclick="Close">✕</button>
             </div>
 
-            <!-- Identity Summary Card -->
-            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--bg-card-border); border-radius: var(--radius-sm); padding: 0.85rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;">
-                <div style="overflow: hidden;">
-                    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.05em; margin-bottom: 0.2rem;">
-                        Your Public Identifier (npub)
-                    </div>
-                    <div style="font-family: var(--font-mono); font-size: 0.85rem; color: #38bdf8; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
-                        @FormattedNpub
-                    </div>
+            <div class="copy-field">
+                <div class="copy-field-text">
+                    <span class="field-label">Public id (npub)</span>
+                    <code>@FormattedNpub</code>
                 </div>
-                <button class="btn-tak btn-ghost btn-sm" @onclick="CopyNpub" title="Copy npub">
-                    📋 @(CopiedNpub ? "Copied" : "Copy")
-                </button>
+                <button type="button" class="btn btn-quiet btn-sm" @onclick="CopyNpub">@(CopiedNpub ? "Copied ✓" : "Copy")</button>
             </div>
 
-            <!-- Tab Selector -->
-            <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--bg-card-border); padding-bottom: 0.75rem; overflow-x: auto;">
-                <button class="btn-tak btn-sm @(ActiveTab == "import" ? "btn-purple" : "btn-ghost")"
-                        @onclick='() => ActiveTab = "import"'>
-                    🔑 Connect Existing Key
-                </button>
-                <button class="btn-tak btn-sm @(ActiveTab == "backup" ? "btn-purple" : "btn-ghost")"
-                        @onclick='() => ActiveTab = "backup"'>
-                    🛡️ Backup Private Key
-                </button>
+            <div class="seg tabs" role="tablist">
+                <button type="button" class="seg-btn @(ActiveTab == "backup" ? "active" : "")" @onclick='() => ActiveTab = "backup"'>Back up this key</button>
+                <button type="button" class="seg-btn @(ActiveTab == "import" ? "active" : "")" @onclick='() => ActiveTab = "import"'>Use an existing key</button>
             </div>
 
             @if (ActiveTab == "import")
             {
-                <div style="display: flex; flex-direction: column;">
-                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
-                        Link this device to an existing Nostr account by entering your private key (<code style="color: #c084fc;">nsec1...</code> or 64-char hex):
-                    </p>
-
-                    <input type="password"
-                           @bind="InputPrivateKey"
-                           placeholder="nsec1... or 64-character hex private key"
-                           style="width: 100%; padding: 0.75rem 0.9rem; border-radius: var(--radius-sm); background: rgba(0,0,0,0.35); border: 1px solid var(--bg-card-border); color: #f1f5f9; font-family: var(--font-mono); font-size: 0.85rem; margin-bottom: 0.75rem;" />
-
-                    @if (!string.IsNullOrEmpty(ImportError))
-                    {
-                        <div style="background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.4); border-radius: var(--radius-sm); padding: 0.6rem 0.85rem; color: #fda4af; font-size: 0.85rem; margin-bottom: 0.75rem;">
-                            ⚠️ @ImportError
-                        </div>
-                    }
-
-                    @if (ImportSuccess)
-                    {
-                        <div style="background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.4); border-radius: var(--radius-sm); padding: 0.6rem 0.85rem; color: #86efac; font-size: 0.85rem; margin-bottom: 0.75rem;">
-                            ✓ Identity linked successfully!
-                        </div>
-                    }
-
-                    <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 0.5rem;">
-                        <button class="btn-tak btn-purple" @onclick="SubmitImport">
-                            Link This Device
-                        </button>
-                    </div>
+                <p class="card-text">Play as the same player on this device: paste your secret key (<code>nsec1…</code> or 64 hex characters).
+                    It replaces this browser's key.</p>
+                <input class="input mono" type="password" @bind="InputPrivateKey" placeholder="nsec1… or hex secret key" autocomplete="off" />
+                @if (!string.IsNullOrEmpty(ImportError))
+                {
+                    <div class="notice error">@ImportError</div>
+                }
+                @if (ImportSuccess)
+                {
+                    <div class="notice ok">This device now uses that key.</div>
+                }
+                <div class="modal-foot">
+                    <button type="button" class="btn btn-primary" @onclick="SubmitImport">Use this key</button>
                 </div>
             }
-            else if (ActiveTab == "backup")
+            else
             {
-                <div style="display: flex; flex-direction: column;">
-                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
-                        Your sovereign signing key (<code style="color: #c084fc;">nsec1...</code>). Keep this private and store it securely in a password manager.
-                    </p>
-
-                    <div style="background: rgba(0,0,0,0.5); border: 1px solid var(--bg-card-border); padding: 0.75rem; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 0.82rem; word-break: break-all; margin-bottom: 1rem; color: #c084fc;">
-                        @(RevealNsec ? FullNsec : "••••••••••••••••••••••••••••••••••••••••••••••••••••••••")
-                    </div>
-
-                    <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
-                        <button class="btn-tak btn-ghost btn-sm" @onclick="() => RevealNsec = !RevealNsec">
-                            @(RevealNsec ? "🙈 Hide" : "👁️ Reveal")
-                        </button>
-                        <button class="btn-tak btn-primary btn-sm" @onclick="CopyNsec">
-                            📋 @(CopiedNsec ? "Copied!" : "Copy nsec")
-                        </button>
-                    </div>
+                <p class="card-text">Your secret key is who you are in online games. Keep a copy in a password manager; anyone with it can play as you.</p>
+                <div class="secret-box mono">@(RevealNsec ? FullNsec : "••••••••••••••••••••••••••••••••••••••••••••••••")</div>
+                <div class="modal-foot">
+                    <button type="button" class="btn btn-quiet btn-sm" @onclick="() => RevealNsec = !RevealNsec">@(RevealNsec ? "Hide" : "Reveal")</button>
+                    <button type="button" class="btn btn-primary btn-sm" @onclick="CopyNsec">@(CopiedNsec ? "Copied ✓" : "Copy nsec")</button>
                 </div>
             }
-
-            <div style="display: flex; justify-content: flex-end; margin-top: 1.25rem; border-top: 1px solid var(--bg-card-border); padding-top: 0.75rem;">
-                <button class="btn-tak btn-ghost" @onclick="Close">Close</button>
-            </div>
         </div>
     </div>
 }

@@ -1,0 +1,105 @@
+2026-11-10T07:08:49.078Z SERVER using running site at http://127.0.0.1:5199
+2026-11-10T07:08:49.208Z SCENARIO local pass-and-play 5x5: place, rotate, quick wall, inspect, slides 1-1-1 and 2-1, cancels, road win
+2026-11-10T07:08:55.591Z PASS G-01 new local game opens in the opening phase
+2026-11-10T07:08:55.594Z PASS G-01 Flat is the selected piece at start
+2026-11-10T07:08:55.603Z PASS G-01 every empty square is marked as a placement target
+2026-11-10T07:08:55.757Z PASS G-04 Wall tab selects Wall
+2026-11-10T07:08:55.761Z PASS G-04 no square is marked for a wall in the opening (F-021 row 2)
+2026-11-10T07:08:55.935Z PASS G-10b refused placement shows the engine error
+2026-11-10T07:08:55.944Z PASS G-10b history is [] (got [])
+2026-11-10T07:08:56.324Z SHOT 01-opening-wall-refused.png
+2026-11-10T07:08:56.461Z PASS G-05 key F selects Flat
+2026-11-10T07:08:56.637Z PASS G-10 a successful click clears the error
+2026-11-10T07:08:56.815Z PASS G-10 history is [a1 e5] (got [a1 e5])
+2026-11-10T07:08:56.819Z PASS G-10 after both opening plies it is White to move
+2026-11-10T07:08:57.011Z PASS G-13 left-click on an opponent stack opens the inspector
+2026-11-10T07:08:58.063Z SHOT 02-inspect-a1.png
+2026-11-10T07:08:58.230Z PASS G-15 a square click dismisses the inspector
+2026-11-10T07:08:58.236Z PASS G-15/G-10 history is [a1 e5 b3] (got [a1 e5 b3])
+2026-11-10T07:08:58.410Z PASS G-02 clicking the selected Flat chip rotates to Wall
+2026-11-10T07:08:58.592Z PASS G-02 clicking the Flat chip when Wall is selected selects Flat
+2026-11-10T07:08:58.752Z PASS G-03 right-clicking the Flat chip rotates to Wall
+2026-11-10T07:08:59.594Z PASS G-12 clicking an own stack selects it as slide origin
+2026-11-10T07:08:59.606Z PASS G-12 HUD shows 1 of 1 carried
+2026-11-10T07:08:59.787Z PASS G-21 (carry 1) history is [a1 e5 b3 a5 b2 b5 b2+] (got [a1 e5 b3 a5 b2 b5 b2+])
+2026-11-10T07:09:00.881Z PASS G-21 history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1] (got [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1])
+2026-11-10T07:09:01.074Z PASS G-12 3-stack: carry starts at min(height, size) = 3
+2026-11-10T07:09:01.079Z PASS G-12 adjacent enterable squares are marked (got a3,b2,b4,c3)
+2026-11-10T07:09:01.279Z PASS G-20 clicking the origin leaves one tile: 2 of 3
+2026-11-10T07:09:01.472Z PASS G-20 again: 1 of 3
+2026-11-10T07:09:01.646Z PASS G-20 below 1 wraps to the maximum: 3 of 3
+2026-11-10T07:09:03.920Z SHOT 03-slide-origin-b3.png
+2026-11-10T07:09:04.102Z PASS G-24 out-of-range click cancels the move
+2026-11-10T07:09:04.107Z PASS G-24 nothing placed history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1] (got [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1])
+2026-11-10T07:09:04.472Z PASS G-21 first step drops 1, 2 in hand
+2026-11-10T07:09:04.933Z SHOT 04-mid-slide.png
+2026-11-10T07:09:05.107Z PASS G-32 click outside the path mid-move cancels the whole move
+2026-11-10T07:09:05.111Z PASS G-32 board unchanged history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1] (got [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1])
+2026-11-10T07:09:05.691Z PASS G-33 right-click mid-move cancels
+2026-11-10T07:09:05.695Z PASS G-33 board unchanged history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1] (got [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1])
+2026-11-10T07:09:06.025Z PASS G-06 Esc cancels a started move
+2026-11-10T07:09:06.214Z PASS G-40 the slide bar opens with a started move
+2026-11-10T07:09:06.414Z PASS G-41 the slide bar Cancel cancels the move
+2026-11-10T07:09:06.419Z PASS G-41 board unchanged history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1] (got [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1])
+2026-11-10T07:09:06.996Z PASS G-31 the next square along the path is offered
+2026-11-10T07:09:07.189Z PASS G-31 slide 1-1-1 history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1 3b3>111] (got [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1 3b3>111])
+2026-11-10T07:09:07.620Z SHOT 05-after-3b3-111.png
+2026-11-10T07:09:07.792Z PASS G-11 right-click empty places a wall history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1 3b3>111 Sa2] (got [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1 3b3>111 Sa2])
+2026-11-10T07:09:07.795Z PASS G-11 quick wall leaves the selected piece unchanged
+2026-11-10T07:09:07.980Z PASS G-43 a new origin resets the slide bar to that stack (Confirm names "c3+")
+2026-11-10T07:09:09.282Z PASS G-30 the current step square is offered for stacking
+2026-11-10T07:09:09.499Z PASS G-30 clicking the current square drops one more
+2026-11-10T07:09:09.707Z PASS G-30/G-31 slide 2-1 history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1 3b3>111 Sa2 c3> b1 e3< e2 3d3<21] (got [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1 3b3>111 Sa2 c3> b1 e3< e2 3d3<21])
+2026-11-10T07:09:11.824Z SHOT 06-after-3d3-21.png
+2026-11-10T07:09:12.885Z PASS G-10 final placement history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1 3b3>111 Sa2 c3> b1 e3< e2 3d3<21 c1 a3 c5 d3 d2 e3] (got [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1 3b3>111 Sa2 c3> b1 e3< e2 3d3<21 c1 a3 c5 d3 d2 e3])
+2026-11-10T07:09:12.888Z PASS G-50 road win is announced (status "White wins by road")
+2026-11-10T07:09:12.893Z PASS G-50 the winning road is highlighted (got a3,b3,c3,d3,e3)
+2026-11-10T07:09:12.896Z PASS G-50 Resign is hidden after the game ends
+2026-11-10T07:09:12.901Z PASS G-50 no placement targets after the game ends
+2026-11-10T07:09:15.532Z SHOT 07-local-road-win.png
+2026-11-10T07:09:15.700Z PASS G-17 a click after the end is refused by the engine (error "Game has already completed.")
+2026-11-10T07:09:15.712Z PASS G-17 nothing changes after the end history is [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1 3b3>111 Sa2 c3> b1 e3< e2 3d3<21 c1 a3 c5 d3 d2 e3] (got [a1 e5 b3 a5 b2 b5 b2+ d5 b4 a4 b4- e1 3b3>111 Sa2 c3> b1 e3< e2 3d3<21 c1 a3 c5 d3 d2 e3])
+2026-11-10T07:09:15.714Z PASS localGame: no unhandled error bar
+2026-11-10T07:09:15.715Z SCENARIO vs AI (Easy) 5x5: the human places flats on the first empty square until the game ends
+2026-11-10T07:09:21.552Z PASS G-52 the status names the AI mode
+2026-11-10T07:09:22.351Z SHOT 08-ai-first-reply.png
+2026-11-10T07:09:26.514Z RESULT vs AI after 11 human plies: You win by road
+2026-11-10T07:09:26.517Z PASS G-52 the vs AI game reached a result ("You win by road")
+2026-11-10T07:09:26.520Z AI GAME PTN a1 a5 a2 Cc3 a3 c4 a4 d3 b1 a1+ a1 2a2+ a2 3a3-12 a3 3a1+12 a1 3a3-12 a3 c2 b2
+2026-11-10T07:09:27.930Z SHOT 09-ai-result.png
+2026-11-10T07:09:27.933Z PASS aiGame: no unhandled error bar
+2026-11-10T07:09:27.934Z SCENARIO 3D board 5x5: placements, quick wall, stack pick-up and step, a 2-stack split, switch to 2D and back mid-game
+2026-11-10T07:09:31.682Z PASS 3D the 3D board replaces the 2D one
+2026-11-10T07:09:33.193Z FAIL 3D placements and right-click wall history is [a1 e5 c3 c4 Sd4] (got [a1 c3 c4 Se4])
+2026-11-10T07:09:33.794Z FAIL 3D clicking an own stack picks it up
+2026-11-10T07:09:34.832Z SHOT 10-3d-picked-up.png
+2026-11-10T07:09:35.125Z FAIL 3D step sends the move history is [a1 e5 c3 c4 Sd4 c5 c3<] (got [a1 c3 c4 Se4 c5 b3])
+2026-11-10T07:09:36.343Z PASS 3D a 2-stack carries 2
+2026-11-10T07:09:36.762Z PASS 3D first step drops one, one in hand
+2026-11-10T07:09:40.246Z SHOT 11-3d-mid-move.png
+2026-11-10T07:09:40.538Z FAIL 3D two-square split history is [a1 e5 c3 c4 Sd4 c5 c3< c4+ b2 2c5-11] (got [a1 c3 c4 Se4 c5 b3 c4+ b2 2c5-11])
+2026-11-10T07:09:40.881Z PASS 3D own stack picked up again
+2026-11-10T07:09:41.020Z PASS 3D Esc cancels
+2026-11-10T07:09:41.311Z PASS 3D right-click on a stack opens the inspector
+2026-11-10T07:09:44.185Z FAIL V switches to 2D and keeps the game history is [a1 e5 c3 c4 Sd4 c5 c3< c4+ b2 2c5-11] (got [a1 c3 c4 Se4 c5 b3 c4+ b2 2c5-11])
+2026-11-10T07:09:44.381Z PASS V switches back to 3D
+2026-11-10T07:09:45.405Z SHOT 12-3d-after-switch.png
+2026-11-10T07:09:45.408Z PASS threeDGame: no unhandled error bar
+2026-11-10T07:09:45.408Z SCENARIO vs AI as Black 4x4: the AI opens, the board faces Black, resign, then Play again
+2026-11-10T07:09:51.433Z PASS G-52 the AI (White) made the first move (a1)
+2026-11-10T07:09:51.437Z PASS the human is to place White's flat ("Opening · You place a white flat")
+2026-11-10T07:09:51.439Z PASS no Cap tab on 4x4 (no capstones)
+2026-11-10T07:09:51.440Z PASS the board is turned to face Black
+2026-11-10T07:09:52.019Z PASS Resign asks once more
+2026-11-10T07:09:52.192Z PASS G-51 resigning ends the game ("AI (Easy) wins by resignation")
+2026-11-10T07:09:52.618Z SHOT 13-ai-white-resigned.png
+2026-11-10T07:09:53.020Z PASS Play again starts a fresh game with the same settings (the AI opens again)
+2026-11-10T07:09:53.023Z PASS aiWhite: no unhandled error bar
+2026-11-10T07:09:53.024Z SCENARIO phone 390x844: home, local game on the 2D board by taps, layout fits the width
+2026-11-10T07:09:55.402Z PASS phone: the home page has no sideways scroll
+2026-11-10T07:09:56.779Z SHOT 14-phone-home.png
+2026-11-10T07:10:01.273Z PASS phone: taps place pieces history is [a1 e5 c3] (got [a1 e5 c3])
+2026-11-10T07:10:01.275Z PASS phone: the game page has no sideways scroll
+2026-11-10T07:10:01.286Z PASS phone: the board uses the screen width (371 px)
+2026-11-10T07:10:01.602Z SHOT 15-phone-game.png
+2026-11-10T07:10:01.729Z SUMMARY FAIL checks=81 failed=5 evidence=pipeline/evidence/redesign-2026-11-10/break-3d-hit

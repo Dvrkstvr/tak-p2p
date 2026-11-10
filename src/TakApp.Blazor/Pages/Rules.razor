@@ -1,0 +1,54 @@
+@page "/rules"
+
+<PageTitle>Tak · rules</PageTitle>
+
+<div class="page rules">
+    <header class="page-head">
+        <a class="back-link" href="">← Home</a>
+        <h1>How to play Tak</h1>
+        <p class="lede">Two players, one goal: a road of your pieces that links two opposite edges of the board.</p>
+    </header>
+
+    <section class="card prose">
+        <h2>Pieces</h2>
+        <ul class="piece-legend">
+            <li><span class="chip-icon flat w"></span><span class="chip-icon flat b"></span><div><strong>Flat stone.</strong> Counts for roads and can be stacked on.</div></li>
+            <li><span class="chip-icon wall w"></span><span class="chip-icon wall b"></span><div><strong>Wall</strong> (a stone stood on its edge). Blocks: nothing can be stacked on it, and it doesn't count for roads.</div></li>
+            <li><span class="chip-icon cap w"></span><span class="chip-icon cap b"></span><div><strong>Capstone.</strong> Counts for roads, can't be covered, and on its own it flattens a wall.</div></li>
+        </ul>
+        <table class="reserve-table">
+            <thead><tr><th>Board</th><th>3×3</th><th>4×4</th><th>5×5</th><th>6×6</th><th>7×7</th><th>8×8</th></tr></thead>
+            <tbody>
+                <tr><th>Stones</th><td>10</td><td>15</td><td>21</td><td>30</td><td>40</td><td>50</td></tr>
+                <tr><th>Capstones</th><td>0</td><td>0</td><td>1</td><td>1</td><td>2</td><td>2</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card prose">
+        <h2>A turn</h2>
+        <p><strong>Opening:</strong> on the very first turn each player places one of the <em>opponent's</em> flats on any empty square.</p>
+        <p>After that, on your turn you do one of two things:</p>
+        <ol>
+            <li><strong>Place</strong> a flat, a wall or your capstone on an empty square.</li>
+            <li><strong>Move</strong> a stack whose top piece is yours. Pick up as many pieces as the board is wide (at most), walk in a
+                straight line, and drop at least one piece from the bottom of your hand on every square you enter.
+                You can't move onto a wall or a capstone, except with a capstone alone, which flattens the wall.</li>
+        </ol>
+    </section>
+
+    <section class="card prose">
+        <h2>Winning</h2>
+        <p><strong>Road:</strong> a connected line of your flats and capstone (orthogonally adjacent) between two opposite edges. A move
+            that makes roads for both players wins for the player who made it.</p>
+        <p><strong>Flats:</strong> if the board fills, or a player places their last piece, the player with more flats on top wins.
+            <em>Komi</em> adds points to Black's count to balance White's first move.</p>
+    </section>
+
+    <section class="card prose">
+        <h2>On this site</h2>
+        <p>Click an empty square to place, right-click (or long-press) to place a wall. Click your stack to pick it up; click it again to
+            carry one fewer, then click neighbouring squares to walk and drop. Press <kbd>?</kbd> during a game for every shortcut, and
+            <kbd>V</kbd> to switch between the 2D and 3D board.</p>
+    </section>
+</div>

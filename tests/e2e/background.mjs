@@ -321,6 +321,8 @@ async function waitPage(page, fn, arg, what, timeoutMs = 60000) {
 }
 async function pageMove(page, ptn) {
   log(`PAGE< ${ptn}`);
+  // The PTN box sits in a collapsed panel beside the board.
+  if (!(await page.isVisible('.online-ptn-input'))) await page.click('details:has(.online-ptn-input) > summary');
   await page.fill('.online-ptn-input', ptn);
   await page.click('button:has-text("Send")');
 }

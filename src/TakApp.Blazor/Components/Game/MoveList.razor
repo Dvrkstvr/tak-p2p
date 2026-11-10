@@ -1,0 +1,25 @@
+@* The game so far in PTN, one row per turn pair. *@
+<div class="move-list">
+    @if (Moves.Count == 0)
+    {
+        <div class="move-list-empty">No moves yet.</div>
+    }
+    else
+    {
+        <ol class="move-history-list">
+            @for (int i = 0; i < Moves.Count; i += 2)
+            {
+                bool last = i + 2 >= Moves.Count;
+                <li class="move-history-row @(last ? "latest" : "")">
+                    <span class="move-turn-num">@(i / 2 + 1).</span>
+                    <span class="move-ptn-white @(Moves.Count - 1 == i ? "is-last" : "")">@Moves[i]</span>
+                    <span class="move-ptn-black @(Moves.Count - 1 == i + 1 ? "is-last" : "")">@(i + 1 < Moves.Count ? Moves[i + 1] : "")</span>
+                </li>
+            }
+        </ol>
+    }
+</div>
+
+@code {
+    [Parameter] public IReadOnlyList<string> Moves { get; set; } = [];
+}
